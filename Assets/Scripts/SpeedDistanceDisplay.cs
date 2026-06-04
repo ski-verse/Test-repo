@@ -1,11 +1,11 @@
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class SpeedDistanceDisplay : MonoBehaviour
 {
     public PlayerSpeedController player;
-    public Text speedText;
-    public Text distanceText;
+    public TMP_Text speedText;
+    public TMP_Text distanceText;
 
     private void Update()
     {
