@@ -2,8 +2,6 @@ using UnityEngine;
 
 public class SkiErgGameBootstrap : MonoBehaviour
 {
-    private const string PlayerTagName = "Player";
-
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void BuildPrototypeScene()
     {
@@ -33,7 +31,6 @@ public class SkiErgGameBootstrap : MonoBehaviour
     {
         var player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
         player.name = "SkiErg Player";
-        player.tag = PlayerTagName;
         player.transform.position = new Vector3(0f, 1f, 0f);
         player.transform.localScale = new Vector3(0.9f, 1.2f, 0.9f);
 
