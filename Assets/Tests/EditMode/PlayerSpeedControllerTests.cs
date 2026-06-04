@@ -1,6 +1,6 @@
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class PlayerSpeedControllerTests
 {
@@ -82,7 +82,7 @@ public class PlayerSpeedControllerTests
     }
 
     [Test]
-    public void Refresh_FormatsSpeedAndDistanceText()
+    public void Refresh_FormatsSpeedAndDistanceTextWithTextMeshPro()
     {
         var player = new GameObject("Player");
         player.transform.position = new Vector3(0f, 0f, 1234f);
@@ -92,8 +92,8 @@ public class PlayerSpeedControllerTests
 
         var hud = new GameObject("HUD").AddComponent<SpeedDistanceDisplay>();
         hud.player = controller;
-        hud.speedText = new GameObject("Speed Text").AddComponent<Text>();
-        hud.distanceText = new GameObject("Distance Text").AddComponent<Text>();
+        hud.speedText = new GameObject("Speed Text").AddComponent<TextMeshProUGUI>();
+        hud.distanceText = new GameObject("Distance Text").AddComponent<TextMeshProUGUI>();
 
         hud.Refresh();
 
