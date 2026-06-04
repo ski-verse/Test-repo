@@ -12,6 +12,8 @@ public class PlayerSpeedController : MonoBehaviour
     [Header("Runtime")]
     [SerializeField]
     private float currentSpeed = 4f;
+    [SerializeField]
+    private float startDistanceZ;
 
     public float CurrentSpeed
     {
@@ -19,9 +21,14 @@ public class PlayerSpeedController : MonoBehaviour
         set => currentSpeed = Mathf.Clamp(value, minSpeed, maxSpeed);
     }
 
+    public float SpeedKmh => CurrentSpeed * 3.6f;
+
+    public float DistanceKm => Mathf.Max(0f, transform.position.z - startDistanceZ) / 1000f;
+
     private void Start()
     {
         CurrentSpeed = currentSpeed;
+        startDistanceZ = transform.position.z;
     }
 
     private void Update()
@@ -52,5 +59,10 @@ public class PlayerSpeedController : MonoBehaviour
     public Vector3 CalculateNextPosition(Vector3 startPosition, Vector3 forwardDirection, float deltaTime)
     {
         return startPosition + forwardDirection.normalized * CurrentSpeed * deltaTime;
+    }
+
+    public void SetStartDistanceZ(float zPosition)
+    {
+        startDistanceZ = zPosition;
     }
 }
