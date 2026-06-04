@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerSpeedControllerTests
 {
@@ -77,6 +78,31 @@ public class PlayerSpeedControllerTests
         controller.SetStartDistanceZ(500f);
 
         Assert.AreEqual(2f, controller.DistanceKm, 0.001f);
+        Object.DestroyImmediate(player);
+    }
+
+    [Test]
+    public void Refresh_FormatsSpeedAndDistanceText()
+    {
+        var player = new GameObject("Player");
+        player.transform.position = new Vector3(0f, 0f, 1234f);
+        var controller = player.AddComponent<PlayerSpeedController>();
+        controller.CurrentSpeed = 8f;
+        controller.SetStartDistanceZ(0f);
+
+        var hud = new GameObject("HUD").AddComponent<SpeedDistanceDisplay>();
+        hud.player = controller;
+        hud.speedText = new GameObject("Speed Text").AddComponent<Text>();
+        hud.distanceText = new GameObject("Distance Text").AddComponent<Text>();
+
+        hud.Refresh();
+
+        Assert.AreEqual("Speed: 28.8 km/h", hud.speedText.text);
+        Assert.AreEqual("Distance: 1.23 km", hud.distanceText.text);
+
+        Object.DestroyImmediate(hud.speedText.gameObject);
+        Object.DestroyImmediate(hud.distanceText.gameObject);
+        Object.DestroyImmediate(hud.gameObject);
         Object.DestroyImmediate(player);
     }
 }
