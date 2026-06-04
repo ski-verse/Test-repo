@@ -9,6 +9,11 @@ public class SpeedDistanceDisplay : MonoBehaviour
 
     private void Update()
     {
+        Refresh();
+    }
+
+    public void Refresh()
+    {
         if (player == null)
         {
             return;
