@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -126,28 +127,37 @@ public class SkiErgGameBootstrap : MonoBehaviour
         var canvasObject = new GameObject("Race HUD");
         var canvas = canvasObject.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvasObject.AddComponent<CanvasScaler>();
+        canvas.sortingOrder = 1000;
+
+        var scaler = canvasObject.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        scaler.matchWidthOrHeight = 0.5f;
+
         canvasObject.AddComponent<GraphicRaycaster>();
 
-        var speedText = CreateHudText(canvasObject.transform, "Speed Text", new Vector2(24f, -24f));
-        var distanceText = CreateHudText(canvasObject.transform, "Distance Text", new Vector2(24f, -58f));
+        var speedText = CreateHudText(canvasObject.transform, "Speed Text", new Vector2(28f, -28f));
+        var distanceText = CreateHudText(canvasObject.transform, "Distance Text", new Vector2(28f, -78f));
 
         var display = canvasObject.AddComponent<SpeedDistanceDisplay>();
         display.player = player;
         display.speedText = speedText;
         display.distanceText = distanceText;
+        display.Refresh();
     }
 
-    private static Text CreateHudText(Transform parent, string name, Vector2 anchoredPosition)
+    private static TextMeshProUGUI CreateHudText(Transform parent, string name, Vector2 anchoredPosition)
     {
         var textObject = new GameObject(name);
         textObject.transform.SetParent(parent, false);
 
-        var text = textObject.AddComponent<Text>();
-        text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-        text.fontSize = 24;
+        var text = textObject.AddComponent<TextMeshProUGUI>();
+        text.fontSize = 36f;
+        text.fontStyle = FontStyles.Bold;
         text.color = Color.white;
-        text.alignment = TextAnchor.UpperLeft;
+        text.alignment = TextAlignmentOptions.TopLeft;
+        text.enableWordWrapping = false;
+        text.raycastTarget = false;
         text.text = string.Empty;
 
         var rectTransform = text.GetComponent<RectTransform>();
@@ -155,7 +165,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
         rectTransform.anchorMax = new Vector2(0f, 1f);
         rectTransform.pivot = new Vector2(0f, 1f);
         rectTransform.anchoredPosition = anchoredPosition;
-        rectTransform.sizeDelta = new Vector2(320f, 32f);
+        rectTransform.sizeDelta = new Vector2(520f, 48f);
 
         return text;
     }
