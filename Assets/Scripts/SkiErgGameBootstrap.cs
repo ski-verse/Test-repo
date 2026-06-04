@@ -7,7 +7,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void BuildPrototypeScene()
     {
-        if (Object.FindFirstObjectByType<PlayerSpeedController>() != null)
+        if (Object.FindObjectOfType<PlayerSpeedController>() != null)
         {
             return;
         }
@@ -57,7 +57,10 @@ public class SkiErgGameBootstrap : MonoBehaviour
         var followCamera = cameraObject.AddComponent<FollowCamera>();
         followCamera.target = target;
 
-        Camera.main?.gameObject.SetActive(false);
+        if (Camera.main != null)
+        {
+            Camera.main.gameObject.SetActive(false);
+        }
     }
 
     private static void CreateLight()
