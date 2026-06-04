@@ -57,4 +57,26 @@ public class PlayerSpeedControllerTests
         Assert.AreEqual(new Vector3(0f, 0f, 3f), next);
         Object.DestroyImmediate(controller.gameObject);
     }
+
+    [Test]
+    public void SpeedKmh_ConvertsMetersPerSecondToKilometersPerHour()
+    {
+        var controller = new GameObject("Player").AddComponent<PlayerSpeedController>();
+        controller.CurrentSpeed = 10f;
+
+        Assert.AreEqual(36f, controller.SpeedKmh, 0.001f);
+        Object.DestroyImmediate(controller.gameObject);
+    }
+
+    [Test]
+    public void DistanceKm_UsesForwardProgressFromStartPosition()
+    {
+        var player = new GameObject("Player");
+        player.transform.position = new Vector3(0f, 0f, 2500f);
+        var controller = player.AddComponent<PlayerSpeedController>();
+        controller.SetStartDistanceZ(500f);
+
+        Assert.AreEqual(2f, controller.DistanceKm, 0.001f);
+        Object.DestroyImmediate(player);
+    }
 }
