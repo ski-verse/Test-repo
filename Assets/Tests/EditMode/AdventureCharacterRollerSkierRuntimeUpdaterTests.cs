@@ -22,19 +22,19 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
         Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseUpperArmDropMuscle, 0.55f);
         Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseForearmBendMuscle, 0.15f);
         Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseHipHingeMuscle, 0.15f);
-        Assert.GreaterOrEqual(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseKneeBendMuscle, 0.02f);
-        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseKneeBendMuscle, 0.05f);
+        Assert.GreaterOrEqual(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseKneeBendMuscle, 0f);
+        Assert.LessOrEqual(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseKneeBendMuscle, 0.02f);
         Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.BasePosePoleBackwardAngleDegrees, 0f);
         Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.BasePosePoleBackwardZOffset, 0f);
     }
 
     [Test]
-    public void AdventureCharacterStance_UsesNarrowDoublePolingSpacing()
+    public void AdventureCharacterStance_UsesParallelRollerSkiLegsInsteadOfGoalieStance()
     {
         Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.CharacterWidthScale, 0.86f);
         Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.CharacterWidthScale, 0.93f);
-        Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseLegInwardMuscle, 0.1f);
-        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseLegInwardMuscle, 0.22f);
+        Assert.GreaterOrEqual(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseLegInwardMuscle, -0.02f);
+        Assert.LessOrEqual(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseLegInwardMuscle, 0.02f);
     }
 
     [Test]
