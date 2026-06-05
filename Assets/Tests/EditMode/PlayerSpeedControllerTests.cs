@@ -122,16 +122,23 @@ public class PlayerSpeedControllerTests
     }
 
     [Test]
+    public void CameraDefaults_MoveCloserLowerAndKeepRoadLookAhead()
+    {
+        Assert.AreEqual(new Vector3(0f, 2.75f, -4.8f), FollowCamera.FocusedPlayerOffset);
+        Assert.AreEqual(1.25f, FollowCamera.FocusedLookTargetHeight, 0.001f);
+    }
+
+    [Test]
     public void CalculateLookAheadDistance_LooksFurtherAheadAtHighSpeed()
     {
         var followCamera = new GameObject("Follow Camera").AddComponent<FollowCamera>();
-        followCamera.baseLookAheadDistance = 12f;
-        followCamera.maxLookAheadDistance = 38f;
+        followCamera.baseLookAheadDistance = 14f;
+        followCamera.maxLookAheadDistance = 42f;
         followCamera.speedForMaxLookAheadKmh = 72f;
 
-        Assert.AreEqual(12f, followCamera.CalculateLookAheadDistance(0f), 0.001f);
-        Assert.AreEqual(25f, followCamera.CalculateLookAheadDistance(36f), 0.001f);
-        Assert.AreEqual(38f, followCamera.CalculateLookAheadDistance(90f), 0.001f);
+        Assert.AreEqual(14f, followCamera.CalculateLookAheadDistance(0f), 0.001f);
+        Assert.AreEqual(28f, followCamera.CalculateLookAheadDistance(36f), 0.001f);
+        Assert.AreEqual(42f, followCamera.CalculateLookAheadDistance(90f), 0.001f);
 
         Object.DestroyImmediate(followCamera.gameObject);
     }
