@@ -8,6 +8,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
     private const float RoadWidthMeters = 8f;
     private const float GrassWidthMeters = 36f;
     private const float RoadSegmentLength = 12f;
+    private const float SkierVisualScale = 1.18f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void BuildPrototypeScene()
@@ -354,6 +355,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
         var animator = skier.AddComponent<RollerSkierAnimator>();
         animator.player = controller;
         var visualRoot = CreateChild(skier.transform, "Roller Skier Visual", Vector3.zero);
+        visualRoot.localScale = Vector3.one * SkierVisualScale;
         CreateRollerSkierVisual(visualRoot, animator);
         animator.ApplyPose(0.15f);
 
@@ -441,8 +443,8 @@ public class SkiErgGameBootstrap : MonoBehaviour
         var cameraObject = new GameObject("Follow Camera");
         var camera = cameraObject.AddComponent<Camera>();
         camera.fieldOfView = 60f;
-        cameraObject.transform.position = target.position + target.TransformDirection(new Vector3(0f, 3.8f, -8.2f));
-        cameraObject.transform.LookAt(target.position + Vector3.up * 1.1f + target.forward * 12f);
+        cameraObject.transform.position = target.position + target.TransformDirection(FollowCamera.FocusedPlayerOffset);
+        cameraObject.transform.LookAt(target.position + Vector3.up * FollowCamera.FocusedLookTargetHeight + target.forward * 14f);
 
         var followCamera = cameraObject.AddComponent<FollowCamera>();
         followCamera.target = target;
