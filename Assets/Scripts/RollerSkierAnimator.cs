@@ -7,6 +7,20 @@ public class RollerSkierAnimator : MonoBehaviour
     private const float PlantPeakPhase = 0.46f;
     private const float ReturnEndPhase = 0.92f;
 
+    private const float ArmRecoveryX = 0.24f;
+    private const float ArmPlantX = 0.18f;
+    private const float ArmRecoveryY = 1.46f;
+    private const float ArmPlantY = 1.08f;
+    private const float ArmRecoveryZ = -0.04f;
+    private const float ArmPlantZ = 0.23f;
+
+    private const float PoleRecoveryX = 0.34f;
+    private const float PolePlantX = 0.24f;
+    private const float PoleRecoveryY = 0.9f;
+    private const float PolePlantY = 0.76f;
+    private const float PoleRecoveryZ = 0.16f;
+    private const float PolePlantZ = 0.48f;
+
     public PlayerSpeedController player;
     public Transform torso;
     public Transform leftArm;
@@ -54,6 +68,28 @@ public class RollerSkierAnimator : MonoBehaviour
         return Mathf.Lerp(15f, 44f, plantAmount) - returnLift * 3f;
     }
 
+    public static Vector3 CalculateArmPivotPosition(float side, float phase)
+    {
+        var sideSign = SideSign(side);
+        var plantAmount = CalculatePlantAmount(phase);
+        var returnLift = CalculateReturnLift(phase);
+        var x = Mathf.Lerp(ArmRecoveryX, ArmPlantX, plantAmount) * sideSign;
+        var y = Mathf.Lerp(ArmRecoveryY, ArmPlantY, plantAmount) + returnLift * 0.04f;
+        var z = Mathf.Lerp(ArmRecoveryZ, ArmPlantZ, plantAmount) - returnLift * 0.04f;
+        return new Vector3(x, y, z);
+    }
+
+    public static Vector3 CalculatePolePivotPosition(float side, float phase)
+    {
+        var sideSign = SideSign(side);
+        var plantAmount = CalculatePlantAmount(phase);
+        var returnLift = CalculateReturnLift(phase);
+        var x = Mathf.Lerp(PoleRecoveryX, PolePlantX, plantAmount) * sideSign;
+        var y = Mathf.Lerp(PoleRecoveryY, PolePlantY, plantAmount) + returnLift * 0.03f;
+        var z = Mathf.Lerp(PoleRecoveryZ, PolePlantZ, plantAmount) - returnLift * 0.03f;
+        return new Vector3(x, y, z);
+    }
+
     public void ApplyPose(float posePhase)
     {
         var armPitch = CalculateArmPitch(posePhase);
@@ -67,21 +103,25 @@ public class RollerSkierAnimator : MonoBehaviour
 
         if (leftArm != null)
         {
-            leftArm.localRotation = Quaternion.Euler(armPitch, -10f, -7f);
+            leftArm.localPosition = CalculateArmPivotPosition(-1f, posePhase);
+            leftArm.localRotation = Quaternion.Euler(armPitch, -4f, -3f);
         }
 
         if (rightArm != null)
         {
-            rightArm.localRotation = Quaternion.Euler(armPitch, 10f, 7f);
+            rightArm.localPosition = CalculateArmPivotPosition(1f, posePhase);
+            rightArm.localRotation = Quaternion.Euler(armPitch, 4f, 3f);
         }
 
         if (leftPole != null)
         {
+            leftPole.localPosition = CalculatePolePivotPosition(-1f, posePhase);
             leftPole.localRotation = Quaternion.Euler(polePitch, 0f, 0f);
         }
 
         if (rightPole != null)
         {
+            rightPole.localPosition = CalculatePolePivotPosition(1f, posePhase);
             rightPole.localRotation = Quaternion.Euler(polePitch, 0f, 0f);
         }
 
@@ -123,5 +163,10 @@ public class RollerSkierAnimator : MonoBehaviour
         }
 
         return Mathf.Sin(Mathf.InverseLerp(PlantPeakPhase, 1f, phase) * Mathf.PI);
+    }
+
+    private static float SideSign(float side)
+    {
+        return side < 0f ? -1f : 1f;
     }
 }
