@@ -5,15 +5,18 @@ public class FollowCamera : MonoBehaviour
 {
     public Transform target;
     public PlayerSpeedController player;
-    public Vector3 offset = new Vector3(0f, 3.2f, -7f);
-    public float followSpeed = 9f;
-    public float lookAheadDistance = 5f;
-    public float baseFieldOfView = 62f;
-    public float maxFieldOfView = 78f;
+    public Vector3 offset = new Vector3(0f, 3f, -6.4f);
+    public float positionSmoothTime = 0.16f;
+    public float rotationSmoothSpeed = 10f;
+    public float lookAheadDistance = 7f;
+    public float baseFieldOfView = 64f;
+    public float maxFieldOfView = 82f;
     public float speedForMaxFieldOfViewKmh = 72f;
-    public float fieldOfViewSmoothSpeed = 4f;
+    public float fieldOfViewSmoothTime = 0.18f;
 
     private Camera followCamera;
+    private Vector3 positionVelocity;
+    private float fieldOfViewVelocity;
 
     private void Awake()
     {
@@ -28,13 +31,16 @@ public class FollowCamera : MonoBehaviour
         }
 
         var desiredPosition = target.position + target.TransformDirection(offset);
-        transform.position = Vector3.Lerp(transform.position, desiredPosition, followSpeed * Time.deltaTime);
-        transform.LookAt(target.position + Vector3.up * 1.15f + target.forward * lookAheadDistance);
+        transform.position = Vector3.SmoothDamp(transform.position, desiredPosition, ref positionVelocity, positionSmoothTime);
+
+        var lookTarget = target.position + Vector3.up * 1.1f + target.forward * lookAheadDistance;
+        var desiredRotation = Quaternion.LookRotation(lookTarget - transform.position, Vector3.up);
+        transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation, rotationSmoothSpeed * Time.deltaTime);
 
         if (followCamera != null && player != null)
         {
             var targetFieldOfView = CalculateTargetFieldOfView(player.SpeedKmh);
-            followCamera.fieldOfView = Mathf.Lerp(followCamera.fieldOfView, targetFieldOfView, fieldOfViewSmoothSpeed * Time.deltaTime);
+            followCamera.fieldOfView = Mathf.SmoothDamp(followCamera.fieldOfView, targetFieldOfView, ref fieldOfViewVelocity, fieldOfViewSmoothTime);
         }
     }
 
