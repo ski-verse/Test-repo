@@ -13,6 +13,8 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     public const bool DisableProceduralAnimationForAdventure = true;
     public const bool SkipGenericPoleVisibilityForAdventure = true;
     public const float CharacterYawDegrees = 0f;
+    public const float CharacterWidthScale = 0.94f;
+    public const float EquipmentNarrowStanceOffset = 0.055f;
     public const float BasePoseUpperArmDropMuscle = 0.46f;
     public const float BasePoseForearmBendMuscle = 0.2f;
     public const float BasePoseHipHingeMuscle = 0.12f;
@@ -106,7 +108,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         character.transform.SetParent(visualRoot, false);
         character.transform.localPosition = Vector3.zero;
         character.transform.localRotation = Quaternion.Euler(0f, CharacterYawDegrees, 0f);
-        character.transform.localScale = Vector3.one;
+        character.transform.localScale = new Vector3(CharacterWidthScale, 1f, 1f);
         ApplyHumanoidBasePose(character);
 
         if (!AttachEquipmentToHumanoidBones(visualRoot, character, animator))
@@ -129,7 +131,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
             PoleVisibilityRuntimeUpdater.ApplyPoleVisibilityPass();
         }
 
-        Debug.Log("[Ski-Verse] Adventure Character stable connected rig applied: equipment follows humanoid hand/foot positions with player-root aligned rotation, and conflicting procedural equipment animation is disabled.");
+        Debug.Log("[Ski-Verse] Adventure Character stable connected rig applied with narrower stance: equipment follows humanoid hand/foot positions with player-root aligned rotation.");
         return true;
 #else
         return false;
@@ -284,10 +286,10 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         animator.leftFoot = leftFoot;
         animator.rightFoot = rightFoot;
 
-        animator.leftSki = CreateConstrainedRollerSki(equipmentRoot, visualRoot, leftFoot, "Left Adventure Roller Ski", aluminium, black, neon);
-        animator.rightSki = CreateConstrainedRollerSki(equipmentRoot, visualRoot, rightFoot, "Right Adventure Roller Ski", aluminium, black, neon);
-        AddConstrainedBootDetails(equipmentRoot, visualRoot, leftFoot, "Left", neon, black);
-        AddConstrainedBootDetails(equipmentRoot, visualRoot, rightFoot, "Right", neon, black);
+        animator.leftSki = CreateConstrainedRollerSki(equipmentRoot, visualRoot, leftFoot, "Left Adventure Roller Ski", -1f, aluminium, black, neon);
+        animator.rightSki = CreateConstrainedRollerSki(equipmentRoot, visualRoot, rightFoot, "Right Adventure Roller Ski", 1f, aluminium, black, neon);
+        AddConstrainedBootDetails(equipmentRoot, visualRoot, leftFoot, "Left", -1f, neon, black);
+        AddConstrainedBootDetails(equipmentRoot, visualRoot, rightFoot, "Right", 1f, neon, black);
         animator.leftPole = CreateConstrainedPole(equipmentRoot, visualRoot, leftHand, "Left Adventure Ski Pole", -1f, black, white);
         animator.rightPole = CreateConstrainedPole(equipmentRoot, visualRoot, rightHand, "Right Adventure Ski Pole", 1f, black, white);
         return true;
@@ -331,9 +333,10 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         return null;
     }
 
-    private static Transform CreateConstrainedRollerSki(Transform parent, Transform orientationRoot, Transform foot, string name, Color frameColor, Color wheelColor, Color accentColor)
+    private static Transform CreateConstrainedRollerSki(Transform parent, Transform orientationRoot, Transform foot, string name, float side, Color frameColor, Color wheelColor, Color accentColor)
     {
-        var ski = CreateConstrainedAttachment(parent, orientationRoot, foot, name, new Vector3(0f, -0.09f, 0.12f), Vector3.zero);
+        var inwardOffset = -side * EquipmentNarrowStanceOffset;
+        var ski = CreateConstrainedAttachment(parent, orientationRoot, foot, name, new Vector3(inwardOffset, -0.09f, 0.12f), Vector3.zero);
         AddPart(ski, "Slim Roller Ski Frame", PrimitiveType.Cube, new Vector3(0f, -0.015f, 0.18f), new Vector3(EquipmentSkiWidth, 0.025f, EquipmentSkiLength), frameColor, Vector3.zero);
         AddPart(ski, "Front Roller Wheel", PrimitiveType.Cylinder, new Vector3(0f, -0.06f, 0.64f), new Vector3(EquipmentWheelRadius * 2f, 0.075f, EquipmentWheelRadius * 2f), wheelColor, new Vector3(0f, 0f, 90f));
         AddPart(ski, "Rear Roller Wheel", PrimitiveType.Cylinder, new Vector3(0f, -0.06f, -0.34f), new Vector3(EquipmentWheelRadius * 2f, 0.075f, EquipmentWheelRadius * 2f), wheelColor, new Vector3(0f, 0f, 90f));
@@ -341,9 +344,10 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         return ski;
     }
 
-    private static void AddConstrainedBootDetails(Transform parent, Transform orientationRoot, Transform foot, string sideName, Color accentColor, Color bootColor)
+    private static void AddConstrainedBootDetails(Transform parent, Transform orientationRoot, Transform foot, string sideName, float side, Color accentColor, Color bootColor)
     {
-        var boot = CreateConstrainedAttachment(parent, orientationRoot, foot, sideName + " Adventure Boot Anchor", new Vector3(0f, -0.025f, 0.04f), Vector3.zero);
+        var inwardOffset = -side * EquipmentNarrowStanceOffset;
+        var boot = CreateConstrainedAttachment(parent, orientationRoot, foot, sideName + " Adventure Boot Anchor", new Vector3(inwardOffset, -0.025f, 0.04f), Vector3.zero);
         AddPart(boot, sideName + " Roller Ski Boot Shell", PrimitiveType.Cube, Vector3.zero, new Vector3(0.13f, 0.1f, 0.28f), bootColor, Vector3.zero);
         AddPart(boot, sideName + " Neon Boot Cuff", PrimitiveType.Cube, new Vector3(0f, 0.065f, -0.07f), new Vector3(0.14f, 0.05f, 0.08f), accentColor, Vector3.zero);
         AddPart(boot, sideName + " Heel Binding Accent", PrimitiveType.Cube, new Vector3(0f, -0.005f, -0.15f), new Vector3(0.12f, 0.04f, 0.06f), accentColor, Vector3.zero);
