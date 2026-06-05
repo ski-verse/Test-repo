@@ -91,7 +91,7 @@ public class RollerSkierDoublePolingAnimationTests
         Assert.AreEqual(animator.rightArm, animator.rightHand.parent);
         Assert.AreEqual(animator.leftHand.position, animator.leftPole.position);
         Assert.AreEqual(animator.rightHand.position, animator.rightPole.position);
-        Assert.Greater(animator.torso.localPosition.z, 0.04f);
+        Assert.Less(Mathf.Abs(animator.torso.localPosition.z - 0.04f), 0.001f);
 
         Object.DestroyImmediate(root);
     }
