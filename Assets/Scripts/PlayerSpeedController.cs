@@ -3,8 +3,7 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class PlayerSpeedController : MonoBehaviour
 {
-    public const float GradientSpeedReductionPerPercent = 0.055f;
-    public const float MinimumClimbSpeedMultiplier = 0.5f;
+    public const float GradientResistanceDecelerationPerPercent = 0.42f;
 
     [Header("Speed")]
     public float acceleration = 3f;
@@ -42,7 +41,7 @@ public class PlayerSpeedController : MonoBehaviour
 
     public float CurrentGradientPercent => CoursePath.GradientPercentAtDistance(transform.position.z);
 
-    public float EffectiveCurrentSpeed => CurrentSpeed * CalculateGradientSpeedMultiplier(CurrentGradientPercent);
+    public float EffectiveCurrentSpeed => CurrentSpeed;
 
     public float SpeedKmh => EffectiveCurrentSpeed * 3.6f;
 
@@ -67,14 +66,14 @@ public class PlayerSpeedController : MonoBehaviour
         MoveAlongCourse(Time.deltaTime);
     }
 
-    public static float CalculateGradientSpeedMultiplier(float gradientPercent)
+    public static float CalculateGradientResistanceDeceleration(float gradientPercent)
     {
         if (gradientPercent <= 0f)
         {
-            return 1f;
+            return 0f;
         }
 
-        return Mathf.Clamp(1f - gradientPercent * GradientSpeedReductionPerPercent, MinimumClimbSpeedMultiplier, 1f);
+        return gradientPercent * GradientResistanceDecelerationPerPercent;
     }
 
     public void EnsureInputSource()
@@ -108,7 +107,13 @@ public class PlayerSpeedController : MonoBehaviour
     public void ApplyInputSource(float deltaTime)
     {
         EnsureInputSource();
-        ApplyMovementInput(inputSource != null ? inputSource.ReadMovementInput() : PlayerMovementInput.None, deltaTime);
+        ApplyMovementInputAndGradientResistance(inputSource != null ? inputSource.ReadMovementInput() : PlayerMovementInput.None, deltaTime);
+    }
+
+    public void ApplyMovementInputAndGradientResistance(PlayerMovementInput movementInput, float deltaTime)
+    {
+        ApplyMovementInput(movementInput, deltaTime);
+        ApplyGradientResistance(deltaTime);
     }
 
     public void ApplyMovementInput(PlayerMovementInput movementInput, float deltaTime)
@@ -121,6 +126,11 @@ public class PlayerSpeedController : MonoBehaviour
         {
             DecreaseSpeed(deltaTime * -movementInput.SpeedAxis);
         }
+    }
+
+    public void ApplyGradientResistance(float deltaTime)
+    {
+        CurrentSpeed -= CalculateGradientResistanceDeceleration(CurrentGradientPercent) * Mathf.Max(0f, deltaTime);
     }
 
     public void IncreaseSpeed(float deltaTime)
