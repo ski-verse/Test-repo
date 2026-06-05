@@ -26,6 +26,53 @@ public class RollerSkierTechniqueTests
     }
 
     [Test]
+    public void CalculateSkiClassicsBiomechanics_UsesCoreDriveMoreThanArmSwing()
+    {
+        var drivePhase = 0.42f;
+        var recoveryPhase = 0.82f;
+
+        Assert.Greater(RollerSkierAnimator.CalculateBodyWeightTransfer(drivePhase), RollerSkierAnimator.CalculateBodyWeightTransfer(recoveryPhase));
+        Assert.Greater(RollerSkierAnimator.CalculateTorsoForwardDrive(drivePhase), RollerSkierAnimator.CalculateHandForwardDrive(drivePhase) * 1.6f);
+        Assert.Greater(RollerSkierAnimator.CalculateHipHingeForwardDrive(drivePhase), RollerSkierAnimator.CalculateHandForwardDrive(drivePhase));
+        Assert.Less(RollerSkierAnimator.CalculateHandOutwardDrift(drivePhase), 0.02f);
+    }
+
+    [Test]
+    public void ApplyPose_UsesStableHeadDuringStrongTorsoLean()
+    {
+        var root = new GameObject("Roller Skier Rig");
+        var animator = root.AddComponent<RollerSkierAnimator>();
+        animator.torso = new GameObject("Torso Pivot").transform;
+        animator.head = new GameObject("Head Stabilizer").transform;
+
+        animator.torso.SetParent(root.transform, false);
+        animator.head.SetParent(animator.torso, false);
+        animator.torso.localPosition = new Vector3(0f, 1.105f, 0.085f);
+        animator.head.localPosition = new Vector3(0f, 0.79f, -0.19f);
+
+        animator.ApplyPose(0.42f);
+
+        var torsoPitch = NormalizeAngle(animator.torso.localEulerAngles.x);
+        var headCounterPitch = NormalizeAngle(animator.head.localEulerAngles.x);
+        Assert.Greater(torsoPitch, 30f);
+        Assert.Less(headCounterPitch, -10f);
+        Assert.Less(Mathf.Abs(animator.head.localPosition.y - 0.79f), 0.03f);
+
+        Object.DestroyImmediate(root);
+    }
+
+    [Test]
+    public void CalculatePolePlant_StaysInFrontWithEfficientHandPath()
+    {
+        var drivePhase = 0.42f;
+        var recoveryPhase = 0.82f;
+
+        Assert.Greater(RollerSkierAnimator.CalculatePolePlantForwardOffset(drivePhase), 0.07f);
+        Assert.Greater(RollerSkierAnimator.CalculatePolePressure(drivePhase), RollerSkierAnimator.CalculatePolePressure(recoveryPhase));
+        Assert.Less(RollerSkierAnimator.CalculateHandRecoveryLift(drivePhase), RollerSkierAnimator.CalculateHandRecoveryLift(recoveryPhase));
+    }
+
+    [Test]
     public void ProperRollerSkierVisual_UsesVisibleGameplayCameraPoles()
     {
         Assert.GreaterOrEqual(ProperRollerSkierRuntimeUpdater.VisiblePoleShaftRadius, 0.027f);
