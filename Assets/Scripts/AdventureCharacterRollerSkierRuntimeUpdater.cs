@@ -19,6 +19,8 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     public const float CharacterWidthScale = 0.72f;
     public const float LegChainLateralCompression = 0.22f;
     public const float LowerLegChainLateralCompression = 0.24f;
+    public const float NarrowUpperLegTrackHalfWidth = 0.14f;
+    public const float NarrowFootTrackHalfWidth = 0.105f;
     public const float FootBindingLateralOffset = 0f;
     public const float BasePoseUpperArmDropMuscle = 0.46f;
     public const float BasePoseForearmBendMuscle = 0.2f;
@@ -137,7 +139,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
             PoleVisibilityRuntimeUpdater.ApplyPoleVisibilityPass();
         }
 
-        Debug.Log("[Ski-Verse] Adventure Character connected rig applied with tight full-leg roller ski stance, feet on bindings, and hand-attached poles.");
+        Debug.Log("[Ski-Verse] Adventure Character connected rig applied with locked narrow Ski Classics stance, feet on bindings, and hand-attached poles.");
         return true;
 #else
         return false;
@@ -309,13 +311,18 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         animator.rightArm = FindHumanoidBone(character.transform, humanAnimator, HumanBodyBones.RightUpperArm, "upperarm_r");
         animator.leftHand = leftHand;
         animator.rightHand = rightHand;
-        animator.leftThigh = FindHumanoidBone(character.transform, humanAnimator, HumanBodyBones.LeftUpperLeg, "thigh_l");
-        animator.rightThigh = FindHumanoidBone(character.transform, humanAnimator, HumanBodyBones.RightUpperLeg, "thigh_r");
-        animator.leftShin = FindHumanoidBone(character.transform, humanAnimator, HumanBodyBones.LeftLowerLeg, "calf_l");
-        animator.rightShin = FindHumanoidBone(character.transform, humanAnimator, HumanBodyBones.RightLowerLeg, "calf_r");
+        var leftThigh = FindHumanoidBone(character.transform, humanAnimator, HumanBodyBones.LeftUpperLeg, "thigh_l");
+        var rightThigh = FindHumanoidBone(character.transform, humanAnimator, HumanBodyBones.RightUpperLeg, "thigh_r");
+        var leftShin = FindHumanoidBone(character.transform, humanAnimator, HumanBodyBones.LeftLowerLeg, "calf_l");
+        var rightShin = FindHumanoidBone(character.transform, humanAnimator, HumanBodyBones.RightLowerLeg, "calf_r");
+        animator.leftThigh = leftThigh;
+        animator.rightThigh = rightThigh;
+        animator.leftShin = leftShin;
+        animator.rightShin = rightShin;
         animator.leftFoot = leftFoot;
         animator.rightFoot = rightFoot;
 
+        AddNarrowStanceConstraint(character, visualRoot, leftThigh, rightThigh, leftShin, rightShin, leftFoot, rightFoot);
         animator.leftSki = CreateConstrainedRollerSki(equipmentRoot, visualRoot, leftFoot, "Left Adventure Roller Ski", -1f, aluminium, black, neon);
         animator.rightSki = CreateConstrainedRollerSki(equipmentRoot, visualRoot, rightFoot, "Right Adventure Roller Ski", 1f, aluminium, black, neon);
         AddConstrainedBootDetails(equipmentRoot, visualRoot, leftFoot, "Left", -1f, neon, black);
@@ -366,7 +373,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     private static Transform CreateConstrainedRollerSki(Transform parent, Transform orientationRoot, Transform foot, string name, float side, Color frameColor, Color wheelColor, Color accentColor)
     {
         var bindingOffset = side * FootBindingLateralOffset;
-        var ski = CreateConstrainedAttachment(parent, orientationRoot, foot, name, new Vector3(bindingOffset, -0.09f, 0.12f), Vector3.zero);
+        var ski = CreateConstrainedAttachment(parent, orientationRoot, foot, name, new Vector3(bindingOffset, -0.09f, 0.12f), Vector3.zero, side * NarrowFootTrackHalfWidth);
         AddPart(ski, "Slim Roller Ski Frame", PrimitiveType.Cube, new Vector3(0f, -0.015f, 0.18f), new Vector3(EquipmentSkiWidth, 0.025f, EquipmentSkiLength), frameColor, Vector3.zero);
         AddPart(ski, "Front Roller Wheel", PrimitiveType.Cylinder, new Vector3(0f, -0.06f, 0.64f), new Vector3(EquipmentWheelRadius * 2f, 0.075f, EquipmentWheelRadius * 2f), wheelColor, new Vector3(0f, 0f, 90f));
         AddPart(ski, "Rear Roller Wheel", PrimitiveType.Cylinder, new Vector3(0f, -0.06f, -0.34f), new Vector3(EquipmentWheelRadius * 2f, 0.075f, EquipmentWheelRadius * 2f), wheelColor, new Vector3(0f, 0f, 90f));
@@ -377,7 +384,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     private static void AddConstrainedBootDetails(Transform parent, Transform orientationRoot, Transform foot, string sideName, float side, Color accentColor, Color bootColor)
     {
         var bindingOffset = side * FootBindingLateralOffset;
-        var boot = CreateConstrainedAttachment(parent, orientationRoot, foot, sideName + " Adventure Boot Anchor", new Vector3(bindingOffset, -0.025f, 0.04f), Vector3.zero);
+        var boot = CreateConstrainedAttachment(parent, orientationRoot, foot, sideName + " Adventure Boot Anchor", new Vector3(bindingOffset, -0.025f, 0.04f), Vector3.zero, side * NarrowFootTrackHalfWidth);
         AddPart(boot, sideName + " Roller Ski Boot Shell", PrimitiveType.Cube, Vector3.zero, new Vector3(0.13f, 0.1f, 0.28f), bootColor, Vector3.zero);
         AddPart(boot, sideName + " Neon Boot Cuff", PrimitiveType.Cube, new Vector3(0f, 0.065f, -0.07f), new Vector3(0.14f, 0.05f, 0.08f), accentColor, Vector3.zero);
         AddPart(boot, sideName + " Heel Binding Accent", PrimitiveType.Cube, new Vector3(0f, -0.005f, -0.15f), new Vector3(0.12f, 0.04f, 0.06f), accentColor, Vector3.zero);
@@ -404,14 +411,36 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
 
     private static Transform CreateConstrainedAttachment(Transform parent, Transform orientationRoot, Transform target, string name, Vector3 rootSpaceOffset, Vector3 rootSpaceEuler)
     {
+        return CreateConstrainedAttachment(parent, orientationRoot, target, name, rootSpaceOffset, rootSpaceEuler, float.NaN);
+    }
+
+    private static Transform CreateConstrainedAttachment(Transform parent, Transform orientationRoot, Transform target, string name, Vector3 rootSpaceOffset, Vector3 rootSpaceEuler, float lockedRootSpaceX)
+    {
         var attachment = CreateChild(parent, name, Vector3.zero);
         var follower = attachment.gameObject.AddComponent<AdventureEquipmentBoneFollower>();
         follower.target = target;
         follower.orientationRoot = orientationRoot;
         follower.rootSpaceOffset = rootSpaceOffset;
         follower.rootSpaceEuler = rootSpaceEuler;
+        follower.lockRootSpaceX = !float.IsNaN(lockedRootSpaceX);
+        follower.lockedRootSpaceX = lockedRootSpaceX;
         follower.ApplyNow();
         return attachment;
+    }
+
+    private static void AddNarrowStanceConstraint(GameObject character, Transform orientationRoot, Transform leftThigh, Transform rightThigh, Transform leftShin, Transform rightShin, Transform leftFoot, Transform rightFoot)
+    {
+        var constraint = character.AddComponent<AdventureNarrowStanceConstraint>();
+        constraint.orientationRoot = orientationRoot;
+        constraint.leftThigh = leftThigh;
+        constraint.rightThigh = rightThigh;
+        constraint.leftShin = leftShin;
+        constraint.rightShin = rightShin;
+        constraint.leftFoot = leftFoot;
+        constraint.rightFoot = rightFoot;
+        constraint.upperTrackHalfWidth = NarrowUpperLegTrackHalfWidth;
+        constraint.lowerTrackHalfWidth = NarrowFootTrackHalfWidth;
+        constraint.ApplyNow();
     }
 
     private static void AddHelmetOverlay(Transform visualRoot)
@@ -472,6 +501,8 @@ public sealed class AdventureEquipmentBoneFollower : MonoBehaviour
     public Transform orientationRoot;
     public Vector3 rootSpaceOffset;
     public Vector3 rootSpaceEuler;
+    public bool lockRootSpaceX;
+    public float lockedRootSpaceX;
 
     private void LateUpdate()
     {
@@ -486,7 +517,55 @@ public sealed class AdventureEquipmentBoneFollower : MonoBehaviour
         }
 
         var rootRotation = orientationRoot != null ? orientationRoot.rotation : Quaternion.identity;
-        transform.position = target.position + rootRotation * rootSpaceOffset;
+        var nextPosition = target.position + rootRotation * rootSpaceOffset;
+        if (lockRootSpaceX && orientationRoot != null)
+        {
+            var rootSpacePosition = orientationRoot.InverseTransformPoint(nextPosition);
+            rootSpacePosition.x = lockedRootSpaceX;
+            nextPosition = orientationRoot.TransformPoint(rootSpacePosition);
+        }
+
+        transform.position = nextPosition;
         transform.rotation = rootRotation * Quaternion.Euler(rootSpaceEuler);
+    }
+}
+
+public sealed class AdventureNarrowStanceConstraint : MonoBehaviour
+{
+    public Transform orientationRoot;
+    public Transform leftThigh;
+    public Transform rightThigh;
+    public Transform leftShin;
+    public Transform rightShin;
+    public Transform leftFoot;
+    public Transform rightFoot;
+    public float upperTrackHalfWidth;
+    public float lowerTrackHalfWidth;
+
+    private void LateUpdate()
+    {
+        ApplyNow();
+    }
+
+    public void ApplyNow()
+    {
+        ApplyRootSpaceX(leftThigh, -upperTrackHalfWidth);
+        ApplyRootSpaceX(rightThigh, upperTrackHalfWidth);
+        ApplyRootSpaceX(leftShin, -lowerTrackHalfWidth);
+        ApplyRootSpaceX(rightShin, lowerTrackHalfWidth);
+        ApplyRootSpaceX(leftFoot, -lowerTrackHalfWidth);
+        ApplyRootSpaceX(rightFoot, lowerTrackHalfWidth);
+    }
+
+    private void ApplyRootSpaceX(Transform bone, float rootSpaceX)
+    {
+        if (bone == null || orientationRoot == null)
+        {
+            return;
+        }
+
+        var rootSpacePosition = orientationRoot.InverseTransformPoint(bone.position);
+        rootSpacePosition.x = rootSpaceX;
+        bone.position = orientationRoot.TransformPoint(rootSpacePosition);
     }
 }
