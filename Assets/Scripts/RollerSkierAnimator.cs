@@ -37,21 +37,21 @@ public class RollerSkierAnimator : MonoBehaviour
     {
         var plantAmount = CalculatePlantAmount(phase);
         var returnLift = CalculateReturnLift(phase);
-        return Mathf.Lerp(-62f, 44f, plantAmount) - returnLift * 10f;
+        return Mathf.Lerp(-78f, 64f, plantAmount) - returnLift * 18f;
     }
 
     public static float CalculatePolePitch(float phase)
     {
         var plantAmount = CalculatePlantAmount(phase);
         var returnLift = CalculateReturnLift(phase);
-        return Mathf.Lerp(34f, -46f, plantAmount) + returnLift * 8f;
+        return Mathf.Lerp(50f, -72f, plantAmount) + returnLift * 18f;
     }
 
     public static float CalculateTorsoPitch(float phase)
     {
         var plantAmount = CalculatePlantAmount(phase);
         var returnLift = CalculateReturnLift(phase);
-        return Mathf.Lerp(12f, 31f, plantAmount) - returnLift * 2f;
+        return Mathf.Lerp(15f, 44f, plantAmount) - returnLift * 3f;
     }
 
     public void ApplyPose(float posePhase)
