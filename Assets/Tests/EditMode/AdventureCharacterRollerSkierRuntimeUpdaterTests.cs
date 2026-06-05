@@ -28,12 +28,14 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
     }
 
     [Test]
-    public void AdventureCharacterStance_UsesNarrowerLegAndSkiSpacing()
+    public void AdventureCharacterStance_UsesNarrowDoublePolingSpacing()
     {
-        Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.CharacterWidthScale, 0.9f);
-        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.CharacterWidthScale, 1f);
-        Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.EquipmentNarrowStanceOffset, 0.04f);
-        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.EquipmentNarrowStanceOffset, 0.08f);
+        Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.CharacterWidthScale, 0.86f);
+        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.CharacterWidthScale, 0.93f);
+        Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.EquipmentNarrowStanceOffset, 0.1f);
+        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.EquipmentNarrowStanceOffset, 0.15f);
+        Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseLegInwardMuscle, 0.1f);
+        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseLegInwardMuscle, 0.22f);
     }
 
     [Test]
