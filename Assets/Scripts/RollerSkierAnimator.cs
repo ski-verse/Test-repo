@@ -79,7 +79,7 @@ public class RollerSkierAnimator : MonoBehaviour
 
     public static float CalculateBodyCompression(float phase)
     {
-        return CalculateBodyWeightTransfer(phase) * 0.16f;
+        return CalculateBodyWeightTransfer(phase) * 0.19f;
     }
 
     public static float CalculateToeRise(float phase)
@@ -99,58 +99,58 @@ public class RollerSkierAnimator : MonoBehaviour
 
     public static float CalculateTorsoForwardDrive(float phase)
     {
-        return CalculateBodyWeightTransfer(phase) * 0.19f - CalculateReturnLift(phase) * 0.028f;
+        return CalculateBodyWeightTransfer(phase) * 0.24f - CalculateReturnLift(phase) * 0.026f;
     }
 
     public static float CalculateHipHingeForwardDrive(float phase)
     {
-        return CalculateBodyWeightTransfer(phase) * 0.12f - CalculateReturnLift(phase) * 0.018f;
+        return CalculateBodyWeightTransfer(phase) * 0.16f - CalculateReturnLift(phase) * 0.018f;
     }
 
     public static float CalculateHandForwardDrive(float phase)
     {
-        return CalculatePolePressure(phase) * 0.072f;
+        return CalculatePolePressure(phase) * 0.058f;
     }
 
     public static float CalculateHandOutwardDrift(float phase)
     {
-        return CalculatePolePressure(phase) * 0.008f;
+        return CalculatePolePressure(phase) * 0.006f;
     }
 
     public static float CalculateHandRecoveryLift(float phase)
     {
-        return CalculateReturnLift(phase) * 0.07f;
+        return CalculateReturnLift(phase) * 0.065f;
     }
 
     public static float CalculatePolePlantForwardOffset(float phase)
     {
-        return CalculatePolePressure(phase) * 0.095f;
+        return CalculatePolePressure(phase) * 0.1f;
     }
 
     public static float CalculateHeadCounterPitch(float phase)
     {
-        return -CalculateTorsoPitch(phase) * 0.45f;
+        return -CalculateTorsoPitch(phase) * 0.5f;
     }
 
     public static float CalculateArmPitch(float phase)
     {
         var polePressure = CalculatePolePressure(phase);
         var returnLift = CalculateReturnLift(phase);
-        return Mathf.Lerp(-34f, 17f, polePressure) - returnLift * 3f;
+        return Mathf.Lerp(-30f, 11f, polePressure) - returnLift * 2.5f;
     }
 
     public static float CalculatePolePitch(float phase)
     {
         var polePressure = CalculatePolePressure(phase);
         var returnLift = CalculateReturnLift(phase);
-        return Mathf.Lerp(24f, -43f, polePressure) + returnLift * 4f;
+        return Mathf.Lerp(25f, -44f, polePressure) + returnLift * 4f;
     }
 
     public static float CalculateTorsoPitch(float phase)
     {
         var bodyWeightTransfer = CalculateBodyWeightTransfer(phase);
         var returnLift = CalculateReturnLift(phase);
-        return Mathf.Lerp(10f, 37f, bodyWeightTransfer) - returnLift * 4f;
+        return Mathf.Lerp(11f, 43f, bodyWeightTransfer) - returnLift * 3.5f;
     }
 
     public void ApplyPose(float posePhase)
@@ -165,7 +165,7 @@ public class RollerSkierAnimator : MonoBehaviour
         var armPitch = CalculateArmPitch(posePhase);
         var polePitch = CalculatePolePitch(posePhase);
         var torsoPitch = CalculateTorsoPitch(posePhase);
-        var recoveryExtension = returnLift * 0.05f;
+        var recoveryExtension = returnLift * 0.052f;
         var handDrive = CalculateHandForwardDrive(posePhase);
         var handOutwardDrift = CalculateHandOutwardDrift(posePhase);
         var handRecoveryLift = CalculateHandRecoveryLift(posePhase);
@@ -176,41 +176,41 @@ public class RollerSkierAnimator : MonoBehaviour
         if (hips != null)
         {
             hips.localPosition = hipsBasePosition + new Vector3(0f, -compression * 0.18f + recoveryExtension * 0.2f, hipForwardDrive);
-            hips.localRotation = Quaternion.Euler(-6f + bodyWeightTransfer * 4f - returnLift * 1.5f, 0f, 0f);
+            hips.localRotation = Quaternion.Euler(-7f + bodyWeightTransfer * 5f - returnLift * 1.5f, 0f, 0f);
         }
 
         if (torso != null)
         {
-            torso.localPosition = torsoBasePosition + new Vector3(0f, -compression * 0.3f + recoveryExtension, torsoForwardDrive);
+            torso.localPosition = torsoBasePosition + new Vector3(0f, -compression * 0.32f + recoveryExtension, torsoForwardDrive);
             torso.localRotation = Quaternion.Euler(torsoPitch, 0f, 0f);
         }
 
         if (head != null)
         {
-            head.localPosition = headBasePosition + new Vector3(0f, compression * 0.12f, -bodyWeightTransfer * 0.015f);
+            head.localPosition = headBasePosition + new Vector3(0f, compression * 0.09f, -bodyWeightTransfer * 0.012f);
             head.localRotation = Quaternion.Euler(CalculateHeadCounterPitch(posePhase), 0f, 0f);
         }
 
         if (leftArm != null)
         {
-            leftArm.localPosition = leftArmBasePosition + new Vector3(handOutwardDrift, -compression * 0.36f + handRecoveryLift, handDrive + polePlantForwardOffset * 0.35f);
-            leftArm.localRotation = Quaternion.Euler(armPitch, -0.3f, -0.2f);
+            leftArm.localPosition = leftArmBasePosition + new Vector3(handOutwardDrift, -compression * 0.28f + handRecoveryLift, handDrive + polePlantForwardOffset * 0.28f);
+            leftArm.localRotation = Quaternion.Euler(armPitch, -0.2f, -0.15f);
         }
 
         if (rightArm != null)
         {
-            rightArm.localPosition = rightArmBasePosition + new Vector3(-handOutwardDrift, -compression * 0.36f + handRecoveryLift, handDrive + polePlantForwardOffset * 0.35f);
-            rightArm.localRotation = Quaternion.Euler(armPitch, 0.3f, 0.2f);
+            rightArm.localPosition = rightArmBasePosition + new Vector3(-handOutwardDrift, -compression * 0.28f + handRecoveryLift, handDrive + polePlantForwardOffset * 0.28f);
+            rightArm.localRotation = Quaternion.Euler(armPitch, 0.2f, 0.15f);
         }
 
         if (leftHand != null)
         {
-            leftHand.localPosition = leftHandBasePosition + new Vector3(handOutwardDrift * 0.5f, -compression * 0.25f + handRecoveryLift * 0.35f, handDrive + polePlantForwardOffset);
+            leftHand.localPosition = leftHandBasePosition + new Vector3(handOutwardDrift * 0.45f, -compression * 0.22f + handRecoveryLift * 0.35f, handDrive + polePlantForwardOffset);
         }
 
         if (rightHand != null)
         {
-            rightHand.localPosition = rightHandBasePosition + new Vector3(-handOutwardDrift * 0.5f, -compression * 0.25f + handRecoveryLift * 0.35f, handDrive + polePlantForwardOffset);
+            rightHand.localPosition = rightHandBasePosition + new Vector3(-handOutwardDrift * 0.45f, -compression * 0.22f + handRecoveryLift * 0.35f, handDrive + polePlantForwardOffset);
         }
 
         AttachPoleToHand(leftPole, leftHand, polePitch);
