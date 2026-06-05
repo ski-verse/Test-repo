@@ -302,7 +302,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
     private static GameObject CreateSkier()
     {
-        var skier = new GameObject("Placeholder Skier");
+        var skier = new GameObject("Low Poly Roller Skier");
         skier.transform.position = CoursePath.CenterPointAtDistance(0f);
         skier.transform.rotation = CoursePath.RotationAtDistance(0f);
 
@@ -310,21 +310,80 @@ public class SkiErgGameBootstrap : MonoBehaviour
         controller.CurrentSpeed = 4f;
         controller.SetStartDistanceZ(skier.transform.position.z);
 
-        AddBodyPart(skier.transform, "Torso", PrimitiveType.Capsule, new Vector3(0f, 1.22f, -0.08f), new Vector3(0.36f, 0.7f, 0.28f), new Color(0.1f, 0.45f, 0.95f), new Vector3(16f, 0f, 0f));
-        AddBodyPart(skier.transform, "Head", PrimitiveType.Sphere, new Vector3(0f, 1.82f, -0.23f), new Vector3(0.26f, 0.26f, 0.26f), new Color(0.95f, 0.78f, 0.58f), Vector3.zero);
-        AddBodyPart(skier.transform, "Left Arm", PrimitiveType.Capsule, new Vector3(-0.33f, 1.05f, 0.02f), new Vector3(0.11f, 0.48f, 0.11f), new Color(0.1f, 0.45f, 0.95f), new Vector3(24f, 0f, 22f));
-        AddBodyPart(skier.transform, "Right Arm", PrimitiveType.Capsule, new Vector3(0.33f, 1.05f, 0.02f), new Vector3(0.11f, 0.48f, 0.11f), new Color(0.1f, 0.45f, 0.95f), new Vector3(24f, 0f, -22f));
-        AddBodyPart(skier.transform, "Left Leg", PrimitiveType.Capsule, new Vector3(-0.16f, 0.58f, 0.08f), new Vector3(0.14f, 0.54f, 0.14f), new Color(0.08f, 0.1f, 0.16f), new Vector3(-10f, 0f, 0f));
-        AddBodyPart(skier.transform, "Right Leg", PrimitiveType.Capsule, new Vector3(0.16f, 0.58f, 0.08f), new Vector3(0.14f, 0.54f, 0.14f), new Color(0.08f, 0.1f, 0.16f), new Vector3(-10f, 0f, 0f));
-        AddBodyPart(skier.transform, "Left Ski", PrimitiveType.Cube, new Vector3(-0.25f, 0.05f, 0.35f), new Vector3(0.09f, 0.05f, 1.95f), Color.white, Vector3.zero);
-        AddBodyPart(skier.transform, "Right Ski", PrimitiveType.Cube, new Vector3(0.25f, 0.05f, 0.35f), new Vector3(0.09f, 0.05f, 1.95f), Color.white, Vector3.zero);
-        AddPole(skier.transform, "Left Pole", new Vector3(-0.54f, 0.8f, 0.15f), 22f);
-        AddPole(skier.transform, "Right Pole", new Vector3(0.54f, 0.8f, 0.15f), -22f);
+        var animator = skier.AddComponent<RollerSkierAnimator>();
+        animator.player = controller;
+        var visualRoot = CreateChild(skier.transform, "Roller Skier Visual", Vector3.zero);
+        CreateRollerSkierVisual(visualRoot, animator);
+        animator.ApplyPose(0.15f);
 
         return skier;
     }
 
-    private static void AddBodyPart(Transform parent, string name, PrimitiveType primitiveType, Vector3 localPosition, Vector3 localScale, Color color, Vector3 localRotation)
+    private static void CreateRollerSkierVisual(Transform parent, RollerSkierAnimator animator)
+    {
+        var suitBlue = new Color(0.08f, 0.36f, 0.9f);
+        var darkSuit = new Color(0.05f, 0.07f, 0.1f);
+        var skin = new Color(0.95f, 0.78f, 0.58f);
+        var skiColor = new Color(0.92f, 0.94f, 0.92f);
+        var wheelColor = new Color(0.03f, 0.03f, 0.035f);
+
+        animator.leftSki = CreateRollerSki(parent, "Left Parallel Roller Ski", -0.24f, skiColor, wheelColor);
+        animator.rightSki = CreateRollerSki(parent, "Right Parallel Roller Ski", 0.24f, skiColor, wheelColor);
+
+        AddBodyPart(parent, "Left Thigh", PrimitiveType.Capsule, new Vector3(-0.16f, 0.67f, 0.12f), new Vector3(0.13f, 0.36f, 0.13f), darkSuit, new Vector3(-20f, 0f, 4f));
+        AddBodyPart(parent, "Right Thigh", PrimitiveType.Capsule, new Vector3(0.16f, 0.67f, 0.12f), new Vector3(0.13f, 0.36f, 0.13f), darkSuit, new Vector3(-20f, 0f, -4f));
+        AddBodyPart(parent, "Left Shin", PrimitiveType.Capsule, new Vector3(-0.18f, 0.34f, 0.04f), new Vector3(0.105f, 0.34f, 0.105f), darkSuit, new Vector3(8f, 0f, -3f));
+        AddBodyPart(parent, "Right Shin", PrimitiveType.Capsule, new Vector3(0.18f, 0.34f, 0.04f), new Vector3(0.105f, 0.34f, 0.105f), darkSuit, new Vector3(8f, 0f, 3f));
+        AddBodyPart(parent, "Hips", PrimitiveType.Cube, new Vector3(0f, 0.94f, 0.04f), new Vector3(0.46f, 0.24f, 0.28f), darkSuit, new Vector3(-8f, 0f, 0f));
+
+        var torsoPivot = CreateChild(parent, "Torso Pivot", new Vector3(0f, 1.08f, 0.04f));
+        animator.torso = torsoPivot;
+        AddBodyPart(torsoPivot, "Forward Leaning Torso", PrimitiveType.Capsule, new Vector3(0f, 0.32f, -0.04f), new Vector3(0.38f, 0.58f, 0.28f), suitBlue, Vector3.zero);
+        AddBodyPart(torsoPivot, "Head", PrimitiveType.Sphere, new Vector3(0f, 0.78f, -0.18f), new Vector3(0.25f, 0.25f, 0.25f), skin, Vector3.zero);
+        AddBodyPart(torsoPivot, "Helmet", PrimitiveType.Sphere, new Vector3(0f, 0.89f, -0.18f), new Vector3(0.27f, 0.13f, 0.27f), new Color(0.1f, 0.12f, 0.14f), Vector3.zero);
+
+        animator.leftArm = CreateArm(parent, "Left Double-Poling Arm", new Vector3(-0.31f, 1.46f, -0.04f), -1f, suitBlue, skin);
+        animator.rightArm = CreateArm(parent, "Right Double-Poling Arm", new Vector3(0.31f, 1.46f, -0.04f), 1f, suitBlue, skin);
+        animator.leftPole = CreatePole(parent, "Left Carbon Pole", new Vector3(-0.48f, 0.9f, 0.16f), -1f);
+        animator.rightPole = CreatePole(parent, "Right Carbon Pole", new Vector3(0.48f, 0.9f, 0.16f), 1f);
+    }
+
+    private static Transform CreateRollerSki(Transform parent, string name, float xPosition, Color skiColor, Color wheelColor)
+    {
+        var ski = CreateChild(parent, name, new Vector3(xPosition, 0f, 0.22f));
+        AddBodyPart(ski, "Ski Frame", PrimitiveType.Cube, new Vector3(0f, 0.07f, 0f), new Vector3(0.08f, 0.045f, 1.82f), skiColor, Vector3.zero);
+        AddBodyPart(ski, "Front Wheel", PrimitiveType.Cylinder, new Vector3(0f, 0.03f, 0.72f), new Vector3(0.12f, 0.045f, 0.12f), wheelColor, new Vector3(0f, 0f, 90f));
+        AddBodyPart(ski, "Rear Wheel", PrimitiveType.Cylinder, new Vector3(0f, 0.03f, -0.66f), new Vector3(0.12f, 0.045f, 0.12f), wheelColor, new Vector3(0f, 0f, 90f));
+        AddBodyPart(ski, "Boot", PrimitiveType.Cube, new Vector3(0f, 0.16f, 0.1f), new Vector3(0.13f, 0.13f, 0.32f), new Color(0.04f, 0.04f, 0.045f), Vector3.zero);
+        return ski;
+    }
+
+    private static Transform CreateArm(Transform parent, string name, Vector3 localPosition, float side, Color suitColor, Color skinColor)
+    {
+        var armPivot = CreateChild(parent, name, localPosition);
+        AddBodyPart(armPivot, "Upper Arm", PrimitiveType.Capsule, new Vector3(0.02f * side, -0.22f, 0.08f), new Vector3(0.095f, 0.29f, 0.095f), suitColor, new Vector3(22f, 0f, 8f * side));
+        AddBodyPart(armPivot, "Forearm", PrimitiveType.Capsule, new Vector3(0.08f * side, -0.48f, 0.22f), new Vector3(0.08f, 0.32f, 0.08f), suitColor, new Vector3(36f, 0f, -12f * side));
+        AddBodyPart(armPivot, "Hand", PrimitiveType.Sphere, new Vector3(0.13f * side, -0.72f, 0.39f), new Vector3(0.11f, 0.11f, 0.11f), skinColor, Vector3.zero);
+        return armPivot;
+    }
+
+    private static Transform CreatePole(Transform parent, string name, Vector3 localPosition, float side)
+    {
+        var polePivot = CreateChild(parent, name, localPosition);
+        AddBodyPart(polePivot, "Pole Shaft", PrimitiveType.Cylinder, new Vector3(0.06f * side, -0.48f, 0.25f), new Vector3(0.025f, 0.9f, 0.025f), new Color(0.04f, 0.04f, 0.045f), new Vector3(26f, 0f, -8f * side));
+        AddBodyPart(polePivot, "Pole Tip", PrimitiveType.Sphere, new Vector3(0.2f * side, -1.02f, 0.58f), new Vector3(0.055f, 0.055f, 0.055f), new Color(0.02f, 0.02f, 0.025f), Vector3.zero);
+        return polePivot;
+    }
+
+    private static Transform CreateChild(Transform parent, string name, Vector3 localPosition)
+    {
+        var child = new GameObject(name).transform;
+        child.SetParent(parent, false);
+        child.localPosition = localPosition;
+        return child;
+    }
+
+    private static Transform AddBodyPart(Transform parent, string name, PrimitiveType primitiveType, Vector3 localPosition, Vector3 localScale, Color color, Vector3 localRotation)
     {
         var part = GameObject.CreatePrimitive(primitiveType);
         part.name = name;
@@ -333,17 +392,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
         part.transform.localRotation = Quaternion.Euler(localRotation);
         part.transform.localScale = localScale;
         part.GetComponent<Renderer>().material.color = color;
-    }
-
-    private static void AddPole(Transform parent, string name, Vector3 localPosition, float zRotation)
-    {
-        var pole = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        pole.name = name;
-        pole.transform.SetParent(parent, false);
-        pole.transform.localPosition = localPosition;
-        pole.transform.localRotation = Quaternion.Euler(0f, 0f, zRotation);
-        pole.transform.localScale = new Vector3(0.028f, 0.98f, 0.028f);
-        pole.GetComponent<Renderer>().material.color = new Color(0.08f, 0.08f, 0.08f);
+        return part.transform;
     }
 
     private static void CreateCamera(Transform target, PlayerSpeedController player)
