@@ -14,8 +14,9 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     public const string RightAdventurePoleName = "Right Adventure Ski Pole";
     public const bool DisableProceduralAnimationForAdventure = true;
     public const bool SkipGenericPoleVisibilityForAdventure = true;
-    public const bool AttachAdventurePolesDirectlyToHands = true;
-    public const bool UseAdventureCharacterPrefabInGameplay = false;
+    public const bool AttachAdventurePolesDirectlyToHands = false;
+    public const bool AttachAdventureEquipmentToHumanoid = false;
+    public const bool UseAdventureCharacterPrefabInGameplay = true;
     public const float CharacterYawDegrees = 0f;
     public const float CharacterWidthScale = 0.72f;
     public const float LegChainLateralCompression = 0.22f;
@@ -127,20 +128,13 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         character.transform.SetParent(visualRoot, false);
         character.transform.localPosition = Vector3.zero;
         character.transform.localRotation = Quaternion.Euler(0f, CharacterYawDegrees, 0f);
-        character.transform.localScale = new Vector3(CharacterWidthScale, 1f, 1f);
-        ApplyHumanoidBasePose(character);
-
-        if (!AttachEquipmentToHumanoidBones(visualRoot, character, animator))
-        {
-            ClearChildren(visualRoot);
-            return false;
-        }
-
-        AddHelmetOverlay(visualRoot);
+        character.transform.localScale = Vector3.one;
+        DisableImportedCharacterAnimation(character);
         new GameObject(AdventureCharacterAppliedMarkerName).transform.SetParent(visualRoot, false);
 
         if (DisableProceduralAnimationForAdventure)
         {
+            ClearAnimatorBodyReferences(animator);
             animator.ResetBasePose();
             animator.enabled = false;
         }
@@ -150,11 +144,51 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
             PoleVisibilityRuntimeUpdater.ApplyPoleVisibilityPass();
         }
 
-        Debug.Log("[Ski-Verse] Adventure Character connected rig applied with locked narrow Ski Classics stance, feet on bindings, and hand-attached poles.");
+        Debug.Log("[Ski-Verse] Adventure Character active skier body applied as a stable neutral model with no poles, no roller skis, and no procedural animation.");
         return true;
 #else
         return false;
 #endif
+    }
+
+    private static void DisableImportedCharacterAnimation(GameObject character)
+    {
+        if (character == null)
+        {
+            return;
+        }
+
+        var animators = character.GetComponentsInChildren<Animator>(true);
+        for (var i = 0; i < animators.Length; i++)
+        {
+            animators[i].enabled = false;
+        }
+    }
+
+    private static void ClearAnimatorBodyReferences(RollerSkierAnimator animator)
+    {
+        if (animator == null)
+        {
+            return;
+        }
+
+        animator.hips = null;
+        animator.torso = null;
+        animator.head = null;
+        animator.leftArm = null;
+        animator.rightArm = null;
+        animator.leftHand = null;
+        animator.rightHand = null;
+        animator.leftPole = null;
+        animator.rightPole = null;
+        animator.leftThigh = null;
+        animator.rightThigh = null;
+        animator.leftShin = null;
+        animator.rightShin = null;
+        animator.leftFoot = null;
+        animator.rightFoot = null;
+        animator.leftSki = null;
+        animator.rightSki = null;
     }
 
     private static void ApplyHumanoidBasePose(GameObject character)

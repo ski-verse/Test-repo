@@ -12,14 +12,45 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
         Assert.AreEqual("Adventure Stable Equipment Constraint Rig", AdventureCharacterRollerSkierRuntimeUpdater.BoneAttachedEquipmentRootName);
         Assert.IsTrue(AdventureCharacterRollerSkierRuntimeUpdater.DisableProceduralAnimationForAdventure);
         Assert.IsTrue(AdventureCharacterRollerSkierRuntimeUpdater.SkipGenericPoleVisibilityForAdventure);
-        Assert.IsFalse(AdventureCharacterRollerSkierRuntimeUpdater.UseAdventureCharacterPrefabInGameplay);
+        Assert.IsFalse(AdventureCharacterRollerSkierRuntimeUpdater.AttachAdventurePolesDirectlyToHands);
+        Assert.IsFalse(AdventureCharacterRollerSkierRuntimeUpdater.AttachAdventureEquipmentToHumanoid);
+        Assert.IsTrue(AdventureCharacterRollerSkierRuntimeUpdater.UseAdventureCharacterPrefabInGameplay);
         Assert.AreEqual(0f, AdventureCharacterRollerSkierRuntimeUpdater.CharacterYawDegrees);
     }
 
     [Test]
-    public void ApplyAdventureCharacterSwap_IsDisabledForGameplayUntilImportedRigIsStable()
+    public void ApplyAdventureCharacterSwap_UsesAdventureCharacterOnlyAsStableBody()
     {
-        Assert.IsFalse(AdventureCharacterRollerSkierRuntimeUpdater.ApplyAdventureCharacterSwap());
+        var skier = new GameObject("Low Poly Roller Skier");
+        try
+        {
+            var animator = skier.AddComponent<RollerSkierAnimator>();
+            var visualRoot = new GameObject("Roller Skier Visual").transform;
+            visualRoot.SetParent(skier.transform, false);
+            new GameObject(SkiClassicsSkierModelBuilder.GameplayModelAppliedMarkerName).transform.SetParent(visualRoot, false);
+            new GameObject("Old Procedural Body Part").transform.SetParent(visualRoot, false);
+
+            var applied = AdventureCharacterRollerSkierRuntimeUpdater.ApplyAdventureCharacterSwap();
+
+            Assert.IsTrue(applied);
+            Assert.IsFalse(animator.enabled);
+            Assert.IsNotNull(visualRoot.Find(AdventureCharacterRollerSkierRuntimeUpdater.HumanoidRootName));
+            Assert.IsNotNull(visualRoot.Find(AdventureCharacterRollerSkierRuntimeUpdater.AdventureCharacterAppliedMarkerName));
+            Assert.IsNull(visualRoot.Find("Old Procedural Body Part"));
+            Assert.IsNull(visualRoot.Find(AdventureCharacterRollerSkierRuntimeUpdater.BoneAttachedEquipmentRootName));
+            Assert.IsNull(FindChildRecursive(visualRoot, AdventureCharacterRollerSkierRuntimeUpdater.LeftAdventurePoleName));
+            Assert.IsNull(FindChildRecursive(visualRoot, AdventureCharacterRollerSkierRuntimeUpdater.RightAdventurePoleName));
+            Assert.IsNull(FindChildRecursive(visualRoot, "Left Adventure Roller Ski"));
+            Assert.IsNull(FindChildRecursive(visualRoot, "Right Adventure Roller Ski"));
+            Assert.IsNull(animator.leftPole);
+            Assert.IsNull(animator.rightPole);
+            Assert.IsNull(animator.leftSki);
+            Assert.IsNull(animator.rightSki);
+        }
+        finally
+        {
+            Object.DestroyImmediate(skier);
+        }
     }
 
     [Test]
@@ -60,11 +91,11 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
     }
 
     [Test]
-    public void AdventureCharacterPoles_AreHandAttachedAndProceduralPoleMotionIsDisabled()
+    public void AdventureCharacterPoles_AreNotAttachedWhileProceduralBodyMotionIsDisabled()
     {
         Assert.AreEqual("Left Adventure Ski Pole", AdventureCharacterRollerSkierRuntimeUpdater.LeftAdventurePoleName);
         Assert.AreEqual("Right Adventure Ski Pole", AdventureCharacterRollerSkierRuntimeUpdater.RightAdventurePoleName);
-        Assert.IsTrue(AdventureCharacterRollerSkierRuntimeUpdater.AttachAdventurePolesDirectlyToHands);
+        Assert.IsFalse(AdventureCharacterRollerSkierRuntimeUpdater.AttachAdventurePolesDirectlyToHands);
         Assert.IsTrue(AdventureCharacterRollerSkierRuntimeUpdater.DisableProceduralAnimationForAdventure);
     }
 
@@ -125,5 +156,29 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
         {
             Object.DestroyImmediate(root.gameObject);
         }
+    }
+
+    private static Transform FindChildRecursive(Transform root, string childName)
+    {
+        if (root == null)
+        {
+            return null;
+        }
+
+        if (root.name == childName)
+        {
+            return root;
+        }
+
+        for (var i = 0; i < root.childCount; i++)
+        {
+            var match = FindChildRecursive(root.GetChild(i), childName);
+            if (match != null)
+            {
+                return match;
+            }
+        }
+
+        return null;
     }
 }
