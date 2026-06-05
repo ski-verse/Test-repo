@@ -6,7 +6,7 @@ A small Unity prototype for a SkiErg-inspired movement game.
 
 - A runtime-generated loopable 5 km road with large, clearly visible sweeping training-course turns
 - Visible uphill and downhill road sections generated from the course profile
-- A major 700 meter climb at about 6.5% grade, followed by a descent so the 5 km course loops back to its start height
+- A major 700 meter climb with a clearly readable 5-8% climbing grade, followed by a descent so the 5 km course loops back to its start height
 - Gradient-based speed reduction that slows actual forward movement on climbs while preserving the current W/S controls
 - White edge lines and dashed center road markings that follow the curves and slopes
 - At least 15 meters of open terrain on each side of the road before trees, hills, forests, or mountains begin
