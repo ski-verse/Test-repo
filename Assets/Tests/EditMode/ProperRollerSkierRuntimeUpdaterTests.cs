@@ -35,6 +35,7 @@ public class ProperRollerSkierRuntimeUpdaterTests
 
         Assert.IsNotNull(torsoPivot.Find("Athletic Forward Leaning Torso"));
         Assert.IsNotNull(torsoPivot.Find("Narrow Waist"));
+        Assert.IsNotNull(torsoPivot.Find("Relaxed Shoulder Line"));
         Assert.IsNotNull(torsoPivot.Find("Low Poly Helmet"));
         Assert.IsNotNull(torsoPivot.Find("Helmet Visor"));
         Assert.IsNotNull(leftSki.Find("Front Roller Wheel"));
@@ -95,14 +96,39 @@ public class ProperRollerSkierRuntimeUpdaterTests
     }
 
     [Test]
-    public void ApplyProperRollerSkierModel_UsesLongerReadableRollerSkiProportions()
+    public void ApplyProperRollerSkierModel_UsesEnduranceAthleteBodyProportions()
+    {
+        var skier = CreateSkierRoot(out var visualRoot, out _);
+
+        ProperRollerSkierRuntimeUpdater.ApplyProperRollerSkierModel();
+
+        var torsoPivot = visualRoot.transform.Find("Torso Pivot");
+        var leftThigh = visualRoot.transform.Find("Left Long Athletic Thigh");
+        var leftLowerLeg = visualRoot.transform.Find("Left Long Lower Leg");
+        var head = torsoPivot.Find("Head");
+        var waist = torsoPivot.Find("Narrow Waist");
+        var shoulders = torsoPivot.Find("Relaxed Shoulder Line");
+        var chest = torsoPivot.Find("Chest Panel");
+
+        Assert.Greater(leftThigh.localScale.y + leftLowerLeg.localScale.y, 0.8f);
+        Assert.Less(head.localScale.x, 0.22f);
+        Assert.Less(waist.localScale.x, 0.25f);
+        Assert.Greater(shoulders.localScale.x, 0.45f);
+        Assert.Less(shoulders.localScale.x, 0.55f);
+        Assert.Greater(chest.localScale.x, waist.localScale.x);
+
+        Object.DestroyImmediate(skier);
+    }
+
+    [Test]
+    public void ApplyProperRollerSkierModel_UsesLongReadableRollerSkiProportions()
     {
         var skier = CreateSkierRoot(out var visualRoot, out _);
 
         ProperRollerSkierRuntimeUpdater.ApplyProperRollerSkierModel();
 
         var leftSki = visualRoot.transform.Find("Left Parallel Roller Ski");
-        var deck = leftSki.Find("Roller Ski Deck");
+        var deck = leftSki.Find("Long Roller Ski Deck");
         var innerRail = leftSki.Find("Inner Side Rail");
         var outerRail = leftSki.Find("Outer Side Rail");
         var frontWheel = leftSki.Find("Front Roller Wheel");
@@ -110,25 +136,25 @@ public class ProperRollerSkierRuntimeUpdaterTests
         var binding = leftSki.Find("Binding Plate");
         var wheelbase = frontWheel.localPosition.z - rearWheel.localPosition.z;
 
-        Assert.Greater(deck.localScale.z, 1.6f);
-        Assert.Less(deck.localScale.z, 1.8f);
-        Assert.Greater(innerRail.localScale.z, deck.localScale.z);
-        Assert.Greater(outerRail.localScale.z, deck.localScale.z);
-        Assert.Greater(wheelbase, 1.55f);
-        Assert.Less(wheelbase, 1.7f);
+        Assert.Greater(deck.localScale.y, 0.8f);
+        Assert.Greater(innerRail.localScale.z, 1.85f);
+        Assert.Greater(outerRail.localScale.z, 1.85f);
+        Assert.Greater(wheelbase, 1.75f);
+        Assert.Less(wheelbase, 1.9f);
         Assert.Greater(binding.localPosition.y, deck.localPosition.y);
 
         Object.DestroyImmediate(skier);
     }
 
     [Test]
-    public void ApplyProperRollerSkierModel_UsesSlightlyLongerPolesWithGripStrapBasketAndTip()
+    public void ApplyProperRollerSkierModel_UsesLongSlenderPolesWithParallelPlantParts()
     {
         var skier = CreateSkierRoot(out var visualRoot, out _);
 
         ProperRollerSkierRuntimeUpdater.ApplyProperRollerSkierModel();
 
         var leftPole = visualRoot.transform.Find("Left Ski Pole");
+        var rightPole = visualRoot.transform.Find("Right Ski Pole");
         var shaft = leftPole.Find("Pole Shaft");
         var grip = leftPole.Find("Ergonomic Pole Grip");
         var strap = leftPole.Find("Wrist Strap");
@@ -139,35 +165,38 @@ public class ProperRollerSkierRuntimeUpdaterTests
         Assert.IsNotNull(strap);
         Assert.IsNotNull(basket);
         Assert.IsNotNull(tip);
-        Assert.Less(shaft.localScale.x, 0.02f);
-        Assert.Greater(shaft.localScale.y, 1.1f);
-        Assert.Less(basket.localScale.x, 0.08f);
-        Assert.Less(tip.localPosition.y, -1.2f);
+        Assert.Less(shaft.localScale.x, 0.015f);
+        Assert.Greater(shaft.localScale.y, 1.2f);
+        Assert.Less(basket.localScale.x, 0.06f);
+        Assert.Less(tip.localPosition.y, -1.35f);
+        Assert.AreEqual(-leftPole.localPosition.x, rightPole.localPosition.x, 0.001f);
+        Assert.AreEqual(leftPole.localPosition.y, rightPole.localPosition.y, 0.001f);
 
         Object.DestroyImmediate(skier);
     }
 
     [Test]
-    public void ApplyProperRollerSkierModel_UsesSlightlyLongerArmsForReadableDoublePoling()
+    public void ApplyProperRollerSkierModel_UsesRelaxedSlightlyLongerArmsForSkiClassicsDoublePoling()
     {
         var skier = CreateSkierRoot(out var visualRoot, out _);
 
         ProperRollerSkierRuntimeUpdater.ApplyProperRollerSkierModel();
 
         var leftArm = visualRoot.transform.Find("Left Connected Double-Poling Arm");
-        var upperArm = leftArm.Find("Upper Arm");
-        var forearm = leftArm.Find("Forearm");
+        var upperArm = leftArm.Find("Relaxed Upper Arm");
+        var forearm = leftArm.Find("Long Forearm");
         var hand = leftArm.Find("Hand On Pole Grip");
 
-        Assert.Greater(upperArm.localScale.y, 0.3f);
-        Assert.Greater(forearm.localScale.y, 0.36f);
-        Assert.Less(hand.localPosition.y, -0.8f);
+        Assert.Greater(upperArm.localScale.y, 0.32f);
+        Assert.Greater(forearm.localScale.y, 0.4f);
+        Assert.Less(hand.localPosition.y, -0.85f);
+        Assert.Less(Mathf.Abs(leftArm.localPosition.x), 0.27f);
 
         Object.DestroyImmediate(skier);
     }
 
     [Test]
-    public void ApplyProperRollerSkierModel_KeepsAthleticPostureWithSmallForwardLean()
+    public void ApplyProperRollerSkierModel_KeepsAthleticPostureWithSmallForwardLeanAndNeutralHead()
     {
         var skier = CreateSkierRoot(out var visualRoot, out _);
 
@@ -176,10 +205,12 @@ public class ProperRollerSkierRuntimeUpdaterTests
         var hips = visualRoot.transform.Find("Narrow Athletic Hips");
         var torsoPivot = visualRoot.transform.Find("Torso Pivot");
         var chestPanel = torsoPivot.Find("Chest Panel");
+        var head = torsoPivot.Find("Head");
         var waist = torsoPivot.Find("Narrow Waist");
 
-        Assert.Less(Mathf.DeltaAngle(0f, hips.localEulerAngles.x), -5f);
+        Assert.Less(Mathf.DeltaAngle(0f, hips.localEulerAngles.x), -8f);
         Assert.Greater(Mathf.DeltaAngle(0f, chestPanel.localEulerAngles.x), 5f);
+        Assert.AreEqual(0f, Mathf.DeltaAngle(0f, head.localEulerAngles.x), 0.001f);
         Assert.Less(waist.localScale.x, chestPanel.localScale.x);
         Assert.AreEqual(10f, RollerSkierAnimator.CalculateTorsoPitch(0.15f), 0.001f);
 
