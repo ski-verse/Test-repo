@@ -51,6 +51,9 @@ public class RollerSkierVisualModelTests
         Assert.GreaterOrEqual(SkierHumanSilhouetteRuntimeUpdater.VisibleGluteAccentWidth, 0.18f);
         Assert.GreaterOrEqual(SkierHumanSilhouetteRuntimeUpdater.VisibleGripContrastRadius, ProperRollerSkierRuntimeUpdater.VisibleGloveRadius * 1.15f);
         Assert.GreaterOrEqual(SkierHumanSilhouetteRuntimeUpdater.VisiblePoleOutsideOffset, 0.18f);
+        Assert.GreaterOrEqual(SkierHumanSilhouetteRuntimeUpdater.GameplayReadablePoleRadius, ProperRollerSkierRuntimeUpdater.VisiblePoleShaftRadius * 1.45f);
+        Assert.GreaterOrEqual(SkierHumanSilhouetteRuntimeUpdater.NaturalUpperArmRadius, 0.08f);
+        Assert.GreaterOrEqual(SkierHumanSilhouetteRuntimeUpdater.NaturalForearmRadius, 0.064f);
     }
 
     [Test]
@@ -69,9 +72,10 @@ public class RollerSkierVisualModelTests
         Assert.IsNotNull(FindChildRecursive(animator.torso, "Human Dark Back Panel"));
         Assert.IsNotNull(FindChildRecursive(animator.torso, "Human Central Spine Seam"));
         Assert.IsNotNull(FindChildRecursive(animator.torso, "Human Left Scapula Shadow"));
-        Assert.IsNotNull(visualRoot.Find("Human Black Shorts Block"));
-        Assert.IsNotNull(visualRoot.Find("Human Left Glute Accent"));
-        Assert.IsNotNull(visualRoot.Find("Human Shorts Leg Split"));
+        Assert.IsNotNull(FindChildRecursive(animator.torso, "Human Lat Shadow Left"));
+        Assert.IsNotNull(FindChildRecursive(animator.hips, "Human Black Shorts Block"));
+        Assert.IsNotNull(FindChildRecursive(animator.hips, "Human Left Glute Accent"));
+        Assert.IsNotNull(FindChildRecursive(animator.hips, "Human Shorts Leg Split"));
         Assert.IsNotNull(FindChildRecursive(animator.leftHand, "Visible Glove Grip Wrap"));
         Assert.IsNotNull(FindChildRecursive(animator.rightHand, "Visible Glove Grip Wrap"));
         Assert.AreEqual(animator.leftHand, animator.leftPole.parent);
