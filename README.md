@@ -17,12 +17,13 @@ A small Unity prototype for a SkiErg-inspired movement game.
 - Large Nordic mountain ranges on both sides of the world, close enough to frame the road and horizon while staying outside the road corridor
 - Start and finish gates with road line markers
 - A proper low-poly roller skier with realistic proportions, parallel roller skis, wheels, poles, helmet, and double-poling stance
+- Larger on-screen skier presence with a slightly scaled visual rig and a closer, lower follow camera
 - Synchronized double-poling arm and pole animation that works with the current movement controller
 - A smoother speed-responsive camera with noticeable speed-based field of view, longer high-speed look-ahead, and light camera shake
 - `W` increases forward speed
 - `S` decreases forward speed
 - A top-left TextMeshPro HUD showing speed in km/h and distance in km
-- EditMode tests for speed, distance, HUD formatting, camera FOV, camera look-ahead, camera shake, dramatic course path behavior, environment clearance, visible mountain placement, and roller skier animation behavior
+- EditMode tests for speed, distance, HUD formatting, camera FOV, focused player camera framing, camera look-ahead, camera shake, dramatic course path behavior, environment clearance, visible mountain placement, and roller skier animation behavior
 
 ## Open in Unity
 
