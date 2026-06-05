@@ -67,12 +67,12 @@ public class RollerSkierAnimator : MonoBehaviour
 
         if (leftArm != null)
         {
-            leftArm.localRotation = Quaternion.Euler(armPitch, -5f, -3f);
+            leftArm.localRotation = Quaternion.Euler(armPitch, -1.5f, -1f);
         }
 
         if (rightArm != null)
         {
-            rightArm.localRotation = Quaternion.Euler(armPitch, 5f, 3f);
+            rightArm.localRotation = Quaternion.Euler(armPitch, 1.5f, 1f);
         }
 
         if (leftPole != null)
