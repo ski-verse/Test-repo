@@ -32,10 +32,15 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
     {
         Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.CharacterWidthScale, 0.86f);
         Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.CharacterWidthScale, 0.93f);
-        Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.EquipmentNarrowStanceOffset, 0.1f);
-        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.EquipmentNarrowStanceOffset, 0.15f);
         Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseLegInwardMuscle, 0.1f);
         Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseLegInwardMuscle, 0.22f);
+    }
+
+    [Test]
+    public void AdventureCharacterEquipment_KeepsBindingsUnderFeet()
+    {
+        Assert.AreEqual(0f, AdventureCharacterRollerSkierRuntimeUpdater.FootBindingLateralOffset);
+        Assert.LessOrEqual(Mathf.Abs(AdventureCharacterRollerSkierRuntimeUpdater.FootBindingLateralOffset), 0.02f);
     }
 
     [Test]
