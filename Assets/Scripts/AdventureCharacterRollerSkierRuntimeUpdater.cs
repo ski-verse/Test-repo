@@ -105,7 +105,6 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         AddHelmetOverlay(visualRoot);
 
         new GameObject(AdventureCharacterAppliedMarkerName).transform.SetParent(visualRoot, false);
-        new GameObject(ProperRollerSkierRuntimeUpdater.Model20AppliedMarkerName).transform.SetParent(visualRoot, false);
 
         animator.ResetBasePose();
         animator.ApplyPose(0f);
