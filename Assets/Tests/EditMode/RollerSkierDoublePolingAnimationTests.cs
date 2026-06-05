@@ -4,45 +4,45 @@ using UnityEngine;
 public class RollerSkierDoublePolingAnimationTests
 {
     [Test]
-    public void DoublePolingCycle_HasObviousPlantAndStrongRecoveryPhases()
+    public void DoublePolingCycle_HasVeryObviousPlantAndRecoveryPhases()
     {
         var recoveryArmPitch = RollerSkierAnimator.CalculateArmPitch(0.05f);
         var plantArmPitch = RollerSkierAnimator.CalculateArmPitch(0.42f);
         var returnArmPitch = RollerSkierAnimator.CalculateArmPitch(0.85f);
 
-        Assert.Less(recoveryArmPitch, -70f);
-        Assert.Greater(plantArmPitch, 55f);
-        Assert.Less(returnArmPitch, -75f);
-        Assert.Greater(plantArmPitch - returnArmPitch, 130f);
+        Assert.Less(recoveryArmPitch, -100f);
+        Assert.Greater(plantArmPitch, 80f);
+        Assert.Less(returnArmPitch, -105f);
+        Assert.Greater(plantArmPitch - returnArmPitch, 185f);
     }
 
     [Test]
-    public void DoublePolingCycle_LeansBodyFurtherForwardDuringPolePlant()
+    public void DoublePolingCycle_LeansBodySignificantlyFurtherForwardDuringPolePlant()
     {
         var recoveryTorsoPitch = RollerSkierAnimator.CalculateTorsoPitch(0.05f);
         var plantTorsoPitch = RollerSkierAnimator.CalculateTorsoPitch(0.42f);
         var returnTorsoPitch = RollerSkierAnimator.CalculateTorsoPitch(0.85f);
 
         Assert.Less(recoveryTorsoPitch, 17f);
-        Assert.Greater(plantTorsoPitch, 40f);
+        Assert.Greater(plantTorsoPitch, 58f);
         Assert.Less(returnTorsoPitch, 18f);
     }
 
     [Test]
-    public void DoublePolingCycle_MakesPolePlantAndRecoveryVisible()
+    public void DoublePolingCycle_MakesPolePlantAndRecoveryMuchMoreVisible()
     {
         var recoveryPolePitch = RollerSkierAnimator.CalculatePolePitch(0.05f);
         var plantPolePitch = RollerSkierAnimator.CalculatePolePitch(0.42f);
         var returnPolePitch = RollerSkierAnimator.CalculatePolePitch(0.85f);
 
-        Assert.Greater(recoveryPolePitch, 45f);
-        Assert.Less(plantPolePitch, -65f);
-        Assert.Greater(returnPolePitch, 45f);
-        Assert.Greater(recoveryPolePitch - plantPolePitch, 110f);
+        Assert.Greater(recoveryPolePitch, 70f);
+        Assert.Less(plantPolePitch, -95f);
+        Assert.Greater(returnPolePitch, 70f);
+        Assert.Greater(recoveryPolePitch - plantPolePitch, 165f);
     }
 
     [Test]
-    public void PowerPhase_KeepsArmsCloseAndMovesHandsTowardKnees()
+    public void PowerPhase_DoublesVisibleHandTravelTowardKnees()
     {
         var recoveryLeftHand = RollerSkierAnimator.CalculateArmPivotPosition(-1f, 0.05f);
         var plantLeftHand = RollerSkierAnimator.CalculateArmPivotPosition(-1f, 0.42f);
@@ -50,12 +50,12 @@ public class RollerSkierDoublePolingAnimationTests
 
         Assert.Less(Mathf.Abs(plantLeftHand.x), 0.23f);
         Assert.AreEqual(-plantLeftHand.x, plantRightHand.x, 0.001f);
-        Assert.Less(plantLeftHand.y, recoveryLeftHand.y - 0.3f);
-        Assert.Greater(plantLeftHand.z, recoveryLeftHand.z + 0.2f);
+        Assert.Less(plantLeftHand.y, recoveryLeftHand.y - 0.72f);
+        Assert.Greater(plantLeftHand.z, recoveryLeftHand.z + 0.52f);
     }
 
     [Test]
-    public void PowerPhase_PlantsBothPolesInFrontAndSymmetrically()
+    public void PowerPhase_PlantsBothPolesClearlyInFrontAndSymmetrically()
     {
         var recoveryLeftPole = RollerSkierAnimator.CalculatePolePivotPosition(-1f, 0.05f);
         var plantLeftPole = RollerSkierAnimator.CalculatePolePivotPosition(-1f, 0.42f);
@@ -64,7 +64,7 @@ public class RollerSkierDoublePolingAnimationTests
         Assert.Less(Mathf.Abs(plantLeftPole.x), 0.3f);
         Assert.AreEqual(-plantLeftPole.x, plantRightPole.x, 0.001f);
         Assert.AreEqual(plantLeftPole.y, plantRightPole.y, 0.001f);
-        Assert.Greater(plantLeftPole.z, recoveryLeftPole.z + 0.25f);
+        Assert.Greater(plantLeftPole.z, recoveryLeftPole.z + 0.58f);
     }
 
     [Test]
@@ -92,7 +92,7 @@ public class RollerSkierDoublePolingAnimationTests
         Assert.AreEqual(0f, animator.rightPole.localEulerAngles.y, 0.001f);
         Assert.AreEqual(-animator.leftArm.localPosition.x, animator.rightArm.localPosition.x, 0.001f);
         Assert.AreEqual(-animator.leftPole.localPosition.x, animator.rightPole.localPosition.x, 0.001f);
-        Assert.Greater(animator.torso.localEulerAngles.x, 40f);
+        Assert.Greater(animator.torso.localEulerAngles.x, 58f);
 
         Object.DestroyImmediate(root);
     }
