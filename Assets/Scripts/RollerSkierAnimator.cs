@@ -9,6 +9,9 @@ public class RollerSkierAnimator : MonoBehaviour
     private const float PlantPeakPhase = 0.46f;
     private const float ReturnEndPhase = 0.92f;
     private const float IdlePhase = 0f;
+    private const float BodyCompressionDepth = 0.215f;
+    private const float StableFootSkiRise = 0.007f;
+    private const float StableFootSkiDrive = 0.007f;
 
     public PlayerSpeedController player;
     public Transform torso;
@@ -79,7 +82,7 @@ public class RollerSkierAnimator : MonoBehaviour
 
     public static float CalculateBodyCompression(float phase)
     {
-        return CalculateBodyWeightTransfer(phase) * 0.19f;
+        return CalculateBodyWeightTransfer(phase) * BodyCompressionDepth;
     }
 
     public static float CalculateToeRise(float phase)
@@ -175,13 +178,13 @@ public class RollerSkierAnimator : MonoBehaviour
 
         if (hips != null)
         {
-            hips.localPosition = hipsBasePosition + new Vector3(0f, -compression * 0.18f + recoveryExtension * 0.2f, hipForwardDrive);
+            hips.localPosition = hipsBasePosition + new Vector3(0f, -compression * 0.2f + recoveryExtension * 0.2f, hipForwardDrive);
             hips.localRotation = Quaternion.Euler(-7f + bodyWeightTransfer * 5f - returnLift * 1.5f, 0f, 0f);
         }
 
         if (torso != null)
         {
-            torso.localPosition = torsoBasePosition + new Vector3(0f, -compression * 0.32f + recoveryExtension, torsoForwardDrive);
+            torso.localPosition = torsoBasePosition + new Vector3(0f, -compression * 0.34f + recoveryExtension, torsoForwardDrive);
             torso.localRotation = Quaternion.Euler(torsoPitch, 0f, 0f);
         }
 
@@ -236,9 +239,9 @@ public class RollerSkierAnimator : MonoBehaviour
             rightShin.localRotation = Quaternion.Euler(8f + polePressure * 3f - returnLift * 1.2f, 0f, 2.5f);
         }
 
-        var footPitch = -toeRise * 2.4f;
-        var footRise = toeRise * 0.012f;
-        var footDrive = polePressure * 0.014f;
+        var footPitch = -toeRise * 1.4f;
+        var footRise = toeRise * StableFootSkiRise;
+        var footDrive = polePressure * StableFootSkiDrive;
         if (leftFoot != null)
         {
             leftFoot.localPosition = leftFootBasePosition + new Vector3(0f, footRise, footDrive);
@@ -251,9 +254,9 @@ public class RollerSkierAnimator : MonoBehaviour
             rightFoot.localRotation = Quaternion.Euler(footPitch, 0f, 0f);
         }
 
-        var skiPitch = -toeRise * 0.45f;
-        var skiRise = toeRise * 0.003f;
-        var skiDrive = polePressure * 0.007f;
+        var skiPitch = -toeRise * 0.35f;
+        var skiRise = footRise;
+        var skiDrive = footDrive;
         if (leftSki != null)
         {
             leftSki.localPosition = leftSkiBasePosition + new Vector3(0f, skiRise, skiDrive);
