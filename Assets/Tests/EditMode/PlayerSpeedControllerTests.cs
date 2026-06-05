@@ -167,6 +167,26 @@ public class PlayerSpeedControllerTests
     }
 
     [Test]
+    public void EnvironmentPlacement_KeepsSceneryOutsideOpenRoadMargin()
+    {
+        Assert.IsTrue(EnvironmentPlacement.HasOpenRoadMargin(EnvironmentPlacement.NearTreeOffset, EnvironmentPlacement.MaxTreeRadius));
+        Assert.IsTrue(EnvironmentPlacement.HasOpenRoadMargin(EnvironmentPlacement.MidTreeOffset, EnvironmentPlacement.MaxTreeRadius));
+        Assert.IsTrue(EnvironmentPlacement.HasOpenRoadMargin(EnvironmentPlacement.FarTreeOffset, EnvironmentPlacement.MaxTreeRadius));
+        Assert.IsTrue(EnvironmentPlacement.HasOpenRoadMargin(EnvironmentPlacement.NearHillOffset, EnvironmentPlacement.NearHillHalfWidth));
+        Assert.IsTrue(EnvironmentPlacement.HasOpenRoadMargin(EnvironmentPlacement.FarHillOffset, EnvironmentPlacement.FarHillHalfWidth));
+        Assert.IsTrue(EnvironmentPlacement.HasOpenRoadMargin(EnvironmentPlacement.NearMountainOffset, EnvironmentPlacement.NearMountainHalfWidth));
+        Assert.IsTrue(EnvironmentPlacement.HasOpenRoadMargin(EnvironmentPlacement.FarMountainOffset, EnvironmentPlacement.FarMountainHalfWidth));
+    }
+
+    [Test]
+    public void EnvironmentPlacement_KeepsMountainsAsDistantBackgroundOnly()
+    {
+        Assert.GreaterOrEqual(EnvironmentPlacement.MountainFirstDistance, 1000f);
+        Assert.GreaterOrEqual(EnvironmentPlacement.NearMountainOffset - EnvironmentPlacement.NearMountainHalfWidth, 300f);
+        Assert.GreaterOrEqual(EnvironmentPlacement.FarMountainOffset - EnvironmentPlacement.FarMountainHalfWidth, 300f);
+    }
+
+    [Test]
     public void RollerSkierAnimator_CycleAdvancesFasterAtHigherSpeedAndWraps()
     {
         var slowPhase = RollerSkierAnimator.CalculateNextPhase(0.9f, 0f, 0.5f, 0.65f, 0.018f);
