@@ -16,6 +16,10 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
         Assert.IsFalse(AdventureCharacterRollerSkierRuntimeUpdater.AttachAdventureEquipmentToHumanoid);
         Assert.IsTrue(AdventureCharacterRollerSkierRuntimeUpdater.UseAdventureCharacterPrefabInGameplay);
         Assert.AreEqual(0f, AdventureCharacterRollerSkierRuntimeUpdater.CharacterYawDegrees);
+        Assert.GreaterOrEqual(AdventureCharacterRollerSkierRuntimeUpdater.NeutralUpperArmDownDegrees, 75f);
+        Assert.LessOrEqual(AdventureCharacterRollerSkierRuntimeUpdater.NeutralUpperArmDownDegrees, 90f);
+        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.NeutralArmDownMuscle, -0.8f);
+        Assert.LessOrEqual(Mathf.Abs(AdventureCharacterRollerSkierRuntimeUpdater.NeutralForearmStretchMuscle), 0.12f);
     }
 
     [Test]
@@ -36,6 +40,8 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
             Assert.IsFalse(animator.enabled);
             Assert.IsNotNull(visualRoot.Find(AdventureCharacterRollerSkierRuntimeUpdater.HumanoidRootName));
             Assert.IsNotNull(visualRoot.Find(AdventureCharacterRollerSkierRuntimeUpdater.AdventureCharacterAppliedMarkerName));
+            Assert.IsNotNull(FindChildRecursive(visualRoot, "upperarm_l"));
+            Assert.IsNotNull(FindChildRecursive(visualRoot, "upperarm_r"));
             Assert.IsNull(visualRoot.Find("Old Procedural Body Part"));
             Assert.IsNull(visualRoot.Find(AdventureCharacterRollerSkierRuntimeUpdater.BoneAttachedEquipmentRootName));
             Assert.IsNull(FindChildRecursive(visualRoot, AdventureCharacterRollerSkierRuntimeUpdater.LeftAdventurePoleName));

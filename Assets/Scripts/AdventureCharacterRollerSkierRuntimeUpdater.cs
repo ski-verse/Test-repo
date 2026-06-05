@@ -24,6 +24,10 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     public const float NarrowUpperLegTrackHalfWidth = 0.14f;
     public const float NarrowFootTrackHalfWidth = 0.105f;
     public const float FootBindingLateralOffset = 0f;
+    public const float NeutralUpperArmDownDegrees = 82f;
+    public const float NeutralForearmRelaxDegrees = 8f;
+    public const float NeutralArmDownMuscle = -0.95f;
+    public const float NeutralForearmStretchMuscle = -0.08f;
     public const float BasePoseUpperArmDropMuscle = 0.46f;
     public const float BasePoseForearmBendMuscle = 0.2f;
     public const float BasePoseHipHingeMuscle = 0.12f;
@@ -129,6 +133,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         character.transform.localPosition = Vector3.zero;
         character.transform.localRotation = Quaternion.Euler(0f, CharacterYawDegrees, 0f);
         character.transform.localScale = Vector3.one;
+        ApplyNeutralStandingPose(character);
         DisableImportedCharacterAnimation(character);
         new GameObject(AdventureCharacterAppliedMarkerName).transform.SetParent(visualRoot, false);
 
@@ -149,6 +154,81 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
 #else
         return false;
 #endif
+    }
+
+    private static void ApplyNeutralStandingPose(GameObject character)
+    {
+        if (character == null)
+        {
+            return;
+        }
+
+        if (!TryApplyNeutralHumanPose(character))
+        {
+            ApplyNeutralFallbackBonePose(character.transform);
+        }
+    }
+
+    private static bool TryApplyNeutralHumanPose(GameObject character)
+    {
+        var humanoidAnimator = character.GetComponentInChildren<Animator>();
+        if (humanoidAnimator == null || humanoidAnimator.avatar == null || !humanoidAnimator.avatar.isHuman)
+        {
+            return false;
+        }
+
+        try
+        {
+            var poseHandler = new HumanPoseHandler(humanoidAnimator.avatar, humanoidAnimator.transform);
+            var pose = new HumanPose();
+            poseHandler.GetHumanPose(ref pose);
+            var muscles = pose.muscles;
+
+            SetMuscle(muscles, "Spine Front-Back", 0f);
+            SetMuscle(muscles, "Chest Front-Back", 0f);
+            SetMuscle(muscles, "UpperChest Front-Back", 0f);
+            SetMuscle(muscles, "Neck Nod Down-Up", 0f);
+            SetMuscle(muscles, "Head Nod Down-Up", 0f);
+
+            SetMuscle(muscles, "Left Arm Down-Up", NeutralArmDownMuscle);
+            SetMuscle(muscles, "Right Arm Down-Up", NeutralArmDownMuscle);
+            SetMuscle(muscles, "Left Arm Front-Back", 0f);
+            SetMuscle(muscles, "Right Arm Front-Back", 0f);
+            SetMuscle(muscles, "Left Arm In-Out", -0.12f);
+            SetMuscle(muscles, "Right Arm In-Out", 0.12f);
+            SetMuscle(muscles, "Left Forearm Stretch", NeutralForearmStretchMuscle);
+            SetMuscle(muscles, "Right Forearm Stretch", NeutralForearmStretchMuscle);
+            SetMuscle(muscles, "Left Hand Down-Up", 0f);
+            SetMuscle(muscles, "Right Hand Down-Up", 0f);
+
+            SetMuscle(muscles, "Left Upper Leg Front-Back", 0f);
+            SetMuscle(muscles, "Right Upper Leg Front-Back", 0f);
+            SetMuscle(muscles, "Left Upper Leg In-Out", 0f);
+            SetMuscle(muscles, "Right Upper Leg In-Out", 0f);
+            SetMuscle(muscles, "Left Lower Leg Stretch", 0f);
+            SetMuscle(muscles, "Right Lower Leg Stretch", 0f);
+            SetMuscle(muscles, "Left Foot Up-Down", 0f);
+            SetMuscle(muscles, "Right Foot Up-Down", 0f);
+
+            pose.muscles = muscles;
+            poseHandler.SetHumanPose(ref pose);
+            Debug.Log("[Ski-Verse] Adventure Character neutral standing pose applied with arms down and no equipment.");
+            return true;
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogWarning("[Ski-Verse] Adventure Character neutral humanoid pose failed; using named-bone fallback. " + exception.Message);
+            return false;
+        }
+    }
+
+    private static void ApplyNeutralFallbackBonePose(Transform root)
+    {
+        ApplyLocalRotationDelta(root, "upperarm_l", new Vector3(0f, 0f, -NeutralUpperArmDownDegrees));
+        ApplyLocalRotationDelta(root, "upperarm_r", new Vector3(0f, 0f, NeutralUpperArmDownDegrees));
+        ApplyLocalRotationDelta(root, "lowerarm_l", new Vector3(0f, 0f, -NeutralForearmRelaxDegrees));
+        ApplyLocalRotationDelta(root, "lowerarm_r", new Vector3(0f, 0f, NeutralForearmRelaxDegrees));
+        Debug.Log("[Ski-Verse] Adventure Character fallback neutral standing pose applied with arms down.");
     }
 
     private static void DisableImportedCharacterAnimation(GameObject character)
