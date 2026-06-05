@@ -10,9 +10,9 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     public const string AdventureCharacterAppliedMarkerName = "Adventure Character Roller Skier Applied";
     public const string HumanoidRootName = "Adventure Character Roller Skier";
     public const string AnimationProxyRootName = "Adventure Roller Skier Animation Proxy Rig";
+    public const float CharacterYawDegrees = 0f;
 
     private const string VisualRootName = "Roller Skier Visual";
-    private const float CharacterYawDegrees = 180f;
     private const float EquipmentSkiLength = 1.05f;
     private const float EquipmentSkiWidth = 0.045f;
     private const float EquipmentWheelRadius = 0.105f;
