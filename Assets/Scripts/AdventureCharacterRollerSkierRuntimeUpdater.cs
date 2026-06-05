@@ -17,6 +17,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     public const bool AttachAdventurePolesDirectlyToHands = true;
     public const float CharacterYawDegrees = 0f;
     public const float CharacterWidthScale = 0.9f;
+    public const float LegChainLateralCompression = 0.45f;
     public const float FootBindingLateralOffset = 0f;
     public const float BasePoseUpperArmDropMuscle = 0.46f;
     public const float BasePoseForearmBendMuscle = 0.2f;
@@ -135,7 +136,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
             PoleVisibilityRuntimeUpdater.ApplyPoleVisibilityPass();
         }
 
-        Debug.Log("[Ski-Verse] Adventure Character connected rig applied with parallel roller skier legs, feet on bindings, and hand-attached poles.");
+        Debug.Log("[Ski-Verse] Adventure Character connected rig applied with compressed parallel roller skier legs, feet on bindings, and hand-attached poles.");
         return true;
 #else
         return false;
@@ -149,12 +150,12 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
             return;
         }
 
-        if (TryApplyHumanPose(character))
+        if (!TryApplyHumanPose(character))
         {
-            return;
+            ApplyFallbackBonePose(character.transform);
         }
 
-        ApplyFallbackBonePose(character.transform);
+        ApplyParallelLegChainSpacing(character.transform);
     }
 
     private static bool TryApplyHumanPose(GameObject character)
@@ -245,6 +246,24 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         ApplyLocalRotationDelta(root, "calf_l", new Vector3(-0.5f, 0f, 0f));
         ApplyLocalRotationDelta(root, "calf_r", new Vector3(-0.5f, 0f, 0f));
         Debug.Log("[Ski-Verse] Adventure Character fallback base pose applied with parallel roller skier legs.");
+    }
+
+    private static void ApplyParallelLegChainSpacing(Transform root)
+    {
+        CompressBoneLateralPosition(root, "thigh_l");
+        CompressBoneLateralPosition(root, "thigh_r");
+    }
+
+    private static void CompressBoneLateralPosition(Transform root, string boneName)
+    {
+        var bone = FindDeepChild(root, boneName);
+        if (bone == null)
+        {
+            return;
+        }
+
+        var localPosition = bone.localPosition;
+        bone.localPosition = new Vector3(localPosition.x * LegChainLateralCompression, localPosition.y, localPosition.z);
     }
 
     private static void ApplyLocalRotationDelta(Transform root, string boneName, Vector3 localEulerDelta)
