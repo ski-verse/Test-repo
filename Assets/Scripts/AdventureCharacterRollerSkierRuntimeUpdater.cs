@@ -11,6 +11,12 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     public const string HumanoidRootName = "Adventure Character Roller Skier";
     public const string AnimationProxyRootName = "Adventure Roller Skier Animation Proxy Rig";
     public const float CharacterYawDegrees = 0f;
+    public const float BasePoseUpperArmDropMuscle = 0.72f;
+    public const float BasePoseForearmBendMuscle = 0.34f;
+    public const float BasePoseHipHingeMuscle = 0.2f;
+    public const float BasePoseKneeBendMuscle = 0.16f;
+    public const float BasePosePoleBackwardAngleDegrees = -16f;
+    public const float BasePosePoleBackwardZOffset = -0.2f;
 
     private const string VisualRootName = "Roller Skier Visual";
     private const float EquipmentSkiLength = 1.05f;
@@ -99,6 +105,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         character.transform.localPosition = Vector3.zero;
         character.transform.localRotation = Quaternion.Euler(0f, CharacterYawDegrees, 0f);
         character.transform.localScale = Vector3.one;
+        ApplyHumanoidBasePose(character);
 
         CreateAnimationProxyRig(visualRoot, animator);
         AddRollerSkiEquipment(visualRoot, animator);
@@ -110,25 +117,167 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         animator.ApplyPose(0f);
         PoleVisibilityRuntimeUpdater.ApplyPoleVisibilityPass();
 
-        Debug.Log("[Ski-Verse] Adventure Character humanoid skier applied upright. Humanoid mesh is kept intact while the roller-ski equipment uses a stable proxy animation rig.");
+        Debug.Log("[Ski-Verse] Adventure Character roller skier base pose applied: arms lowered, hands on poles, slight knee bend, hip hinge, and backward pole angle.");
         return true;
 #else
         return false;
 #endif
     }
 
+    private static void ApplyHumanoidBasePose(GameObject character)
+    {
+        if (character == null)
+        {
+            return;
+        }
+
+        if (TryApplyHumanPose(character))
+        {
+            return;
+        }
+
+        ApplyFallbackBonePose(character.transform);
+    }
+
+    private static bool TryApplyHumanPose(GameObject character)
+    {
+        var humanoidAnimator = character.GetComponentInChildren<Animator>();
+        if (humanoidAnimator == null || humanoidAnimator.avatar == null || !humanoidAnimator.avatar.isHuman)
+        {
+            return false;
+        }
+
+        try
+        {
+            var poseHandler = new HumanPoseHandler(humanoidAnimator.avatar, humanoidAnimator.transform);
+            var pose = new HumanPose();
+            poseHandler.GetHumanPose(ref pose);
+            var muscles = pose.muscles;
+
+            SetMuscle(muscles, "Spine Front-Back", -BasePoseHipHingeMuscle);
+            SetMuscle(muscles, "Chest Front-Back", -BasePoseHipHingeMuscle * 0.7f);
+            SetMuscle(muscles, "UpperChest Front-Back", -BasePoseHipHingeMuscle * 0.45f);
+            SetMuscle(muscles, "Neck Nod Down-Up", 0.04f);
+            SetMuscle(muscles, "Head Nod Down-Up", 0.03f);
+
+            SetMuscle(muscles, "Left Arm Down-Up", -BasePoseUpperArmDropMuscle);
+            SetMuscle(muscles, "Right Arm Down-Up", -BasePoseUpperArmDropMuscle);
+            SetMuscle(muscles, "Left Arm Front-Back", 0.14f);
+            SetMuscle(muscles, "Right Arm Front-Back", 0.14f);
+            SetMuscle(muscles, "Left Forearm Stretch", -BasePoseForearmBendMuscle);
+            SetMuscle(muscles, "Right Forearm Stretch", -BasePoseForearmBendMuscle);
+            SetMuscle(muscles, "Left Hand Down-Up", -0.08f);
+            SetMuscle(muscles, "Right Hand Down-Up", -0.08f);
+
+            SetMuscle(muscles, "Left Upper Leg Front-Back", -0.08f);
+            SetMuscle(muscles, "Right Upper Leg Front-Back", -0.08f);
+            SetMuscle(muscles, "Left Lower Leg Stretch", -BasePoseKneeBendMuscle);
+            SetMuscle(muscles, "Right Lower Leg Stretch", -BasePoseKneeBendMuscle);
+            SetMuscle(muscles, "Left Foot Up-Down", -0.05f);
+            SetMuscle(muscles, "Right Foot Up-Down", -0.05f);
+
+            pose.muscles = muscles;
+            poseHandler.SetHumanPose(ref pose);
+            humanoidAnimator.enabled = false;
+            Debug.Log("[Ski-Verse] Adventure Character humanoid base pose applied through Unity Humanoid muscles.");
+            return true;
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogWarning("[Ski-Verse] Humanoid base pose failed; using named-bone fallback. " + exception.Message);
+            return false;
+        }
+    }
+
+    private static void SetMuscle(float[] muscles, string muscleName, float value)
+    {
+        if (muscles == null)
+        {
+            return;
+        }
+
+        var names = HumanTrait.MuscleName;
+        for (var i = 0; i < names.Length && i < muscles.Length; i++)
+        {
+            if (names[i] == muscleName)
+            {
+                muscles[i] = Mathf.Clamp(value, -1f, 1f);
+                return;
+            }
+        }
+    }
+
+    private static void ApplyFallbackBonePose(Transform root)
+    {
+        ApplyLocalRotationDelta(root, "pelvis", new Vector3(-6f, 0f, 0f));
+        ApplyLocalRotationDelta(root, "spine_01", new Vector3(-5f, 0f, 0f));
+        ApplyLocalRotationDelta(root, "spine_02", new Vector3(-4f, 0f, 0f));
+        ApplyLocalRotationDelta(root, "spine_03", new Vector3(-3f, 0f, 0f));
+        ApplyLocalRotationDelta(root, "head", new Vector3(3f, 0f, 0f));
+
+        ApplyLocalRotationDelta(root, "upperarm_l", new Vector3(0f, 0f, -64f));
+        ApplyLocalRotationDelta(root, "upperarm_r", new Vector3(0f, 0f, 64f));
+        ApplyLocalRotationDelta(root, "lowerarm_l", new Vector3(0f, 0f, -18f));
+        ApplyLocalRotationDelta(root, "lowerarm_r", new Vector3(0f, 0f, 18f));
+        ApplyLocalRotationDelta(root, "hand_l", new Vector3(-6f, 0f, -6f));
+        ApplyLocalRotationDelta(root, "hand_r", new Vector3(-6f, 0f, 6f));
+
+        ApplyLocalRotationDelta(root, "thigh_l", new Vector3(5f, 0f, 0f));
+        ApplyLocalRotationDelta(root, "thigh_r", new Vector3(5f, 0f, 0f));
+        ApplyLocalRotationDelta(root, "calf_l", new Vector3(-9f, 0f, 0f));
+        ApplyLocalRotationDelta(root, "calf_r", new Vector3(-9f, 0f, 0f));
+        ApplyLocalRotationDelta(root, "foot_l", new Vector3(3f, 0f, 0f));
+        ApplyLocalRotationDelta(root, "foot_r", new Vector3(3f, 0f, 0f));
+        Debug.Log("[Ski-Verse] Adventure Character fallback named-bone base pose applied.");
+    }
+
+    private static void ApplyLocalRotationDelta(Transform root, string boneName, Vector3 localEulerDelta)
+    {
+        var bone = FindDeepChild(root, boneName);
+        if (bone == null)
+        {
+            return;
+        }
+
+        bone.localRotation *= Quaternion.Euler(localEulerDelta);
+    }
+
+    private static Transform FindDeepChild(Transform parent, string name)
+    {
+        if (parent == null)
+        {
+            return null;
+        }
+
+        if (parent.name == name)
+        {
+            return parent;
+        }
+
+        for (var i = 0; i < parent.childCount; i++)
+        {
+            var result = FindDeepChild(parent.GetChild(i), name);
+            if (result != null)
+            {
+                return result;
+            }
+        }
+
+        return null;
+    }
+
     private static void CreateAnimationProxyRig(Transform visualRoot, RollerSkierAnimator animator)
     {
         var proxyRoot = CreateChild(visualRoot, AnimationProxyRootName, Vector3.zero);
 
-        animator.hips = CreateChild(proxyRoot, "Adventure Proxy Hips", new Vector3(0f, 0.94f, 0.12f));
-        animator.torso = CreateChild(proxyRoot, "Adventure Proxy Torso", new Vector3(0f, 1.08f, 0.08f));
-        animator.head = CreateChild(proxyRoot, "Adventure Proxy Head", new Vector3(0f, 1.78f, -0.1f));
+        animator.hips = CreateChild(proxyRoot, "Adventure Proxy Hips", new Vector3(0f, 0.91f, 0.16f));
+        animator.torso = CreateChild(proxyRoot, "Adventure Proxy Torso", new Vector3(0f, 1.08f, 0.14f));
+        animator.head = CreateChild(proxyRoot, "Adventure Proxy Head", new Vector3(0f, 1.78f, -0.08f));
 
-        animator.leftArm = CreateChild(proxyRoot, "Adventure Proxy Left Arm", new Vector3(-0.32f, 1.47f, -0.03f));
-        animator.rightArm = CreateChild(proxyRoot, "Adventure Proxy Right Arm", new Vector3(0.32f, 1.47f, -0.03f));
-        animator.leftHand = CreateChild(animator.leftArm, "Adventure Proxy Left Hand", new Vector3(-0.03f, -0.82f, 0.42f));
-        animator.rightHand = CreateChild(animator.rightArm, "Adventure Proxy Right Hand", new Vector3(0.03f, -0.82f, 0.42f));
+        animator.leftArm = CreateChild(proxyRoot, "Adventure Proxy Left Arm", new Vector3(-0.31f, 1.36f, 0.02f));
+        animator.rightArm = CreateChild(proxyRoot, "Adventure Proxy Right Arm", new Vector3(0.31f, 1.36f, 0.02f));
+        animator.leftHand = CreateChild(animator.leftArm, "Adventure Proxy Left Hand", new Vector3(-0.035f, -0.66f, 0.13f));
+        animator.rightHand = CreateChild(animator.rightArm, "Adventure Proxy Right Hand", new Vector3(0.035f, -0.66f, 0.13f));
 
         animator.leftThigh = CreateChild(proxyRoot, "Adventure Proxy Left Thigh", new Vector3(-0.145f, 0.67f, 0.16f));
         animator.rightThigh = CreateChild(proxyRoot, "Adventure Proxy Right Thigh", new Vector3(0.145f, 0.67f, 0.16f));
@@ -169,10 +318,10 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     {
         var pole = CreateChild(hand, name, Vector3.zero);
         AddPart(pole, "Humanoid Pole Grip", PrimitiveType.Capsule, new Vector3(0.035f * side, -0.03f, 0.02f), new Vector3(0.055f, 0.14f, 0.055f), poleColor, new Vector3(12f, 0f, 0f));
-        AddPart(pole, "Humanoid Pole Strap", PrimitiveType.Capsule, new Vector3(0.11f * side, -0.15f, 0.03f), new Vector3(0.03f, 0.24f, 0.03f), poleColor, new Vector3(32f, 0f, 14f * side));
-        AddPart(pole, "Humanoid Pole Shaft", PrimitiveType.Cylinder, new Vector3(0.48f * side, -0.82f, 0.18f), new Vector3(PoleRadius, PoleLength, PoleRadius), poleColor, new Vector3(24f, 0f, -2.5f * side));
-        AddPart(pole, "Humanoid Pole Basket", PrimitiveType.Cylinder, new Vector3(0.64f * side, -1.52f, 0.54f), new Vector3(0.12f, 0.018f, 0.12f), poleColor, new Vector3(90f, 0f, 0f));
-        AddPart(pole, "Humanoid Pole Force Highlight", PrimitiveType.Cylinder, new Vector3(0.55f * side, -1.06f, 0.31f), new Vector3(0.035f, 0.44f, 0.035f), highlightColor, new Vector3(24f, 0f, -2.5f * side));
+        AddPart(pole, "Humanoid Pole Strap", PrimitiveType.Capsule, new Vector3(0.1f * side, -0.14f, -0.02f), new Vector3(0.03f, 0.24f, 0.03f), poleColor, new Vector3(26f, 0f, 14f * side));
+        AddPart(pole, "Humanoid Pole Shaft", PrimitiveType.Cylinder, new Vector3(0.44f * side, -0.8f, BasePosePoleBackwardZOffset), new Vector3(PoleRadius, PoleLength, PoleRadius), poleColor, new Vector3(BasePosePoleBackwardAngleDegrees, 0f, -2.5f * side));
+        AddPart(pole, "Humanoid Pole Basket", PrimitiveType.Cylinder, new Vector3(0.6f * side, -1.49f, -0.56f), new Vector3(0.12f, 0.018f, 0.12f), poleColor, new Vector3(90f, 0f, 0f));
+        AddPart(pole, "Humanoid Pole Force Highlight", PrimitiveType.Cylinder, new Vector3(0.51f * side, -1.05f, -0.36f), new Vector3(0.035f, 0.44f, 0.035f), highlightColor, new Vector3(BasePosePoleBackwardAngleDegrees, 0f, -2.5f * side));
         return pole;
     }
 
