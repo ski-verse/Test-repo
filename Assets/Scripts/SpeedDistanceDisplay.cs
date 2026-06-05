@@ -6,6 +6,7 @@ public class SpeedDistanceDisplay : MonoBehaviour
     public PlayerSpeedController player;
     public TMP_Text speedText;
     public TMP_Text distanceText;
+    public TMP_Text gradientText;
 
     private void Update()
     {
@@ -27,6 +28,11 @@ public class SpeedDistanceDisplay : MonoBehaviour
         if (distanceText != null)
         {
             distanceText.text = $"Distance: {player.DistanceKm:0.00} km";
+        }
+
+        if (gradientText != null)
+        {
+            gradientText.text = $"Gradient: {player.CurrentGradientPercent:0.0}%";
         }
     }
 }
