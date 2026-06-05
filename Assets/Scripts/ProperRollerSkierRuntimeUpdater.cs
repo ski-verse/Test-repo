@@ -5,6 +5,9 @@ public class ProperRollerSkierRuntimeUpdater : MonoBehaviour
 {
     private const string VisualRootName = "Roller Skier Visual";
 
+    public const string Model20AppliedMarkerName = "Skier Model 2.0 Applied";
+    public const float Model20RuntimeVisualScale = 1.32f;
+
     public const float EnduranceShoulderWidth = 0.7f;
     public const float EnduranceWaistWidth = 0.18f;
     public const float EnduranceHeadDiameter = 0.17f;
@@ -39,6 +42,9 @@ public class ProperRollerSkierRuntimeUpdater : MonoBehaviour
 
     private static readonly Color PoleTipColor = new Color(0.015f, 0.017f, 0.019f);
 
+    private bool applied;
+    private int applyAttempts;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void InstallRuntimeUpdater()
     {
@@ -47,19 +53,46 @@ public class ProperRollerSkierRuntimeUpdater : MonoBehaviour
             return;
         }
 
+        Debug.Log("[Ski-Verse] ProperRollerSkierRuntimeUpdater started. Waiting for SkiErgGameBootstrap skier visual.");
         var updater = new GameObject("Proper Roller Skier Runtime Updater");
         updater.AddComponent<ProperRollerSkierRuntimeUpdater>();
     }
 
     private void Start()
     {
-        ApplyProperRollerSkierModel();
-        Destroy(gameObject);
+        TryApplyOrWait();
+    }
+
+    private void Update()
+    {
+        if (applied)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        TryApplyOrWait();
+    }
+
+    private void TryApplyOrWait()
+    {
+        applied = ApplyProperRollerSkierModel();
+        if (applied)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        applyAttempts++;
+        if (applyAttempts == 1 || applyAttempts % 60 == 0)
+        {
+            Debug.Log("[Ski-Verse] ProperRollerSkierRuntimeUpdater waiting for Low Poly Roller Skier/Roller Skier Visual.");
+        }
     }
 
     public static bool ApplyProperRollerSkierModel()
     {
-        var visualRoot = GameObject.Find(VisualRootName);
+        var visualRoot = FindSkierVisualRoot();
         if (visualRoot == null)
         {
             return false;
@@ -71,10 +104,39 @@ public class ProperRollerSkierRuntimeUpdater : MonoBehaviour
             return false;
         }
 
-        ClearChildren(visualRoot.transform);
-        CreateProperRollerSkierVisual(visualRoot.transform, animator);
+        if (visualRoot.Find(Model20AppliedMarkerName) != null)
+        {
+            Debug.Log("[Ski-Verse] Skier Model 2.0 already applied to bootstrap skier visual.");
+            return true;
+        }
+
+        ClearChildren(visualRoot);
+        var scale = Mathf.Max(visualRoot.localScale.x, Model20RuntimeVisualScale);
+        visualRoot.localScale = Vector3.one * scale;
+        CreateProperRollerSkierVisual(visualRoot, animator);
+        CreateChild(visualRoot, Model20AppliedMarkerName, Vector3.zero);
+        animator.ResetBasePose();
+        SkierTechniqueRuntimeUpdater.ConfigureAnimator(animator);
+        animator.ResetBasePose();
         animator.ApplyPose(0.15f);
+        Debug.Log($"[Ski-Verse] Skier Model 2.0 applied to {animator.gameObject.name}/{visualRoot.name} with visual scale {visualRoot.localScale.x:0.00}.");
         return true;
+    }
+
+    private static Transform FindSkierVisualRoot()
+    {
+        var animators = Object.FindObjectsByType<RollerSkierAnimator>(FindObjectsSortMode.None);
+        for (var i = 0; i < animators.Length; i++)
+        {
+            var visualRoot = animators[i].transform.Find(VisualRootName);
+            if (visualRoot != null)
+            {
+                return visualRoot;
+            }
+        }
+
+        var fallback = GameObject.Find(VisualRootName);
+        return fallback != null ? fallback.transform : null;
     }
 
     private static void ClearChildren(Transform parent)
@@ -127,9 +189,9 @@ public class ProperRollerSkierRuntimeUpdater : MonoBehaviour
         var torsoPivot = CreateChild(parent, "Torso Pivot", new Vector3(0f, 1.105f, 0.085f));
         animator.torso = torsoPivot;
         AddBodyPart(torsoPivot, "Tight Suit Endurance Torso", PrimitiveType.Capsule, new Vector3(0f, 0.3f, -0.055f), new Vector3(0.285f, 0.66f, 0.198f), suitBlue, Vector3.zero);
-        AddBodyPart(torsoPivot, "Visible Upper Back", PrimitiveType.Capsule, new Vector3(0f, 0.49f, 0.005f), new Vector3(VisibleUpperBackWidth, 0.185f, 0.075f), suitBackShadow, new Vector3(5f, 0f, 90f));
-        AddBodyPart(torsoPivot, "Left Lat Taper", PrimitiveType.Capsule, new Vector3(-0.205f, 0.32f, -0.005f), new Vector3(VisibleLatWidth, 0.37f, 0.07f), suitBackShadow, new Vector3(-7f, 0f, 18f));
-        AddBodyPart(torsoPivot, "Right Lat Taper", PrimitiveType.Capsule, new Vector3(0.205f, 0.32f, -0.005f), new Vector3(VisibleLatWidth, 0.37f, 0.07f), suitBackShadow, new Vector3(-7f, 0f, -18f));
+        AddBodyPart(torsoPivot, "Visible Upper Back", PrimitiveType.Capsule, new Vector3(0f, 0.49f, -0.015f), new Vector3(VisibleUpperBackWidth, 0.185f, 0.08f), suitBackShadow, new Vector3(5f, 0f, 90f));
+        AddBodyPart(torsoPivot, "Left Lat Taper", PrimitiveType.Capsule, new Vector3(-0.205f, 0.32f, -0.02f), new Vector3(VisibleLatWidth, 0.37f, 0.075f), suitBackShadow, new Vector3(-7f, 0f, 18f));
+        AddBodyPart(torsoPivot, "Right Lat Taper", PrimitiveType.Capsule, new Vector3(0.205f, 0.32f, -0.02f), new Vector3(VisibleLatWidth, 0.37f, 0.075f), suitBackShadow, new Vector3(-7f, 0f, -18f));
         AddBodyPart(torsoPivot, "Broad V Shape Chest", PrimitiveType.Capsule, new Vector3(0f, 0.445f, -0.09f), new Vector3(EnduranceShoulderWidth, 0.245f, 0.075f), suitBlue, new Vector3(7f, 0f, 90f));
         AddBodyPart(torsoPivot, "Tapered Narrow Waist", PrimitiveType.Capsule, new Vector3(0f, 0.075f, 0.005f), new Vector3(EnduranceWaistWidth, 0.135f, 0.142f), suitDark, new Vector3(0f, 0f, 90f));
         AddBodyPart(torsoPivot, "Broad Relaxed Shoulder Line", PrimitiveType.Capsule, new Vector3(0f, 0.575f, -0.04f), new Vector3(EnduranceShoulderWidth, 0.07f, 0.125f), suitBlue, new Vector3(0f, 0f, 90f));
