@@ -98,8 +98,12 @@ public class PoleVisibilityRuntimeUpdater : MonoBehaviour
 
     private static bool HasSupportedSkierModelMarker(Transform visualRoot)
     {
-        return visualRoot.Find(ProperRollerSkierRuntimeUpdater.Model20AppliedMarkerName) != null
-            || visualRoot.Find(AdventureCharacterRollerSkierRuntimeUpdater.AdventureCharacterAppliedMarkerName) != null;
+        if (visualRoot.Find(AdventureCharacterRollerSkierRuntimeUpdater.AdventureCharacterAppliedMarkerName) != null)
+        {
+            return false;
+        }
+
+        return visualRoot.Find(ProperRollerSkierRuntimeUpdater.Model20AppliedMarkerName) != null;
     }
 
     private static void ApplySide(Transform hand, Transform pole, float side, Color poleColor, Color strapColor, Color forceColor)
