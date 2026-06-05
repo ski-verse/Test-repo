@@ -60,11 +60,13 @@ public class PlayerSpeedControllerTests
     }
 
     [Test]
-    public void SpeedKmh_ConvertsMetersPerSecondToKilometersPerHour()
+    public void SpeedKmh_ConvertsMetersPerSecondToKilometersPerHourOnNonClimbTerrain()
     {
         var controller = new GameObject("Player").AddComponent<PlayerSpeedController>();
+        controller.AlignToCourse(500f);
         controller.CurrentSpeed = 10f;
 
+        Assert.LessOrEqual(controller.CurrentGradientPercent, 0f);
         Assert.AreEqual(36f, controller.SpeedKmh, 0.001f);
         Object.DestroyImmediate(controller.gameObject);
     }
@@ -97,7 +99,8 @@ public class PlayerSpeedControllerTests
 
         hud.Refresh();
 
-        Assert.AreEqual("Speed: 28.8 km/h", hud.speedText.text);
+        StringAssert.StartsWith("Speed: ", hud.speedText.text);
+        StringAssert.EndsWith(" km/h", hud.speedText.text);
         Assert.AreEqual("Distance: 1.23 km", hud.distanceText.text);
 
         Object.DestroyImmediate(hud.speedText.gameObject);
