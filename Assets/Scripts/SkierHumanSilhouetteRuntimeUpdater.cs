@@ -15,6 +15,11 @@ public class SkierHumanSilhouetteRuntimeUpdater : MonoBehaviour
     public const float RearVisiblePoleRadius = 0.064f;
     public const float RearVisiblePoleOutsideOffset = 0.46f;
     public const float RearVisiblePolePlantRadius = 0.105f;
+    public const float PolePressureLineRadius = 0.043f;
+    public const float VisibleHandClampRadius = 0.096f;
+    public const float UpperBackRidgeWidth = 0.64f;
+    public const float RearShoulderPlaneWidth = 0.28f;
+    public const float NaturalHipRoundness = 0.23f;
     public const float NaturalUpperArmRadius = 0.086f;
     public const float NaturalForearmRadius = 0.067f;
 
@@ -105,12 +110,17 @@ public class SkierHumanSilhouetteRuntimeUpdater : MonoBehaviour
         AddBodyPart(torsoParent, "Human Right Scapula Shadow", PrimitiveType.Cube, new Vector3(0.17f, 0.54f, 0.145f), new Vector3(0.2f, 0.055f, 0.05f), suitSeam, new Vector3(-5f, 0f, 18f));
         AddBodyPart(torsoParent, "Human Lat Shadow Left", PrimitiveType.Capsule, new Vector3(-0.235f, 0.35f, 0.115f), new Vector3(0.11f, 0.31f, 0.055f), suitSeam, new Vector3(-5f, 0f, 16f));
         AddBodyPart(torsoParent, "Human Lat Shadow Right", PrimitiveType.Capsule, new Vector3(0.235f, 0.35f, 0.115f), new Vector3(0.11f, 0.31f, 0.055f), suitSeam, new Vector3(-5f, 0f, -16f));
+        AddBodyPart(torsoParent, "Gameplay Upper Back Ridge", PrimitiveType.Capsule, new Vector3(0f, 0.6f, 0.14f), new Vector3(UpperBackRidgeWidth, 0.075f, 0.055f), suitSeam, new Vector3(0f, 0f, 90f));
+        AddBodyPart(torsoParent, "Left Rear Shoulder Plane", PrimitiveType.Cube, new Vector3(-0.31f, 0.57f, 0.125f), new Vector3(RearShoulderPlaneWidth, 0.085f, 0.07f), suitBackBlue, new Vector3(-4f, 0f, -12f));
+        AddBodyPart(torsoParent, "Right Rear Shoulder Plane", PrimitiveType.Cube, new Vector3(0.31f, 0.57f, 0.125f), new Vector3(RearShoulderPlaneWidth, 0.085f, 0.07f), suitBackBlue, new Vector3(-4f, 0f, 12f));
 
         var hipParent = animator.hips != null ? animator.hips : visualRoot;
         AddBodyPart(hipParent, "Human Black Shorts Block", PrimitiveType.Cube, new Vector3(0f, 0.02f, 0.105f), new Vector3(VisibleShortsPanelWidth, 0.22f, 0.12f), suitDark, new Vector3(4f, 0f, -90f));
         AddBodyPart(hipParent, "Human Left Glute Accent", PrimitiveType.Sphere, new Vector3(-0.12f, -0.04f, 0.15f), new Vector3(VisibleGluteAccentWidth, 0.13f, 0.12f), suitDark, Vector3.zero);
         AddBodyPart(hipParent, "Human Right Glute Accent", PrimitiveType.Sphere, new Vector3(0.12f, -0.04f, 0.15f), new Vector3(VisibleGluteAccentWidth, 0.13f, 0.12f), suitDark, Vector3.zero);
         AddBodyPart(hipParent, "Human Shorts Leg Split", PrimitiveType.Cube, new Vector3(0f, -0.12f, 0.14f), new Vector3(0.035f, 0.2f, 0.06f), suitSeam, new Vector3(4f, 0f, -90f));
+        AddBodyPart(hipParent, "Left Natural Hip Roundness", PrimitiveType.Sphere, new Vector3(-0.185f, 0.035f, 0.095f), new Vector3(NaturalHipRoundness, 0.12f, 0.11f), suitDark, Vector3.zero);
+        AddBodyPart(hipParent, "Right Natural Hip Roundness", PrimitiveType.Sphere, new Vector3(0.185f, 0.035f, 0.095f), new Vector3(NaturalHipRoundness, 0.12f, 0.11f), suitDark, Vector3.zero);
 
         AddGripReadability(animator.leftHand, animator.leftPole, -1f, gloveBlack, highlight);
         AddGripReadability(animator.rightHand, animator.rightPole, 1f, gloveBlack, highlight);
@@ -121,7 +131,7 @@ public class SkierHumanSilhouetteRuntimeUpdater : MonoBehaviour
 
         new GameObject(HumanSilhouetteAppliedMarkerName).transform.SetParent(visualRoot, false);
         animator.ResetBasePose();
-        Debug.Log("[Ski-Verse] Human silhouette pass applied: reduced blue mannequin mass, added animated back/shorts panels, and made poles visible from gameplay camera.");
+        Debug.Log("[Ski-Verse] Human silhouette pass applied: refined back, shoulders, hips, hands, and gameplay-visible pole pressure.");
         return true;
     }
 
@@ -173,6 +183,7 @@ public class SkierHumanSilhouetteRuntimeUpdater : MonoBehaviour
 
         AddBodyPart(hand, "Visible Glove Grip Wrap", PrimitiveType.Capsule, new Vector3(0.012f * side, 0f, 0.012f), new Vector3(VisibleGripContrastRadius, 0.06f, VisibleGripContrastRadius), gloveColor, new Vector3(90f, 0f, 0f));
         AddBodyPart(hand, "Pole Contact Highlight", PrimitiveType.Cylinder, new Vector3(0.014f * side, 0f, 0.015f), new Vector3(0.074f, 0.016f, 0.074f), highlight, new Vector3(90f, 0f, 0f));
+        AddBodyPart(hand, "Visible Hand Clamp Around Pole", PrimitiveType.Capsule, new Vector3(0.02f * side, -0.012f, 0.025f), new Vector3(VisibleHandClampRadius, 0.07f, VisibleHandClampRadius), gloveColor, new Vector3(90f, 0f, 0f));
 
         if (pole != null && pole.parent != hand)
         {
@@ -224,6 +235,7 @@ public class SkierHumanSilhouetteRuntimeUpdater : MonoBehaviour
         AddBodyPart(pole, "Gameplay Rear Visible Pole Shaft", PrimitiveType.Cylinder, new Vector3(RearVisiblePoleOutsideOffset * side, -0.76f, -0.04f), new Vector3(RearVisiblePoleRadius, ProperRollerSkierRuntimeUpdater.VisiblePoleShaftLength * 0.96f, RearVisiblePoleRadius), poleColor, new Vector3(24f, 0f, -2f * side));
         AddBodyPart(pole, "Gameplay Rear Upper Pole Glint", PrimitiveType.Cylinder, new Vector3(RearVisiblePoleOutsideOffset * side, -0.3f, -0.12f), new Vector3(RearVisiblePoleRadius * 1.15f, 0.055f, RearVisiblePoleRadius * 1.15f), highlightColor, new Vector3(24f, 0f, -2f * side));
         AddBodyPart(pole, "Gameplay Rear Pole Plant Dot", PrimitiveType.Sphere, new Vector3((RearVisiblePoleOutsideOffset + 0.1f) * side, -1.46f, 0.55f), new Vector3(RearVisiblePolePlantRadius, RearVisiblePolePlantRadius, RearVisiblePolePlantRadius), poleColor, Vector3.zero);
+        AddBodyPart(pole, "Visible Pole Pressure Line", PrimitiveType.Cylinder, new Vector3((RearVisiblePoleOutsideOffset + 0.04f) * side, -1.02f, 0.33f), new Vector3(PolePressureLineRadius, 0.42f, PolePressureLineRadius), highlightColor, new Vector3(24f, 0f, -2f * side));
     }
 
     private static void SetColor(Transform part, Color color)
