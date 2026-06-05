@@ -17,7 +17,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     public const bool AttachAdventurePolesDirectlyToHands = true;
     public const float CharacterYawDegrees = 0f;
     public const float CharacterWidthScale = 0.9f;
-    public const float EquipmentNarrowStanceOffset = 0.12f;
+    public const float FootBindingLateralOffset = 0f;
     public const float BasePoseUpperArmDropMuscle = 0.46f;
     public const float BasePoseForearmBendMuscle = 0.2f;
     public const float BasePoseHipHingeMuscle = 0.12f;
@@ -135,7 +135,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
             PoleVisibilityRuntimeUpdater.ApplyPoleVisibilityPass();
         }
 
-        Debug.Log("[Ski-Verse] Adventure Character stable connected rig applied with narrow double-poling stance and hand-attached poles.");
+        Debug.Log("[Ski-Verse] Adventure Character stable connected rig applied with feet aligned to roller ski bindings and hand-attached poles.");
         return true;
 #else
         return false;
@@ -341,8 +341,8 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
 
     private static Transform CreateConstrainedRollerSki(Transform parent, Transform orientationRoot, Transform foot, string name, float side, Color frameColor, Color wheelColor, Color accentColor)
     {
-        var inwardOffset = -side * EquipmentNarrowStanceOffset;
-        var ski = CreateConstrainedAttachment(parent, orientationRoot, foot, name, new Vector3(inwardOffset, -0.09f, 0.12f), Vector3.zero);
+        var bindingOffset = side * FootBindingLateralOffset;
+        var ski = CreateConstrainedAttachment(parent, orientationRoot, foot, name, new Vector3(bindingOffset, -0.09f, 0.12f), Vector3.zero);
         AddPart(ski, "Slim Roller Ski Frame", PrimitiveType.Cube, new Vector3(0f, -0.015f, 0.18f), new Vector3(EquipmentSkiWidth, 0.025f, EquipmentSkiLength), frameColor, Vector3.zero);
         AddPart(ski, "Front Roller Wheel", PrimitiveType.Cylinder, new Vector3(0f, -0.06f, 0.64f), new Vector3(EquipmentWheelRadius * 2f, 0.075f, EquipmentWheelRadius * 2f), wheelColor, new Vector3(0f, 0f, 90f));
         AddPart(ski, "Rear Roller Wheel", PrimitiveType.Cylinder, new Vector3(0f, -0.06f, -0.34f), new Vector3(EquipmentWheelRadius * 2f, 0.075f, EquipmentWheelRadius * 2f), wheelColor, new Vector3(0f, 0f, 90f));
@@ -352,8 +352,8 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
 
     private static void AddConstrainedBootDetails(Transform parent, Transform orientationRoot, Transform foot, string sideName, float side, Color accentColor, Color bootColor)
     {
-        var inwardOffset = -side * EquipmentNarrowStanceOffset;
-        var boot = CreateConstrainedAttachment(parent, orientationRoot, foot, sideName + " Adventure Boot Anchor", new Vector3(inwardOffset, -0.025f, 0.04f), Vector3.zero);
+        var bindingOffset = side * FootBindingLateralOffset;
+        var boot = CreateConstrainedAttachment(parent, orientationRoot, foot, sideName + " Adventure Boot Anchor", new Vector3(bindingOffset, -0.025f, 0.04f), Vector3.zero);
         AddPart(boot, sideName + " Roller Ski Boot Shell", PrimitiveType.Cube, Vector3.zero, new Vector3(0.13f, 0.1f, 0.28f), bootColor, Vector3.zero);
         AddPart(boot, sideName + " Neon Boot Cuff", PrimitiveType.Cube, new Vector3(0f, 0.065f, -0.07f), new Vector3(0.14f, 0.05f, 0.08f), accentColor, Vector3.zero);
         AddPart(boot, sideName + " Heel Binding Accent", PrimitiveType.Cube, new Vector3(0f, -0.005f, -0.15f), new Vector3(0.12f, 0.04f, 0.06f), accentColor, Vector3.zero);
