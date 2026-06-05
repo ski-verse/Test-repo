@@ -22,7 +22,7 @@ public static class EnvironmentPlacement
     public const float MountainFirstDistance = 520f;
     public const float MountainSpacing = 620f;
     public const float NearMountainOffset = 180f;
-    public const float FarMountainOffset = 280f;
+    public const float FarMountainOffset = 275f;
     public const float NearMountainHalfWidth = 95f;
     public const float FarMountainHalfWidth = 125f;
 
