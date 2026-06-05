@@ -74,10 +74,7 @@ public class SkiClassicsGameplayModelRuntimeUpdater : MonoBehaviour
         visualRoot.localScale = Vector3.one * ProperRollerSkierRuntimeUpdater.Model20RuntimeVisualScale;
 
         SkiClassicsSkierModelBuilder.CreateGameplayModel(visualRoot, animator);
-        if (visualRoot.Find(ProperRollerSkierRuntimeUpdater.Model20AppliedMarkerName) == null)
-        {
-            new GameObject(ProperRollerSkierRuntimeUpdater.Model20AppliedMarkerName).transform.SetParent(visualRoot, false);
-        }
+        new GameObject(ProperRollerSkierRuntimeUpdater.Model20AppliedMarkerName).transform.SetParent(visualRoot, false);
 
         SkierTechniqueRuntimeUpdater.ConfigureAnimator(animator);
         animator.ResetBasePose();
