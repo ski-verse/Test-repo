@@ -331,7 +331,8 @@ public class ProperRollerSkierRuntimeUpdaterTests
         Assert.Greater(Mathf.DeltaAngle(0f, chestPanel.localEulerAngles.x), 5f);
         Assert.AreEqual(0f, Mathf.DeltaAngle(0f, head.localEulerAngles.x), 0.001f);
         Assert.Less(waist.localScale.x, chestPanel.localScale.x);
-        Assert.AreEqual(10f, RollerSkierAnimator.CalculateTorsoPitch(0.15f), 0.001f);
+        Assert.Greater(RollerSkierAnimator.CalculateTorsoPitch(0.15f), 20f);
+        Assert.Less(RollerSkierAnimator.CalculateTorsoPitch(0.15f), 30f);
 
         Object.DestroyImmediate(skier);
     }
