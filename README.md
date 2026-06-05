@@ -14,7 +14,7 @@ A small Unity prototype for a SkiErg-inspired movement game.
 - Set-back simple low-poly trees placed outside the open road margin
 - Rolling low-poly hills moved further away from the road
 - Distant low-poly forest bands between the road corridor and mountain ranges
-- Large Nordic mountain ranges on both sides of the world, close enough to frame the road and horizon while staying outside the road corridor
+- Low-poly Nordic mountain chains with irregular ridgelines that frame the road and horizon while staying outside the road corridor
 - Start and finish gates with road line markers
 - A proper low-poly roller skier with realistic proportions, parallel roller skis, wheels, poles, helmet, and double-poling stance
 - Larger on-screen skier presence with a slightly scaled visual rig and a closer, lower follow camera
@@ -23,7 +23,7 @@ A small Unity prototype for a SkiErg-inspired movement game.
 - `W` increases forward speed
 - `S` decreases forward speed
 - A top-left TextMeshPro HUD showing speed in km/h and distance in km
-- EditMode tests for speed, distance, HUD formatting, camera FOV, focused player camera framing, camera look-ahead, camera shake, dramatic course path behavior, environment clearance, visible mountain placement, and roller skier animation behavior
+- EditMode tests for speed, distance, HUD formatting, camera FOV, focused player camera framing, camera look-ahead, camera shake, dramatic course path behavior, environment clearance, visible mountain placement, mountain range mesh shape, and roller skier animation behavior
 
 ## Open in Unity
 
@@ -33,7 +33,7 @@ A small Unity prototype for a SkiErg-inspired movement game.
 4. Open any empty scene or create a new one.
 5. Press Play.
 
-The prototype scene is created automatically at runtime by `Assets/Scripts/SkiErgGameBootstrap.cs`.
+The prototype scene is created automatically at runtime by `Assets/Scripts/SkiErgGameBootstrap.cs`, with `Assets/Scripts/MountainRangeSceneUpdater.cs` replacing the placeholder mountains with Nordic low-poly mountain chains.
 
 ## Controls
 
@@ -42,4 +42,4 @@ The prototype scene is created automatically at runtime by `Assets/Scripts/SkiEr
 
 ## Tests
 
-Open Unity Test Runner and run EditMode tests. The tests are in `Assets/Tests/EditMode/PlayerSpeedControllerTests.cs`.
+Open Unity Test Runner and run EditMode tests. The tests are in `Assets/Tests/EditMode`.
