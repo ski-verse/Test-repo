@@ -172,6 +172,8 @@ public class PlayerSpeedControllerTests
         Assert.IsTrue(EnvironmentPlacement.HasOpenRoadMargin(EnvironmentPlacement.NearTreeOffset, EnvironmentPlacement.MaxTreeRadius));
         Assert.IsTrue(EnvironmentPlacement.HasOpenRoadMargin(EnvironmentPlacement.MidTreeOffset, EnvironmentPlacement.MaxTreeRadius));
         Assert.IsTrue(EnvironmentPlacement.HasOpenRoadMargin(EnvironmentPlacement.FarTreeOffset, EnvironmentPlacement.MaxTreeRadius));
+        Assert.IsTrue(EnvironmentPlacement.HasOpenRoadMargin(EnvironmentPlacement.NearForestOffset, EnvironmentPlacement.MaxForestTreeRadius));
+        Assert.IsTrue(EnvironmentPlacement.HasOpenRoadMargin(EnvironmentPlacement.FarForestOffset, EnvironmentPlacement.MaxForestTreeRadius));
         Assert.IsTrue(EnvironmentPlacement.HasOpenRoadMargin(EnvironmentPlacement.NearHillOffset, EnvironmentPlacement.NearHillHalfWidth));
         Assert.IsTrue(EnvironmentPlacement.HasOpenRoadMargin(EnvironmentPlacement.FarHillOffset, EnvironmentPlacement.FarHillHalfWidth));
         Assert.IsTrue(EnvironmentPlacement.HasOpenRoadMargin(EnvironmentPlacement.NearMountainOffset, EnvironmentPlacement.NearMountainHalfWidth));
@@ -179,11 +181,16 @@ public class PlayerSpeedControllerTests
     }
 
     [Test]
-    public void EnvironmentPlacement_KeepsMountainsAsDistantBackgroundOnly()
+    public void EnvironmentPlacement_FramesRoadWithVisibleMountainsAndForests()
     {
-        Assert.GreaterOrEqual(EnvironmentPlacement.MountainFirstDistance, 1000f);
-        Assert.GreaterOrEqual(EnvironmentPlacement.NearMountainOffset - EnvironmentPlacement.NearMountainHalfWidth, 300f);
-        Assert.GreaterOrEqual(EnvironmentPlacement.FarMountainOffset - EnvironmentPlacement.FarMountainHalfWidth, 300f);
+        var nearMountainInnerEdge = EnvironmentPlacement.NearMountainOffset - EnvironmentPlacement.NearMountainHalfWidth;
+        var farMountainInnerEdge = EnvironmentPlacement.FarMountainOffset - EnvironmentPlacement.FarMountainHalfWidth;
+
+        Assert.LessOrEqual(EnvironmentPlacement.MountainFirstDistance, 650f);
+        Assert.LessOrEqual(nearMountainInnerEdge, 110f);
+        Assert.LessOrEqual(farMountainInnerEdge, 150f);
+        Assert.Greater(EnvironmentPlacement.NearMountainOffset, EnvironmentPlacement.FarForestOffset);
+        Assert.Greater(nearMountainInnerEdge, EnvironmentPlacement.FarForestOffset + EnvironmentPlacement.MaxForestTreeRadius);
     }
 
     [Test]
