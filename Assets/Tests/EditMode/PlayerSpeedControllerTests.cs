@@ -165,4 +165,44 @@ public class PlayerSpeedControllerTests
         Assert.AreEqual(1f, direction.magnitude, 0.001f);
         Assert.Greater(Mathf.Abs(direction.y), 0.01f);
     }
+
+    [Test]
+    public void RollerSkierAnimator_CycleAdvancesFasterAtHigherSpeedAndWraps()
+    {
+        var slowPhase = RollerSkierAnimator.CalculateNextPhase(0.9f, 0f, 0.5f, 0.65f, 0.018f);
+        var fastPhase = RollerSkierAnimator.CalculateNextPhase(0.9f, 72f, 0.5f, 0.65f, 0.018f);
+
+        Assert.AreEqual(0.225f, slowPhase, 0.001f);
+        Assert.AreEqual(0.873f, fastPhase, 0.001f);
+        Assert.Greater(fastPhase, slowPhase);
+    }
+
+    [Test]
+    public void RollerSkierAnimator_DoublePolingUsesMatchedArmPitchAndParallelSkis()
+    {
+        var root = new GameObject("Roller Skier Rig");
+        var animator = root.AddComponent<RollerSkierAnimator>();
+        animator.leftArm = new GameObject("Left Arm Pivot").transform;
+        animator.rightArm = new GameObject("Right Arm Pivot").transform;
+        animator.leftPole = new GameObject("Left Pole Pivot").transform;
+        animator.rightPole = new GameObject("Right Pole Pivot").transform;
+        animator.leftSki = new GameObject("Left Roller Ski").transform;
+        animator.rightSki = new GameObject("Right Roller Ski").transform;
+
+        animator.leftArm.SetParent(root.transform);
+        animator.rightArm.SetParent(root.transform);
+        animator.leftPole.SetParent(root.transform);
+        animator.rightPole.SetParent(root.transform);
+        animator.leftSki.SetParent(root.transform);
+        animator.rightSki.SetParent(root.transform);
+
+        animator.ApplyPose(0.5f);
+
+        Assert.AreEqual(animator.leftArm.localEulerAngles.x, animator.rightArm.localEulerAngles.x, 0.001f);
+        Assert.AreEqual(animator.leftPole.localEulerAngles.x, animator.rightPole.localEulerAngles.x, 0.001f);
+        Assert.AreEqual(Quaternion.identity.eulerAngles, animator.leftSki.localEulerAngles);
+        Assert.AreEqual(Quaternion.identity.eulerAngles, animator.rightSki.localEulerAngles);
+
+        Object.DestroyImmediate(root);
+    }
 }
