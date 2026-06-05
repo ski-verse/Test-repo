@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -208,6 +209,7 @@ public class WorkoutSessionController : MonoBehaviour
     {
         if (elapsedTimeText != null && finishSummaryPanel != null && finishSummaryText != null && restartButton != null && returnToStartButton != null)
         {
+            EnsureEventSystemExists();
             return;
         }
 
@@ -224,6 +226,7 @@ public class WorkoutSessionController : MonoBehaviour
         scaler.matchWidthOrHeight = 0.5f;
 
         canvasObject.AddComponent<GraphicRaycaster>();
+        EnsureEventSystemExists();
 
         elapsedTimeText = CreateHudText(canvasObject.transform, "Elapsed Time Text", new Vector2(28f, -128f));
         finishSummaryPanel = CreateFinishSummaryPanel(canvasObject.transform, out var summaryText, out var restart, out var returnToStart);
@@ -259,6 +262,18 @@ public class WorkoutSessionController : MonoBehaviour
         {
             returnToStartButton.onClick.RemoveListener(ReturnToStartSession);
         }
+    }
+
+    private static void EnsureEventSystemExists()
+    {
+        if (Object.FindFirstObjectByType<EventSystem>() != null)
+        {
+            return;
+        }
+
+        var eventSystemObject = new GameObject("Event System");
+        eventSystemObject.AddComponent<EventSystem>();
+        eventSystemObject.AddComponent<StandaloneInputModule>();
     }
 
     private static TextMeshProUGUI CreateHudText(Transform parent, string name, Vector2 anchoredPosition)
