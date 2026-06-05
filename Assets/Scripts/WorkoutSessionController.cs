@@ -13,6 +13,7 @@ public class WorkoutSessionController : MonoBehaviour
     public GameObject finishSummaryPanel;
     public TMP_Text finishSummaryText;
     public Button restartButton;
+    public Button returnToStartButton;
     public float finishDistanceKm = DefaultFinishDistanceKm;
 
     public float ElapsedTimeSeconds { get; private set; }
@@ -33,24 +34,19 @@ public class WorkoutSessionController : MonoBehaviour
 
     private void Awake()
     {
-        if (restartButton != null)
-        {
-            restartButton.onClick.AddListener(RestartSession);
-        }
+        AddButtonListeners();
     }
 
     private void Start()
     {
         CreateRuntimeUiIfNeeded();
+        AddButtonListeners();
         StartSession();
     }
 
     private void OnDestroy()
     {
-        if (restartButton != null)
-        {
-            restartButton.onClick.RemoveListener(RestartSession);
-        }
+        RemoveButtonListeners();
     }
 
     private void Update()
@@ -138,6 +134,12 @@ public class WorkoutSessionController : MonoBehaviour
             return;
         }
 
+        ReturnToStartSession();
+    }
+
+    public void ReturnToStartSession()
+    {
+        Time.timeScale = 1f;
         ResetPlayerToStart();
         StartSession();
     }
@@ -204,7 +206,7 @@ public class WorkoutSessionController : MonoBehaviour
 
     private void CreateRuntimeUiIfNeeded()
     {
-        if (elapsedTimeText != null && finishSummaryPanel != null && finishSummaryText != null && restartButton != null)
+        if (elapsedTimeText != null && finishSummaryPanel != null && finishSummaryText != null && restartButton != null && returnToStartButton != null)
         {
             return;
         }
@@ -224,11 +226,39 @@ public class WorkoutSessionController : MonoBehaviour
         canvasObject.AddComponent<GraphicRaycaster>();
 
         elapsedTimeText = CreateHudText(canvasObject.transform, "Elapsed Time Text", new Vector2(28f, -128f));
-        finishSummaryPanel = CreateFinishSummaryPanel(canvasObject.transform, out var summaryText, out var button);
+        finishSummaryPanel = CreateFinishSummaryPanel(canvasObject.transform, out var summaryText, out var restart, out var returnToStart);
         finishSummaryText = summaryText;
-        restartButton = button;
-        restartButton.onClick.AddListener(RestartSession);
+        restartButton = restart;
+        returnToStartButton = returnToStart;
         finishSummaryPanel.SetActive(false);
+    }
+
+    private void AddButtonListeners()
+    {
+        RemoveButtonListeners();
+
+        if (restartButton != null)
+        {
+            restartButton.onClick.AddListener(RestartSession);
+        }
+
+        if (returnToStartButton != null)
+        {
+            returnToStartButton.onClick.AddListener(ReturnToStartSession);
+        }
+    }
+
+    private void RemoveButtonListeners()
+    {
+        if (restartButton != null)
+        {
+            restartButton.onClick.RemoveListener(RestartSession);
+        }
+
+        if (returnToStartButton != null)
+        {
+            returnToStartButton.onClick.RemoveListener(ReturnToStartSession);
+        }
     }
 
     private static TextMeshProUGUI CreateHudText(Transform parent, string name, Vector2 anchoredPosition)
@@ -254,7 +284,7 @@ public class WorkoutSessionController : MonoBehaviour
         return text;
     }
 
-    private static GameObject CreateFinishSummaryPanel(Transform parent, out TextMeshProUGUI summaryText, out Button restartButton)
+    private static GameObject CreateFinishSummaryPanel(Transform parent, out TextMeshProUGUI summaryText, out Button restartButton, out Button returnToStartButton)
     {
         var panel = new GameObject("Finish Summary Panel");
         panel.transform.SetParent(parent, false);
@@ -267,10 +297,11 @@ public class WorkoutSessionController : MonoBehaviour
         rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
         rectTransform.pivot = new Vector2(0.5f, 0.5f);
         rectTransform.anchoredPosition = Vector2.zero;
-        rectTransform.sizeDelta = new Vector2(560f, 420f);
+        rectTransform.sizeDelta = new Vector2(600f, 500f);
 
-        summaryText = CreatePanelText(panel.transform, "Finish Summary Text", new Vector2(0f, 70f), new Vector2(480f, 230f), 34f);
-        restartButton = CreateRestartButton(panel.transform);
+        summaryText = CreatePanelText(panel.transform, "Finish Summary Text", new Vector2(0f, 95f), new Vector2(520f, 240f), 34f);
+        restartButton = CreatePanelButton(panel.transform, "Restart Button", "Restart", new Vector2(0f, -110f), new Color(0.12f, 0.45f, 0.95f, 0.95f));
+        returnToStartButton = CreatePanelButton(panel.transform, "Return To Start Button", "Return to start", new Vector2(0f, -190f), new Color(0.16f, 0.62f, 0.36f, 0.95f));
         return panel;
     }
 
@@ -297,13 +328,13 @@ public class WorkoutSessionController : MonoBehaviour
         return text;
     }
 
-    private static Button CreateRestartButton(Transform parent)
+    private static Button CreatePanelButton(Transform parent, string name, string labelText, Vector2 anchoredPosition, Color color)
     {
-        var buttonObject = new GameObject("Restart Button");
+        var buttonObject = new GameObject(name);
         buttonObject.transform.SetParent(parent, false);
 
         var image = buttonObject.AddComponent<Image>();
-        image.color = new Color(0.12f, 0.45f, 0.95f, 0.95f);
+        image.color = color;
 
         var button = buttonObject.AddComponent<Button>();
         button.targetGraphic = image;
@@ -312,11 +343,11 @@ public class WorkoutSessionController : MonoBehaviour
         rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
         rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
         rectTransform.pivot = new Vector2(0.5f, 0.5f);
-        rectTransform.anchoredPosition = new Vector2(0f, -145f);
-        rectTransform.sizeDelta = new Vector2(240f, 64f);
+        rectTransform.anchoredPosition = anchoredPosition;
+        rectTransform.sizeDelta = new Vector2(280f, 64f);
 
-        var label = CreatePanelText(buttonObject.transform, "Restart Button Text", Vector2.zero, new Vector2(220f, 48f), 28f);
-        label.text = "Restart";
+        var label = CreatePanelText(buttonObject.transform, name + " Text", Vector2.zero, new Vector2(260f, 48f), 28f);
+        label.text = labelText;
 
         return button;
     }
