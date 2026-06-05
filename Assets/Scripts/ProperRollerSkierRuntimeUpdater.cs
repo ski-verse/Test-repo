@@ -102,9 +102,12 @@ public class ProperRollerSkierRuntimeUpdater : MonoBehaviour
         AddBodyPart(torsoPivot, "Broad Relaxed Shoulder Line", PrimitiveType.Capsule, new Vector3(0f, 0.57f, -0.035f), new Vector3(0.56f, 0.078f, 0.13f), suitBlue, new Vector3(0f, 0f, 90f));
         AddBodyPart(torsoPivot, "Left Soft Shoulder Cap", PrimitiveType.Sphere, new Vector3(-0.285f, 0.545f, -0.045f), new Vector3(0.105f, 0.09f, 0.105f), suitBlue, Vector3.zero);
         AddBodyPart(torsoPivot, "Right Soft Shoulder Cap", PrimitiveType.Sphere, new Vector3(0.285f, 0.545f, -0.045f), new Vector3(0.105f, 0.09f, 0.105f), suitBlue, Vector3.zero);
-        AddBodyPart(torsoPivot, "Head", PrimitiveType.Sphere, new Vector3(0f, 0.79f, -0.19f), new Vector3(0.2f, 0.21f, 0.2f), skin, Vector3.zero);
-        AddBodyPart(torsoPivot, "Low Poly Helmet", PrimitiveType.Sphere, new Vector3(0f, 0.89f, -0.19f), new Vector3(0.235f, 0.128f, 0.235f), helmetColor, Vector3.zero);
-        AddBodyPart(torsoPivot, "Helmet Visor", PrimitiveType.Cube, new Vector3(0f, 0.855f, -0.34f), new Vector3(0.195f, 0.04f, 0.055f), visorColor, Vector3.zero);
+
+        var headPivot = CreateChild(torsoPivot, "Head Stabilizer", new Vector3(0f, 0.79f, -0.19f));
+        animator.head = headPivot;
+        AddBodyPart(headPivot, "Head", PrimitiveType.Sphere, Vector3.zero, new Vector3(0.2f, 0.21f, 0.2f), skin, Vector3.zero);
+        AddBodyPart(headPivot, "Low Poly Helmet", PrimitiveType.Sphere, new Vector3(0f, 0.1f, 0f), new Vector3(0.235f, 0.128f, 0.235f), helmetColor, Vector3.zero);
+        AddBodyPart(headPivot, "Helmet Visor", PrimitiveType.Cube, new Vector3(0f, 0.065f, -0.15f), new Vector3(0.195f, 0.04f, 0.055f), visorColor, Vector3.zero);
 
         animator.leftArm = CreateArm(parent, "Left Connected Double-Poling Arm", new Vector3(-0.295f, 1.49f, -0.075f), -1f, suitBlue, skin);
         animator.rightArm = CreateArm(parent, "Right Connected Double-Poling Arm", new Vector3(0.295f, 1.49f, -0.075f), 1f, suitBlue, skin);
