@@ -57,6 +57,16 @@ public class RollerSkierVisualModelTests
     }
 
     [Test]
+    public void HumanSilhouettePass_UsesGameplayVisiblePoleSilhouette()
+    {
+        Assert.GreaterOrEqual(SkierHumanSilhouetteRuntimeUpdater.VisiblePoleOutsideOffset, 0.34f);
+        Assert.GreaterOrEqual(SkierHumanSilhouetteRuntimeUpdater.GameplayReadablePoleRadius, 0.054f);
+        Assert.GreaterOrEqual(SkierHumanSilhouetteRuntimeUpdater.RearVisiblePoleRadius, 0.06f);
+        Assert.GreaterOrEqual(SkierHumanSilhouetteRuntimeUpdater.RearVisiblePoleOutsideOffset, 0.42f);
+        Assert.GreaterOrEqual(SkierHumanSilhouetteRuntimeUpdater.RearVisiblePolePlantRadius, 0.095f);
+    }
+
+    [Test]
     public void HumanSilhouettePass_AttachesReadableHumanDetailsToAnimatedRig()
     {
         var skier = new GameObject("Low Poly Roller Skier");
@@ -78,6 +88,10 @@ public class RollerSkierVisualModelTests
         Assert.IsNotNull(FindChildRecursive(animator.hips, "Human Shorts Leg Split"));
         Assert.IsNotNull(FindChildRecursive(animator.leftHand, "Visible Glove Grip Wrap"));
         Assert.IsNotNull(FindChildRecursive(animator.rightHand, "Visible Glove Grip Wrap"));
+        Assert.IsNotNull(FindChildRecursive(animator.leftPole, "Gameplay Rear Visible Pole Shaft"));
+        Assert.IsNotNull(FindChildRecursive(animator.rightPole, "Gameplay Rear Visible Pole Shaft"));
+        Assert.IsNotNull(FindChildRecursive(animator.leftPole, "Gameplay Rear Pole Plant Dot"));
+        Assert.IsNotNull(FindChildRecursive(animator.rightPole, "Gameplay Rear Pole Plant Dot"));
         Assert.AreEqual(SkierHumanSilhouetteRuntimeUpdater.NaturalUpperArmRadius, FindChildRecursive(animator.leftArm, "Relaxed Upper Arm").localScale.x, 0.001f);
         Assert.AreEqual(SkierHumanSilhouetteRuntimeUpdater.NaturalUpperArmRadius, FindChildRecursive(animator.rightArm, "Relaxed Upper Arm").localScale.x, 0.001f);
         Assert.AreEqual(animator.leftHand, animator.leftPole.parent);
