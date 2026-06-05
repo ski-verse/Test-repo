@@ -107,16 +107,31 @@ public class PlayerSpeedControllerTests
     }
 
     [Test]
-    public void CalculateTargetFieldOfView_WidensAsSpeedIncreases()
+    public void CalculateTargetFieldOfView_WidensNoticeablyAsSpeedIncreases()
     {
         var followCamera = new GameObject("Follow Camera").AddComponent<FollowCamera>();
-        followCamera.baseFieldOfView = 62f;
-        followCamera.maxFieldOfView = 78f;
+        followCamera.baseFieldOfView = 60f;
+        followCamera.maxFieldOfView = 96f;
         followCamera.speedForMaxFieldOfViewKmh = 72f;
 
-        Assert.AreEqual(62f, followCamera.CalculateTargetFieldOfView(0f), 0.001f);
-        Assert.AreEqual(70f, followCamera.CalculateTargetFieldOfView(36f), 0.001f);
-        Assert.AreEqual(78f, followCamera.CalculateTargetFieldOfView(90f), 0.001f);
+        Assert.AreEqual(60f, followCamera.CalculateTargetFieldOfView(0f), 0.001f);
+        Assert.AreEqual(78f, followCamera.CalculateTargetFieldOfView(36f), 0.001f);
+        Assert.AreEqual(96f, followCamera.CalculateTargetFieldOfView(90f), 0.001f);
+
+        Object.DestroyImmediate(followCamera.gameObject);
+    }
+
+    [Test]
+    public void CalculateLookAheadDistance_LooksFurtherAheadAtHighSpeed()
+    {
+        var followCamera = new GameObject("Follow Camera").AddComponent<FollowCamera>();
+        followCamera.baseLookAheadDistance = 8f;
+        followCamera.maxLookAheadDistance = 24f;
+        followCamera.speedForMaxLookAheadKmh = 72f;
+
+        Assert.AreEqual(8f, followCamera.CalculateLookAheadDistance(0f), 0.001f);
+        Assert.AreEqual(16f, followCamera.CalculateLookAheadDistance(36f), 0.001f);
+        Assert.AreEqual(24f, followCamera.CalculateLookAheadDistance(90f), 0.001f);
 
         Object.DestroyImmediate(followCamera.gameObject);
     }
@@ -136,13 +151,13 @@ public class PlayerSpeedControllerTests
     }
 
     [Test]
-    public void CoursePath_HasCurvedCenterLineAndNormalizedDirection()
+    public void CoursePath_HasClearlyVisibleCurvesAndNormalizedDirection()
     {
         var start = CoursePath.CenterXAtDistance(0f);
-        var later = CoursePath.CenterXAtDistance(900f);
-        var direction = CoursePath.DirectionAtDistance(900f);
+        var later = CoursePath.CenterXAtDistance(400f);
+        var direction = CoursePath.DirectionAtDistance(400f);
 
-        Assert.AreNotEqual(start, later);
+        Assert.Greater(Mathf.Abs(later - start), 12f);
         Assert.AreEqual(1f, direction.magnitude, 0.001f);
     }
 }
