@@ -1,0 +1,98 @@
+using UnityEngine;
+
+public class MountainRangeSceneUpdater : MonoBehaviour
+{
+    private const float RoadLengthMeters = 5000f;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void InstallRuntimeUpdater()
+    {
+        if (Object.FindObjectOfType<MountainRangeSceneUpdater>() != null)
+        {
+            return;
+        }
+
+        var updater = new GameObject("Mountain Range Runtime Updater");
+        updater.AddComponent<MountainRangeSceneUpdater>();
+    }
+
+    private void Start()
+    {
+        TryReplacePrototypeMountains();
+        Destroy(gameObject);
+    }
+
+    public static bool TryReplacePrototypeMountains()
+    {
+        var existingMountains = GameObject.Find("Nordic Mountain Ranges");
+
+        if (existingMountains == null)
+        {
+            return false;
+        }
+
+        Object.Destroy(existingMountains);
+
+        var ranges = new GameObject("Nordic Mountain Ranges");
+        BuildMountainRanges(ranges.transform);
+        return true;
+    }
+
+    public static void BuildMountainRanges(Transform parent)
+    {
+        var nearColor = new Color(0.31f, 0.37f, 0.43f);
+        var farColor = new Color(0.46f, 0.51f, 0.56f);
+
+        for (var z = EnvironmentPlacement.MountainFirstDistance; z <= RoadLengthMeters; z += EnvironmentPlacement.MountainSpacing)
+        {
+            CreateMountainChain(
+                parent,
+                "Left Near Mountain Chain",
+                CoursePath.PointAtDistance(z, -EnvironmentPlacement.NearMountainOffset),
+                new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2f, 165f, 360f),
+                nearColor,
+                11f + z * 0.017f,
+                8);
+
+            CreateMountainChain(
+                parent,
+                "Right Near Mountain Chain",
+                CoursePath.PointAtDistance(z + 120f, EnvironmentPlacement.NearMountainOffset),
+                new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2f, 182f, 390f),
+                nearColor,
+                29f + z * 0.019f,
+                9);
+
+            CreateMountainChain(
+                parent,
+                "Left Far Mountain Chain",
+                CoursePath.PointAtDistance(z + 240f, -EnvironmentPlacement.FarMountainOffset),
+                new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2f, 230f, 460f),
+                farColor,
+                47f + z * 0.013f,
+                9);
+
+            CreateMountainChain(
+                parent,
+                "Right Far Mountain Chain",
+                CoursePath.PointAtDistance(z + 360f, EnvironmentPlacement.FarMountainOffset),
+                new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2f, 245f, 490f),
+                farColor,
+                73f + z * 0.015f,
+                8);
+        }
+    }
+
+    private static void CreateMountainChain(Transform parent, string name, Vector3 position, Vector3 scale, Color color, float seed, int peakCount)
+    {
+        var chain = new GameObject(name);
+        chain.transform.SetParent(parent, false);
+        position.y -= 10f;
+        chain.transform.position = position;
+        chain.transform.localScale = scale;
+
+        var meshFilter = chain.AddComponent<MeshFilter>();
+        meshFilter.mesh = MountainRangeMeshBuilder.CreateRangeMesh(peakCount, seed);
+        chain.AddComponent<MeshRenderer>().material.color = color;
+    }
+}
