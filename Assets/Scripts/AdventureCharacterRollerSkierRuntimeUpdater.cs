@@ -10,8 +10,11 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     public const string AdventureCharacterAppliedMarkerName = "Adventure Character Roller Skier Applied";
     public const string HumanoidRootName = "Adventure Character Roller Skier";
     public const string BoneAttachedEquipmentRootName = "Adventure Stable Equipment Constraint Rig";
+    public const string LeftAdventurePoleName = "Left Adventure Ski Pole";
+    public const string RightAdventurePoleName = "Right Adventure Ski Pole";
     public const bool DisableProceduralAnimationForAdventure = true;
     public const bool SkipGenericPoleVisibilityForAdventure = true;
+    public const bool AttachAdventurePolesDirectlyToHands = true;
     public const float CharacterYawDegrees = 0f;
     public const float CharacterWidthScale = 0.94f;
     public const float EquipmentNarrowStanceOffset = 0.055f;
@@ -131,7 +134,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
             PoleVisibilityRuntimeUpdater.ApplyPoleVisibilityPass();
         }
 
-        Debug.Log("[Ski-Verse] Adventure Character stable connected rig applied with narrower stance: equipment follows humanoid hand/foot positions with player-root aligned rotation.");
+        Debug.Log("[Ski-Verse] Adventure Character stable connected rig applied with narrower stance and hand-attached poles.");
         return true;
 #else
         return false;
@@ -290,8 +293,8 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         animator.rightSki = CreateConstrainedRollerSki(equipmentRoot, visualRoot, rightFoot, "Right Adventure Roller Ski", 1f, aluminium, black, neon);
         AddConstrainedBootDetails(equipmentRoot, visualRoot, leftFoot, "Left", -1f, neon, black);
         AddConstrainedBootDetails(equipmentRoot, visualRoot, rightFoot, "Right", 1f, neon, black);
-        animator.leftPole = CreateConstrainedPole(equipmentRoot, visualRoot, leftHand, "Left Adventure Ski Pole", -1f, black, white);
-        animator.rightPole = CreateConstrainedPole(equipmentRoot, visualRoot, rightHand, "Right Adventure Ski Pole", 1f, black, white);
+        animator.leftPole = CreateHandAttachedPole(visualRoot, leftHand, LeftAdventurePoleName, -1f, black, white);
+        animator.rightPole = CreateHandAttachedPole(visualRoot, rightHand, RightAdventurePoleName, 1f, black, white);
         return true;
     }
 
@@ -353,14 +356,22 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         AddPart(boot, sideName + " Heel Binding Accent", PrimitiveType.Cube, new Vector3(0f, -0.005f, -0.15f), new Vector3(0.12f, 0.04f, 0.06f), accentColor, Vector3.zero);
     }
 
-    private static Transform CreateConstrainedPole(Transform parent, Transform orientationRoot, Transform hand, string name, float side, Color poleColor, Color highlightColor)
+    private static Transform CreateHandAttachedPole(Transform orientationRoot, Transform hand, string name, float side, Color poleColor, Color highlightColor)
     {
-        var pole = CreateConstrainedAttachment(parent, orientationRoot, hand, name, Vector3.zero, Vector3.zero);
-        AddPart(pole, "Humanoid Pole Grip", PrimitiveType.Capsule, new Vector3(0.035f * side, -0.03f, 0.02f), new Vector3(0.05f, 0.12f, 0.05f), poleColor, new Vector3(12f, 0f, 0f));
-        AddPart(pole, "Humanoid Pole Strap", PrimitiveType.Capsule, new Vector3(0.085f * side, -0.13f, -0.02f), new Vector3(0.025f, 0.18f, 0.025f), poleColor, new Vector3(26f, 0f, 14f * side));
-        AddPart(pole, "Humanoid Pole Shaft", PrimitiveType.Cylinder, new Vector3(0.24f * side, -0.62f, BasePosePoleBackwardZOffset), new Vector3(PoleRadius, PoleLength, PoleRadius), poleColor, new Vector3(BasePosePoleBackwardAngleDegrees, 0f, -2.5f * side));
-        AddPart(pole, "Humanoid Pole Basket", PrimitiveType.Cylinder, new Vector3(0.32f * side, -1.2f, -0.44f), new Vector3(0.09f, 0.014f, 0.09f), poleColor, new Vector3(90f, 0f, 0f));
-        AddPart(pole, "Humanoid Pole Force Highlight", PrimitiveType.Cylinder, new Vector3(0.28f * side, -0.86f, -0.3f), new Vector3(0.026f, 0.28f, 0.026f), highlightColor, new Vector3(BasePosePoleBackwardAngleDegrees, 0f, -2.5f * side));
+        var pole = CreateChild(hand, name, Vector3.zero);
+        var follower = pole.gameObject.AddComponent<AdventureEquipmentBoneFollower>();
+        follower.target = hand;
+        follower.orientationRoot = orientationRoot;
+        follower.rootSpaceOffset = Vector3.zero;
+        follower.rootSpaceEuler = Vector3.zero;
+        follower.ApplyNow();
+
+        AddPart(pole, "Humanoid Hand Grip Collar", PrimitiveType.Sphere, new Vector3(0f, -0.015f, 0f), new Vector3(0.075f, 0.075f, 0.075f), poleColor, Vector3.zero);
+        AddPart(pole, "Humanoid Pole Grip", PrimitiveType.Capsule, new Vector3(0.018f * side, -0.04f, 0.01f), new Vector3(0.06f, 0.13f, 0.06f), poleColor, new Vector3(12f, 0f, 0f));
+        AddPart(pole, "Humanoid Pole Strap", PrimitiveType.Capsule, new Vector3(0.055f * side, -0.105f, -0.02f), new Vector3(0.028f, 0.17f, 0.028f), poleColor, new Vector3(26f, 0f, 12f * side));
+        AddPart(pole, "Humanoid Pole Shaft", PrimitiveType.Cylinder, new Vector3(0.13f * side, -0.62f, BasePosePoleBackwardZOffset), new Vector3(PoleRadius, PoleLength, PoleRadius), poleColor, new Vector3(BasePosePoleBackwardAngleDegrees, 0f, -2.5f * side));
+        AddPart(pole, "Humanoid Pole Basket", PrimitiveType.Cylinder, new Vector3(0.18f * side, -1.2f, -0.44f), new Vector3(0.09f, 0.014f, 0.09f), poleColor, new Vector3(90f, 0f, 0f));
+        AddPart(pole, "Humanoid Pole Force Highlight", PrimitiveType.Cylinder, new Vector3(0.15f * side, -0.86f, -0.3f), new Vector3(0.026f, 0.28f, 0.026f), highlightColor, new Vector3(BasePosePoleBackwardAngleDegrees, 0f, -2.5f * side));
         return pole;
     }
 
