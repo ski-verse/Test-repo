@@ -353,7 +353,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
         text.fontStyle = FontStyles.Bold;
         text.color = Color.white;
         text.alignment = TextAlignmentOptions.TopLeft;
-        text.enableWordWrapping = false;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
         text.raycastTarget = false;
         text.text = string.Empty;
 
