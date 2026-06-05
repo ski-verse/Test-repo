@@ -21,7 +21,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     public const float BasePoseUpperArmDropMuscle = 0.46f;
     public const float BasePoseForearmBendMuscle = 0.2f;
     public const float BasePoseHipHingeMuscle = 0.12f;
-    public const float BasePoseKneeBendMuscle = 0.08f;
+    public const float BasePoseKneeBendMuscle = 0.035f;
     public const float BasePoseLegInwardMuscle = 0.16f;
     public const float BasePosePoleBackwardAngleDegrees = -14f;
     public const float BasePosePoleBackwardZOffset = -0.16f;
@@ -135,7 +135,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
             PoleVisibilityRuntimeUpdater.ApplyPoleVisibilityPass();
         }
 
-        Debug.Log("[Ski-Verse] Adventure Character stable connected rig applied with feet aligned to roller ski bindings and hand-attached poles.");
+        Debug.Log("[Ski-Verse] Adventure Character stable connected rig applied with straighter legs, feet aligned to roller ski bindings, and hand-attached poles.");
         return true;
 #else
         return false;
@@ -199,7 +199,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
             pose.muscles = muscles;
             poseHandler.SetHumanPose(ref pose);
             humanoidAnimator.enabled = false;
-            Debug.Log("[Ski-Verse] Adventure Character mild humanoid narrow double-poling base pose applied through Unity Humanoid muscles.");
+            Debug.Log("[Ski-Verse] Adventure Character mild humanoid narrow double-poling base pose applied with straighter legs.");
             return true;
         }
         catch (System.Exception exception)
@@ -240,11 +240,11 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         ApplyLocalRotationDelta(root, "lowerarm_l", new Vector3(0f, 0f, -12f));
         ApplyLocalRotationDelta(root, "lowerarm_r", new Vector3(0f, 0f, 12f));
 
-        ApplyLocalRotationDelta(root, "thigh_l", new Vector3(2f, 0f, 5f));
-        ApplyLocalRotationDelta(root, "thigh_r", new Vector3(2f, 0f, -5f));
-        ApplyLocalRotationDelta(root, "calf_l", new Vector3(-4f, 0f, 0f));
-        ApplyLocalRotationDelta(root, "calf_r", new Vector3(-4f, 0f, 0f));
-        Debug.Log("[Ski-Verse] Adventure Character mild fallback named-bone narrow base pose applied.");
+        ApplyLocalRotationDelta(root, "thigh_l", new Vector3(1f, 0f, 5f));
+        ApplyLocalRotationDelta(root, "thigh_r", new Vector3(1f, 0f, -5f));
+        ApplyLocalRotationDelta(root, "calf_l", new Vector3(-1.5f, 0f, 0f));
+        ApplyLocalRotationDelta(root, "calf_r", new Vector3(-1.5f, 0f, 0f));
+        Debug.Log("[Ski-Verse] Adventure Character mild fallback named-bone narrow base pose applied with straighter legs.");
     }
 
     private static void ApplyLocalRotationDelta(Transform root, string boneName, Vector3 localEulerDelta)
