@@ -71,7 +71,7 @@ public class SpeedFeelingRuntimeUpdater : MonoBehaviour
             return 0;
         }
 
-        return (Mathf.FloorToInt((courseLengthMeters - startDistanceMeters) / spacingMeters) + 1) * 2;
+        return Mathf.CeilToInt((courseLengthMeters - startDistanceMeters) / spacingMeters) * 2;
     }
 
     private void ConfigureCameraIfAvailable()
