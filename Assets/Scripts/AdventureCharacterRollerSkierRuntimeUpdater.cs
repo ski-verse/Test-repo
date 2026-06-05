@@ -16,8 +16,8 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     public const bool SkipGenericPoleVisibilityForAdventure = true;
     public const bool AttachAdventurePolesDirectlyToHands = true;
     public const float CharacterYawDegrees = 0f;
-    public const float CharacterWidthScale = 0.9f;
-    public const float LegChainLateralCompression = 0.45f;
+    public const float CharacterWidthScale = 0.72f;
+    public const float LegChainLateralCompression = 0.22f;
     public const float FootBindingLateralOffset = 0f;
     public const float BasePoseUpperArmDropMuscle = 0.46f;
     public const float BasePoseForearmBendMuscle = 0.2f;
@@ -136,7 +136,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
             PoleVisibilityRuntimeUpdater.ApplyPoleVisibilityPass();
         }
 
-        Debug.Log("[Ski-Verse] Adventure Character connected rig applied with compressed parallel roller skier legs, feet on bindings, and hand-attached poles.");
+        Debug.Log("[Ski-Verse] Adventure Character connected rig applied with tight parallel roller skier legs, feet on bindings, and hand-attached poles.");
         return true;
 #else
         return false;
@@ -200,7 +200,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
             pose.muscles = muscles;
             poseHandler.SetHumanPose(ref pose);
             humanoidAnimator.enabled = false;
-            Debug.Log("[Ski-Verse] Adventure Character humanoid base pose applied with parallel roller skier legs.");
+            Debug.Log("[Ski-Verse] Adventure Character humanoid base pose applied with tight parallel roller skier legs.");
             return true;
         }
         catch (System.Exception exception)
@@ -245,7 +245,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         ApplyLocalRotationDelta(root, "thigh_r", Vector3.zero);
         ApplyLocalRotationDelta(root, "calf_l", new Vector3(-0.5f, 0f, 0f));
         ApplyLocalRotationDelta(root, "calf_r", new Vector3(-0.5f, 0f, 0f));
-        Debug.Log("[Ski-Verse] Adventure Character fallback base pose applied with parallel roller skier legs.");
+        Debug.Log("[Ski-Verse] Adventure Character fallback base pose applied with tight parallel roller skier legs.");
     }
 
     private static void ApplyParallelLegChainSpacing(Transform root)
