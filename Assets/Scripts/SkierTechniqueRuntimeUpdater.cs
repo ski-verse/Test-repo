@@ -38,18 +38,20 @@ public class SkierTechniqueRuntimeUpdater : MonoBehaviour
         }
 
         var root = animator.transform;
-        animator.hips = animator.hips != null ? animator.hips : FindDescendant(root, "Hips");
-        animator.leftThigh = animator.leftThigh != null ? animator.leftThigh : FindDescendant(root, "Left Thigh");
-        animator.rightThigh = animator.rightThigh != null ? animator.rightThigh : FindDescendant(root, "Right Thigh");
-        animator.leftShin = animator.leftShin != null ? animator.leftShin : FindDescendant(root, "Left Shin");
-        animator.rightShin = animator.rightShin != null ? animator.rightShin : FindDescendant(root, "Right Shin");
+        animator.hips = animator.hips != null ? animator.hips : FindDescendant(root, "Forward Hinged Athletic Hips", "Hips");
+        animator.leftThigh = animator.leftThigh != null ? animator.leftThigh : FindDescendant(root, "Left Long Athletic Thigh", "Left Thigh");
+        animator.rightThigh = animator.rightThigh != null ? animator.rightThigh : FindDescendant(root, "Right Long Athletic Thigh", "Right Thigh");
+        animator.leftShin = animator.leftShin != null ? animator.leftShin : FindDescendant(root, "Left Long Lower Leg", "Left Shin");
+        animator.rightShin = animator.rightShin != null ? animator.rightShin : FindDescendant(root, "Right Long Lower Leg", "Right Shin");
+        animator.leftFoot = animator.leftFoot != null ? animator.leftFoot : FindDescendant(root, "Left Boot", "Left Foot");
+        animator.rightFoot = animator.rightFoot != null ? animator.rightFoot : FindDescendant(root, "Right Boot", "Right Foot");
 
-        animator.leftArm = animator.leftArm != null ? animator.leftArm : FindDescendant(root, "Left Double-Poling Arm");
-        animator.rightArm = animator.rightArm != null ? animator.rightArm : FindDescendant(root, "Right Double-Poling Arm");
-        animator.leftHand = animator.leftHand != null ? animator.leftHand : FindDescendant(animator.leftArm, "Hand");
-        animator.rightHand = animator.rightHand != null ? animator.rightHand : FindDescendant(animator.rightArm, "Hand");
-        animator.leftPole = animator.leftPole != null ? animator.leftPole : FindDescendant(root, "Left Carbon Pole");
-        animator.rightPole = animator.rightPole != null ? animator.rightPole : FindDescendant(root, "Right Carbon Pole");
+        animator.leftArm = animator.leftArm != null ? animator.leftArm : FindDescendant(root, "Left Connected Double-Poling Arm", "Left Double-Poling Arm");
+        animator.rightArm = animator.rightArm != null ? animator.rightArm : FindDescendant(root, "Right Connected Double-Poling Arm", "Right Double-Poling Arm");
+        animator.leftHand = animator.leftHand != null ? animator.leftHand : FindDescendant(animator.leftArm, "Hand On Pole Grip", "Hand");
+        animator.rightHand = animator.rightHand != null ? animator.rightHand : FindDescendant(animator.rightArm, "Hand On Pole Grip", "Hand");
+        animator.leftPole = animator.leftPole != null ? animator.leftPole : FindDescendant(root, "Left Ski Pole", "Left Carbon Pole");
+        animator.rightPole = animator.rightPole != null ? animator.rightPole : FindDescendant(root, "Right Ski Pole", "Right Carbon Pole");
 
         AttachPoleToHand(animator.leftPole, animator.leftHand);
         AttachPoleToHand(animator.rightPole, animator.rightHand);
@@ -85,21 +87,24 @@ public class SkierTechniqueRuntimeUpdater : MonoBehaviour
         pole.localRotation = Quaternion.identity;
     }
 
-    private static Transform FindDescendant(Transform root, string name)
+    private static Transform FindDescendant(Transform root, params string[] names)
     {
-        if (root == null)
+        if (root == null || names == null)
         {
             return null;
         }
 
-        if (root.name == name)
+        for (var i = 0; i < names.Length; i++)
         {
-            return root;
+            if (root.name == names[i])
+            {
+                return root;
+            }
         }
 
         for (var i = 0; i < root.childCount; i++)
         {
-            var match = FindDescendant(root.GetChild(i), name);
+            var match = FindDescendant(root.GetChild(i), names);
             if (match != null)
             {
                 return match;
