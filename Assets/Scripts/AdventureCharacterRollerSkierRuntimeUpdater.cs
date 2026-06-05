@@ -9,8 +9,10 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     public const string AdventureCharacterPrefabPath = "Assets/Adventure_Character/Prefabs/Man_01.prefab";
     public const string AdventureCharacterAppliedMarkerName = "Adventure Character Roller Skier Applied";
     public const string HumanoidRootName = "Adventure Character Roller Skier";
+    public const string AnimationProxyRootName = "Adventure Roller Skier Animation Proxy Rig";
 
     private const string VisualRootName = "Roller Skier Visual";
+    private const float CharacterYawDegrees = 180f;
     private const float EquipmentSkiLength = 1.05f;
     private const float EquipmentSkiWidth = 0.045f;
     private const float EquipmentWheelRadius = 0.105f;
@@ -95,42 +97,46 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         character.name = HumanoidRootName;
         character.transform.SetParent(visualRoot, false);
         character.transform.localPosition = Vector3.zero;
-        character.transform.localRotation = Quaternion.identity;
+        character.transform.localRotation = Quaternion.Euler(0f, CharacterYawDegrees, 0f);
         character.transform.localScale = Vector3.one;
 
-        ConfigureHumanoidAnimator(animator, character.transform);
+        CreateAnimationProxyRig(visualRoot, animator);
         AddRollerSkiEquipment(visualRoot, animator);
+        AddHelmetOverlay(visualRoot);
 
         new GameObject(AdventureCharacterAppliedMarkerName).transform.SetParent(visualRoot, false);
         new GameObject(ProperRollerSkierRuntimeUpdater.Model20AppliedMarkerName).transform.SetParent(visualRoot, false);
 
-        SkierTechniqueRuntimeUpdater.ConfigureAnimator(animator);
         animator.ResetBasePose();
         animator.ApplyPose(0f);
         PoleVisibilityRuntimeUpdater.ApplyPoleVisibilityPass();
 
-        Debug.Log("[Ski-Verse] Adventure Character prefab applied as humanoid roller skier with roller skis, poles, boots, and helmet details.");
+        Debug.Log("[Ski-Verse] Adventure Character humanoid skier applied upright. Humanoid mesh is kept intact while the roller-ski equipment uses a stable proxy animation rig.");
         return true;
 #else
         return false;
 #endif
     }
 
-    private static void ConfigureHumanoidAnimator(RollerSkierAnimator animator, Transform root)
+    private static void CreateAnimationProxyRig(Transform visualRoot, RollerSkierAnimator animator)
     {
-        animator.hips = FindDescendant(root, "pelvis");
-        animator.torso = FindDescendant(root, "spine_03", "spine_02", "spine_01");
-        animator.head = FindDescendant(root, "head");
-        animator.leftArm = FindDescendant(root, "upperarm_l");
-        animator.rightArm = FindDescendant(root, "upperarm_r");
-        animator.leftHand = FindDescendant(root, "hand_l");
-        animator.rightHand = FindDescendant(root, "hand_r");
-        animator.leftThigh = FindDescendant(root, "thigh_l");
-        animator.rightThigh = FindDescendant(root, "thigh_r");
-        animator.leftShin = FindDescendant(root, "calf_l");
-        animator.rightShin = FindDescendant(root, "calf_r");
-        animator.leftFoot = FindDescendant(root, "foot_l");
-        animator.rightFoot = FindDescendant(root, "foot_r");
+        var proxyRoot = CreateChild(visualRoot, AnimationProxyRootName, Vector3.zero);
+
+        animator.hips = CreateChild(proxyRoot, "Adventure Proxy Hips", new Vector3(0f, 0.94f, 0.12f));
+        animator.torso = CreateChild(proxyRoot, "Adventure Proxy Torso", new Vector3(0f, 1.08f, 0.08f));
+        animator.head = CreateChild(proxyRoot, "Adventure Proxy Head", new Vector3(0f, 1.78f, -0.1f));
+
+        animator.leftArm = CreateChild(proxyRoot, "Adventure Proxy Left Arm", new Vector3(-0.32f, 1.47f, -0.03f));
+        animator.rightArm = CreateChild(proxyRoot, "Adventure Proxy Right Arm", new Vector3(0.32f, 1.47f, -0.03f));
+        animator.leftHand = CreateChild(animator.leftArm, "Adventure Proxy Left Hand", new Vector3(-0.03f, -0.82f, 0.42f));
+        animator.rightHand = CreateChild(animator.rightArm, "Adventure Proxy Right Hand", new Vector3(0.03f, -0.82f, 0.42f));
+
+        animator.leftThigh = CreateChild(proxyRoot, "Adventure Proxy Left Thigh", new Vector3(-0.145f, 0.67f, 0.16f));
+        animator.rightThigh = CreateChild(proxyRoot, "Adventure Proxy Right Thigh", new Vector3(0.145f, 0.67f, 0.16f));
+        animator.leftShin = CreateChild(proxyRoot, "Adventure Proxy Left Calf", new Vector3(-0.165f, 0.3f, 0.075f));
+        animator.rightShin = CreateChild(proxyRoot, "Adventure Proxy Right Calf", new Vector3(0.165f, 0.3f, 0.075f));
+        animator.leftFoot = CreateChild(proxyRoot, "Adventure Proxy Left Foot", new Vector3(-0.22f, 0.16f, 0.08f));
+        animator.rightFoot = CreateChild(proxyRoot, "Adventure Proxy Right Foot", new Vector3(0.22f, 0.16f, 0.08f));
     }
 
     private static void AddRollerSkiEquipment(Transform visualRoot, RollerSkierAnimator animator)
@@ -145,7 +151,6 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
 
         AddBootDetails(animator.leftFoot, "Left", neon, black);
         AddBootDetails(animator.rightFoot, "Right", neon, black);
-        AddHelmetDetails(animator.head, white, black);
 
         animator.leftPole = CreatePole(animator.leftHand, "Left Adventure Ski Pole", -1f, black, white);
         animator.rightPole = CreatePole(animator.rightHand, "Right Adventure Ski Pole", 1f, black, white);
@@ -163,8 +168,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
 
     private static Transform CreatePole(Transform hand, string name, float side, Color poleColor, Color highlightColor)
     {
-        var parent = hand != null ? hand : null;
-        var pole = CreateChild(parent, name, Vector3.zero);
+        var pole = CreateChild(hand, name, Vector3.zero);
         AddPart(pole, "Humanoid Pole Grip", PrimitiveType.Capsule, new Vector3(0.035f * side, -0.03f, 0.02f), new Vector3(0.055f, 0.14f, 0.055f), poleColor, new Vector3(12f, 0f, 0f));
         AddPart(pole, "Humanoid Pole Strap", PrimitiveType.Capsule, new Vector3(0.11f * side, -0.15f, 0.03f), new Vector3(0.03f, 0.24f, 0.03f), poleColor, new Vector3(32f, 0f, 14f * side));
         AddPart(pole, "Humanoid Pole Shaft", PrimitiveType.Cylinder, new Vector3(0.48f * side, -0.82f, 0.18f), new Vector3(PoleRadius, PoleLength, PoleRadius), poleColor, new Vector3(24f, 0f, -2.5f * side));
@@ -185,15 +189,13 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         AddPart(foot, sideName + " Heel Binding Accent", PrimitiveType.Cube, new Vector3(0f, 0.015f, -0.13f), new Vector3(0.12f, 0.04f, 0.06f), accentColor, Vector3.zero);
     }
 
-    private static void AddHelmetDetails(Transform head, Color white, Color black)
+    private static void AddHelmetOverlay(Transform visualRoot)
     {
-        if (head == null)
-        {
-            return;
-        }
-
-        AddPart(head, "Roller Ski Helmet Shell", PrimitiveType.Sphere, new Vector3(0f, 0.08f, 0f), new Vector3(0.19f, 0.105f, 0.19f), black, Vector3.zero);
-        AddPart(head, "White Helmet Rear Stripe", PrimitiveType.Cube, new Vector3(0f, 0.09f, 0.08f), new Vector3(0.095f, 0.1f, 0.035f), white, new Vector3(8f, 0f, 0f));
+        var helmet = CreateChild(visualRoot, "Adventure Roller Ski Helmet Overlay", new Vector3(0f, 1.82f, -0.08f));
+        var black = new Color(0.005f, 0.006f, 0.008f);
+        var white = new Color(0.92f, 0.94f, 0.9f);
+        AddPart(helmet, "Roller Ski Helmet Shell", PrimitiveType.Sphere, Vector3.zero, new Vector3(0.19f, 0.105f, 0.19f), black, Vector3.zero);
+        AddPart(helmet, "White Helmet Rear Stripe", PrimitiveType.Cube, new Vector3(0f, 0.015f, 0.08f), new Vector3(0.095f, 0.095f, 0.035f), white, new Vector3(8f, 0f, 0f));
     }
 
     private static void ClearChildren(Transform root)
@@ -236,32 +238,5 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         part.transform.localScale = localScale;
         part.GetComponent<Renderer>().material.color = color;
         return part.transform;
-    }
-
-    private static Transform FindDescendant(Transform root, params string[] names)
-    {
-        if (root == null || names == null)
-        {
-            return null;
-        }
-
-        for (var i = 0; i < names.Length; i++)
-        {
-            if (root.name == names[i])
-            {
-                return root;
-            }
-        }
-
-        for (var i = 0; i < root.childCount; i++)
-        {
-            var match = FindDescendant(root.GetChild(i), names);
-            if (match != null)
-            {
-                return match;
-            }
-        }
-
-        return null;
     }
 }
