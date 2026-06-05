@@ -68,7 +68,35 @@ public class RollerSkierDoublePolingAnimationTests
     }
 
     [Test]
-    public void ApplyPose_KeepsArmsTogetherAndPolesParallel()
+    public void DrivePhase_CompressesUpperBodyAndTransfersWeightIntoPoles()
+    {
+        var recoveryTorso = RollerSkierAnimator.CalculateTorsoPivotPosition(0.05f);
+        var driveTorso = RollerSkierAnimator.CalculateTorsoPivotPosition(0.42f);
+        var recoveryArm = RollerSkierAnimator.CalculateArmPivotPosition(-1f, 0.05f);
+        var driveArm = RollerSkierAnimator.CalculateArmPivotPosition(-1f, 0.42f);
+        var recoveryPole = RollerSkierAnimator.CalculatePolePivotPosition(-1f, 0.05f);
+        var drivePole = RollerSkierAnimator.CalculatePolePivotPosition(-1f, 0.42f);
+
+        Assert.Less(driveTorso.y, recoveryTorso.y - 0.16f);
+        Assert.Greater(driveTorso.z, recoveryTorso.z + 0.1f);
+        Assert.AreEqual(driveArm.z - recoveryArm.z, drivePole.z - recoveryPole.z, 0.08f);
+    }
+
+    [Test]
+    public void PlantCurve_EasesSmoothlyAroundTheDriveInsteadOfSnapping()
+    {
+        var beforeDrive = RollerSkierAnimator.CalculateArmPivotPosition(-1f, 0.34f);
+        var drive = RollerSkierAnimator.CalculateArmPivotPosition(-1f, 0.42f);
+        var afterDrive = RollerSkierAnimator.CalculateArmPivotPosition(-1f, 0.5f);
+
+        Assert.Greater(drive.z - beforeDrive.z, 0.05f);
+        Assert.Less(drive.z - beforeDrive.z, 0.25f);
+        Assert.Less(afterDrive.z - drive.z, 0.18f);
+        Assert.Greater(afterDrive.y, drive.y - 0.08f);
+    }
+
+    [Test]
+    public void ApplyPose_KeepsArmsTogetherPolesParallelAndTorsoCompressed()
     {
         var root = new GameObject("Roller Skier Rig");
         var animator = root.AddComponent<RollerSkierAnimator>();
@@ -93,6 +121,7 @@ public class RollerSkierDoublePolingAnimationTests
         Assert.AreEqual(-animator.leftArm.localPosition.x, animator.rightArm.localPosition.x, 0.001f);
         Assert.AreEqual(-animator.leftPole.localPosition.x, animator.rightPole.localPosition.x, 0.001f);
         Assert.Greater(animator.torso.localEulerAngles.x, 58f);
+        Assert.Less(animator.torso.localPosition.y, -0.16f);
 
         Object.DestroyImmediate(root);
     }
