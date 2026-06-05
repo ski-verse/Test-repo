@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using UnityEngine;
 
 public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
 {
@@ -33,5 +34,42 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
         Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.CharacterWidthScale, 1f);
         Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.EquipmentNarrowStanceOffset, 0.04f);
         Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.EquipmentNarrowStanceOffset, 0.08f);
+    }
+
+    [Test]
+    public void AdventureCharacterPoles_AreHandAttachedAndProceduralPoleMotionIsDisabled()
+    {
+        Assert.AreEqual("Left Adventure Ski Pole", AdventureCharacterRollerSkierRuntimeUpdater.LeftAdventurePoleName);
+        Assert.AreEqual("Right Adventure Ski Pole", AdventureCharacterRollerSkierRuntimeUpdater.RightAdventurePoleName);
+        Assert.IsTrue(AdventureCharacterRollerSkierRuntimeUpdater.AttachAdventurePolesDirectlyToHands);
+        Assert.IsTrue(AdventureCharacterRollerSkierRuntimeUpdater.DisableProceduralAnimationForAdventure);
+    }
+
+    [Test]
+    public void AdventureEquipmentBoneFollower_KeepsHandAttachedPoleParentedAndFollowingHand()
+    {
+        var root = new GameObject("Player Visual Root").transform;
+        var hand = new GameObject("Hand Bone").transform;
+        var pole = new GameObject("Hand Attached Pole").transform;
+
+        try
+        {
+            hand.SetParent(root, false);
+            pole.SetParent(hand, false);
+            hand.position = new Vector3(0.35f, 1.1f, 0.2f);
+            root.rotation = Quaternion.Euler(0f, 15f, 0f);
+
+            var follower = pole.gameObject.AddComponent<AdventureEquipmentBoneFollower>();
+            follower.target = hand;
+            follower.orientationRoot = root;
+            follower.ApplyNow();
+
+            Assert.AreSame(hand, pole.parent);
+            Assert.AreEqual(hand.position, pole.position);
+        }
+        finally
+        {
+            Object.DestroyImmediate(root.gameObject);
+        }
     }
 }
