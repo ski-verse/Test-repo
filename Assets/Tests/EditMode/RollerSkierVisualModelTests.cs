@@ -60,4 +60,29 @@ public class RollerSkierVisualModelTests
         Assert.LessOrEqual(ProperRollerSkierRuntimeUpdater.VisiblePoleShaftRadius, 0.03f);
         Assert.GreaterOrEqual(ProperRollerSkierRuntimeUpdater.VisiblePoleTipLateralOffset, 0.28f);
     }
+
+    [Test]
+    public void ApplyProperRollerSkierModel_ReplacesBootstrapVisualWithModel20()
+    {
+        var skier = new GameObject("Low Poly Roller Skier");
+        var animator = skier.AddComponent<RollerSkierAnimator>();
+        var visualRoot = new GameObject("Roller Skier Visual").transform;
+        visualRoot.SetParent(skier.transform, false);
+        visualRoot.localScale = Vector3.one;
+        new GameObject("Old Placeholder Torso").transform.SetParent(visualRoot, false);
+
+        var applied = ProperRollerSkierRuntimeUpdater.ApplyProperRollerSkierModel();
+
+        Assert.IsTrue(applied);
+        Assert.IsNotNull(visualRoot.Find(ProperRollerSkierRuntimeUpdater.Model20AppliedMarkerName));
+        Assert.IsNull(visualRoot.Find("Old Placeholder Torso"));
+        Assert.GreaterOrEqual(visualRoot.localScale.x, ProperRollerSkierRuntimeUpdater.Model20RuntimeVisualScale);
+        Assert.IsNotNull(animator.torso);
+        Assert.IsNotNull(animator.leftHand);
+        Assert.IsNotNull(animator.rightHand);
+        Assert.AreEqual(animator.leftHand, animator.leftPole.parent);
+        Assert.AreEqual(animator.rightHand, animator.rightPole.parent);
+
+        Object.DestroyImmediate(skier);
+    }
 }
