@@ -5,13 +5,16 @@ A small Unity prototype for a SkiErg-inspired movement game.
 ## What is included
 
 - A runtime-generated 5 km straight road
+- White edge lines and dashed center road markings
 - Green grass strips on both sides of the road
+- Simple trees placed along both sides of the course
+- Start and finish gates with road line markers
 - A primitive placeholder skier model with body, head, skis, and poles
-- A camera that follows behind the skier
+- A speed-responsive camera that follows behind the skier and widens FOV at higher speed
 - `W` increases forward speed
 - `S` decreases forward speed
 - A top-left TextMeshPro HUD showing speed in km/h and distance in km
-- EditMode tests for speed and distance behavior
+- EditMode tests for speed, distance, HUD formatting, and camera FOV behavior
 
 ## Open in Unity
 
