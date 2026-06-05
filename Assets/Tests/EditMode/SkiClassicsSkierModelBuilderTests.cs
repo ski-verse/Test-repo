@@ -65,24 +65,37 @@ public class SkiClassicsSkierModelBuilderTests
     }
 
     [Test]
-    public void CreateModel_UsesReferenceVideoRearViewSilhouette()
+    public void CreateModel_UsesReferenceImageRearViewArmsLegsBootsAndHelmet()
     {
         var parent = new GameObject("Model Parent").transform;
 
         var model = SkiClassicsSkierModelBuilder.CreateModel(parent);
 
-        Assert.IsNotNull(FindChildRecursive(model, "Dark Rear Racing Suit Panel"));
-        Assert.IsNotNull(FindChildRecursive(model, "Left Shoulder Blade"));
-        Assert.IsNotNull(FindChildRecursive(model, "Right Shoulder Blade"));
-        Assert.IsNotNull(FindChildRecursive(model, "Left Glute Shape"));
-        Assert.IsNotNull(FindChildRecursive(model, "Right Glute Shape"));
+        Assert.IsNotNull(FindChildRecursive(model, "Bare Upper Back"));
+        Assert.IsNotNull(FindChildRecursive(model, "Red Heart Rate Strap"));
+        Assert.IsNotNull(FindChildRecursive(model, "Black Bib Shorts"));
+        Assert.IsNotNull(FindChildRecursive(model, "Left Bare Upper Arm"));
+        Assert.IsNotNull(FindChildRecursive(model, "Right Bare Upper Arm"));
+        Assert.IsNotNull(FindChildRecursive(model, "Left Bare Forearm"));
+        Assert.IsNotNull(FindChildRecursive(model, "Right Bare Forearm"));
+        Assert.IsNotNull(FindChildRecursive(model, "Left Bare Thigh"));
+        Assert.IsNotNull(FindChildRecursive(model, "Right Bare Thigh"));
+        Assert.IsNotNull(FindChildRecursive(model, "Left Bare Calf"));
+        Assert.IsNotNull(FindChildRecursive(model, "Right Bare Calf"));
+        Assert.IsNotNull(FindChildRecursive(model, "Left Boot Neon Cuff"));
+        Assert.IsNotNull(FindChildRecursive(model, "Right Boot Neon Cuff"));
+        Assert.IsNotNull(FindChildRecursive(model, "Left Boot Heel Accent"));
+        Assert.IsNotNull(FindChildRecursive(model, "Right Boot Heel Accent"));
+        Assert.IsNotNull(FindChildRecursive(model, "White Helmet Rear Panel"));
+        Assert.IsNotNull(FindChildRecursive(model, "Black Helmet Shell"));
         Assert.IsNotNull(FindChildRecursive(model, "Left Outside Pole Silhouette"));
         Assert.IsNotNull(FindChildRecursive(model, "Right Outside Pole Silhouette"));
 
-        var torsoRenderer = FindChildRecursive(model, "Athletic Torso").GetComponent<Renderer>();
-        Assert.Less(torsoRenderer.sharedMaterial.color.b, 0.16f);
-        Assert.LessOrEqual(FindChildRecursive(model, "Compact Head").localScale.x, 0.16f);
-        Assert.Less(FindChildRecursive(model, "Narrow Waist").localScale.x, FindChildRecursive(model, "Visible Shoulder Line").localScale.x * 0.4f);
+        var torsoRenderer = FindChildRecursive(model, "Bare Upper Back").GetComponent<Renderer>();
+        var shortsRenderer = FindChildRecursive(model, "Black Bib Shorts").GetComponent<Renderer>();
+        Assert.Greater(torsoRenderer.sharedMaterial.color.r, shortsRenderer.sharedMaterial.color.r * 8f);
+        Assert.Less(FindChildRecursive(model, "Compact Head").localScale.x, FindChildRecursive(model, "Visible Shoulder Line").localScale.x * 0.26f);
+        Assert.Greater(FindChildRecursive(model, "Left Roller Ski Boot").localScale.y, 0.08f);
 
         Object.DestroyImmediate(parent.gameObject);
     }
