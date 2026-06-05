@@ -23,6 +23,8 @@ public class RollerSkierAnimator : MonoBehaviour
     public Transform rightThigh;
     public Transform leftShin;
     public Transform rightShin;
+    public Transform leftFoot;
+    public Transform rightFoot;
     public Transform leftSki;
     public Transform rightSki;
     public float baseCycleRate = 0.65f;
@@ -38,6 +40,10 @@ public class RollerSkierAnimator : MonoBehaviour
     private Vector3 rightArmBasePosition;
     private Vector3 leftHandBasePosition;
     private Vector3 rightHandBasePosition;
+    private Vector3 leftFootBasePosition;
+    private Vector3 rightFootBasePosition;
+    private Vector3 leftSkiBasePosition;
+    private Vector3 rightSkiBasePosition;
 
     private void LateUpdate()
     {
@@ -117,13 +123,13 @@ public class RollerSkierAnimator : MonoBehaviour
 
         if (hips != null)
         {
-            hips.localPosition = hipsBasePosition + new Vector3(0f, -compression * 0.45f + recoveryExtension * 0.35f, plantAmount * 0.035f);
-            hips.localRotation = Quaternion.Euler(-5f + plantAmount * 3f - returnLift * 1.5f, 0f, 0f);
+            hips.localPosition = hipsBasePosition + new Vector3(0f, -compression * 0.25f + recoveryExtension * 0.25f, plantAmount * 0.04f);
+            hips.localRotation = Quaternion.Euler(-5f + plantAmount * 2f - returnLift, 0f, 0f);
         }
 
         if (torso != null)
         {
-            torso.localPosition = torsoBasePosition + new Vector3(0f, -compression + recoveryExtension, plantAmount * 0.08f - returnLift * 0.025f);
+            torso.localPosition = torsoBasePosition + new Vector3(0f, -compression * 0.35f + recoveryExtension, plantAmount * 0.11f - returnLift * 0.025f);
             torso.localRotation = Quaternion.Euler(torsoPitch, 0f, 0f);
         }
 
@@ -172,14 +178,33 @@ public class RollerSkierAnimator : MonoBehaviour
             rightShin.localRotation = Quaternion.Euler(8f + plantAmount * 4f - returnLift * 1.5f, 0f, 3f);
         }
 
-        var skiPitch = -toeRise * 3.5f;
+        var footPitch = -toeRise * 2.8f;
+        var footRise = toeRise * 0.014f;
+        var footDrive = plantAmount * 0.012f;
+        if (leftFoot != null)
+        {
+            leftFoot.localPosition = leftFootBasePosition + new Vector3(0f, footRise, footDrive);
+            leftFoot.localRotation = Quaternion.Euler(footPitch, 0f, 0f);
+        }
+
+        if (rightFoot != null)
+        {
+            rightFoot.localPosition = rightFootBasePosition + new Vector3(0f, footRise, footDrive);
+            rightFoot.localRotation = Quaternion.Euler(footPitch, 0f, 0f);
+        }
+
+        var skiPitch = -toeRise * 0.6f;
+        var skiRise = toeRise * 0.004f;
+        var skiDrive = plantAmount * 0.006f;
         if (leftSki != null)
         {
+            leftSki.localPosition = leftSkiBasePosition + new Vector3(0f, skiRise, skiDrive);
             leftSki.localRotation = Quaternion.Euler(skiPitch, 0f, 0f);
         }
 
         if (rightSki != null)
         {
+            rightSki.localPosition = rightSkiBasePosition + new Vector3(0f, skiRise, skiDrive);
             rightSki.localRotation = Quaternion.Euler(skiPitch, 0f, 0f);
         }
     }
@@ -202,6 +227,10 @@ public class RollerSkierAnimator : MonoBehaviour
         rightArmBasePosition = rightArm != null ? rightArm.localPosition : Vector3.zero;
         leftHandBasePosition = leftHand != null ? leftHand.localPosition : Vector3.zero;
         rightHandBasePosition = rightHand != null ? rightHand.localPosition : Vector3.zero;
+        leftFootBasePosition = leftFoot != null ? leftFoot.localPosition : Vector3.zero;
+        rightFootBasePosition = rightFoot != null ? rightFoot.localPosition : Vector3.zero;
+        leftSkiBasePosition = leftSki != null ? leftSki.localPosition : Vector3.zero;
+        rightSkiBasePosition = rightSki != null ? rightSki.localPosition : Vector3.zero;
         capturedBasePose = true;
     }
 
