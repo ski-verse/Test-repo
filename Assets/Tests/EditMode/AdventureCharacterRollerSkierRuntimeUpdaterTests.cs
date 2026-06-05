@@ -9,6 +9,8 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
         Assert.AreEqual("Adventure Character Roller Skier Applied", AdventureCharacterRollerSkierRuntimeUpdater.AdventureCharacterAppliedMarkerName);
         Assert.AreEqual("Adventure Character Roller Skier", AdventureCharacterRollerSkierRuntimeUpdater.HumanoidRootName);
         Assert.AreEqual("Adventure Roller Skier Animation Proxy Rig", AdventureCharacterRollerSkierRuntimeUpdater.AnimationProxyRootName);
+        Assert.AreEqual("Adventure Bone Attached Roller Ski Equipment", AdventureCharacterRollerSkierRuntimeUpdater.BoneAttachedEquipmentRootName);
+        Assert.IsTrue(AdventureCharacterRollerSkierRuntimeUpdater.DisableProceduralAnimationForAdventure);
         Assert.AreEqual(0f, AdventureCharacterRollerSkierRuntimeUpdater.CharacterYawDegrees);
     }
 
