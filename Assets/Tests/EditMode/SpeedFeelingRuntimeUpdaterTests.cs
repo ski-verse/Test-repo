@@ -29,8 +29,8 @@ public class SpeedFeelingRuntimeUpdaterTests
         Assert.AreEqual(originalBaseLookAhead, followCamera.baseLookAheadDistance, 0.001f);
         Assert.AreEqual(originalMaxLookAhead, followCamera.maxLookAheadDistance, 0.001f);
         Assert.AreEqual(originalLookAheadSpeed, followCamera.speedForMaxLookAheadKmh, 0.001f);
-        Assert.AreEqual(100f, followCamera.maxFieldOfView, 0.001f);
-        Assert.AreEqual(68f, followCamera.speedForMaxFieldOfViewKmh, 0.001f);
+        Assert.AreEqual(104f, followCamera.maxFieldOfView, 0.001f);
+        Assert.AreEqual(60f, followCamera.speedForMaxFieldOfViewKmh, 0.001f);
         Assert.AreEqual(0f, followCamera.maxShakeAmplitude, 0.001f);
 
         Object.DestroyImmediate(cameraObject);
@@ -46,8 +46,8 @@ public class SpeedFeelingRuntimeUpdaterTests
 
         SpeedFeelingRuntimeUpdater.ApplyCameraComposition(followCamera);
 
-        Assert.Greater(followCamera.CalculateTargetFieldOfView(10f), previousTenKmhFov);
-        Assert.Greater(followCamera.CalculateTargetFieldOfView(36f), previousThirtySixKmhFov);
+        Assert.Greater(followCamera.CalculateTargetFieldOfView(10f), previousTenKmhFov + 1.5f);
+        Assert.Greater(followCamera.CalculateTargetFieldOfView(36f), previousThirtySixKmhFov + 6f);
 
         Object.DestroyImmediate(cameraObject);
     }
@@ -61,7 +61,35 @@ public class SpeedFeelingRuntimeUpdaterTests
             SpeedFeelingRuntimeUpdater.MotionCueSpacingMeters);
         var innerCueEdge = SpeedFeelingRuntimeUpdater.MotionCueLateralOffset - SpeedFeelingRuntimeUpdater.MotionCueHalfWidth;
 
-        Assert.Greater(cueCount, 700);
+        Assert.Greater(cueCount, 1200);
         Assert.Greater(innerCueEdge, EnvironmentPlacement.RoadHalfWidth + 1f);
+    }
+
+    [Test]
+    public void EdgeFlowCues_AddRoadsideMovementWithoutOverlappingRoad()
+    {
+        var totalCueCount = SpeedFeelingRuntimeUpdater.CalculateTotalMotionCueCount(SpeedFeelingRuntimeUpdater.MotionCueCourseLengthMeters);
+        var edgeFlowCueCount = SpeedFeelingRuntimeUpdater.CalculateMotionCueCount(
+            SpeedFeelingRuntimeUpdater.MotionCueCourseLengthMeters,
+            SpeedFeelingRuntimeUpdater.MotionCueStartDistanceMeters + SpeedFeelingRuntimeUpdater.EdgeFlowCueSpacingMeters * 0.5f,
+            SpeedFeelingRuntimeUpdater.EdgeFlowCueSpacingMeters);
+        var innerEdgeFlowCueEdge = SpeedFeelingRuntimeUpdater.EdgeFlowCueLateralOffset - SpeedFeelingRuntimeUpdater.EdgeFlowCueHalfWidth;
+
+        Assert.Greater(edgeFlowCueCount, 1000);
+        Assert.Greater(totalCueCount, 2200);
+        Assert.Greater(innerEdgeFlowCueEdge, EnvironmentPlacement.RoadHalfWidth);
+    }
+
+    [Test]
+    public void SpeedFeelingRuntimeUpdater_DoesNotChangeActualPlayerSpeedValues()
+    {
+        var player = new GameObject("Player").AddComponent<PlayerSpeedController>();
+
+        Assert.AreEqual(3f, player.acceleration, 0.001f);
+        Assert.AreEqual(4f, player.deceleration, 0.001f);
+        Assert.AreEqual(0f, player.minSpeed, 0.001f);
+        Assert.AreEqual(18f, player.maxSpeed, 0.001f);
+
+        Object.DestroyImmediate(player.gameObject);
     }
 }
