@@ -22,7 +22,8 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
         Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseUpperArmDropMuscle, 0.55f);
         Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseForearmBendMuscle, 0.15f);
         Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseHipHingeMuscle, 0.15f);
-        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseKneeBendMuscle, 0.1f);
+        Assert.GreaterOrEqual(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseKneeBendMuscle, 0.02f);
+        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseKneeBendMuscle, 0.05f);
         Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.BasePosePoleBackwardAngleDegrees, 0f);
         Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.BasePosePoleBackwardZOffset, 0f);
     }
