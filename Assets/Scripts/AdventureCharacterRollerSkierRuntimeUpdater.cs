@@ -10,6 +10,8 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     public const string AdventureCharacterAppliedMarkerName = "Adventure Character Roller Skier Applied";
     public const string HumanoidRootName = "Adventure Character Roller Skier";
     public const string AnimationProxyRootName = "Adventure Roller Skier Animation Proxy Rig";
+    public const string BoneAttachedEquipmentRootName = "Adventure Bone Attached Roller Ski Equipment";
+    public const bool DisableProceduralAnimationForAdventure = true;
     public const float CharacterYawDegrees = 0f;
     public const float BasePoseUpperArmDropMuscle = 0.72f;
     public const float BasePoseForearmBendMuscle = 0.34f;
@@ -107,17 +109,25 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         character.transform.localScale = Vector3.one;
         ApplyHumanoidBasePose(character);
 
-        CreateAnimationProxyRig(visualRoot, animator);
-        AddRollerSkiEquipment(visualRoot, animator);
+        if (!AttachEquipmentToHumanoidBones(visualRoot, character, animator))
+        {
+            ClearChildren(visualRoot);
+            return false;
+        }
+
         AddHelmetOverlay(visualRoot);
 
         new GameObject(AdventureCharacterAppliedMarkerName).transform.SetParent(visualRoot, false);
 
-        animator.ResetBasePose();
-        animator.ApplyPose(0f);
+        if (DisableProceduralAnimationForAdventure)
+        {
+            animator.ResetBasePose();
+            animator.enabled = false;
+        }
+
         PoleVisibilityRuntimeUpdater.ApplyPoleVisibilityPass();
 
-        Debug.Log("[Ski-Verse] Adventure Character roller skier base pose applied: arms lowered, hands on poles, slight knee bend, hip hinge, and backward pole angle.");
+        Debug.Log("[Ski-Verse] Adventure Character connected skier rig applied: feet own roller skis, hands own poles, and conflicting procedural equipment animation is disabled for the humanoid model.");
         return true;
 #else
         return false;
@@ -242,6 +252,65 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         bone.localRotation *= Quaternion.Euler(localEulerDelta);
     }
 
+    private static bool AttachEquipmentToHumanoidBones(Transform visualRoot, GameObject character, RollerSkierAnimator animator)
+    {
+        var humanAnimator = character.GetComponentInChildren<Animator>(true);
+        var leftFoot = FindHumanoidBone(character.transform, humanAnimator, HumanBodyBones.LeftFoot, "foot_l");
+        var rightFoot = FindHumanoidBone(character.transform, humanAnimator, HumanBodyBones.RightFoot, "foot_r");
+        var leftHand = FindHumanoidBone(character.transform, humanAnimator, HumanBodyBones.LeftHand, "hand_l");
+        var rightHand = FindHumanoidBone(character.transform, humanAnimator, HumanBodyBones.RightHand, "hand_r");
+
+        if (leftFoot == null || rightFoot == null || leftHand == null || rightHand == null)
+        {
+            Debug.LogWarning("[Ski-Verse] Adventure Character rig missing foot or hand bones; keeping generated skier fallback instead of creating floating equipment.");
+            return false;
+        }
+
+        var equipmentRoot = CreateChild(visualRoot, BoneAttachedEquipmentRootName, Vector3.zero);
+        equipmentRoot.gameObject.SetActive(false);
+
+        var aluminium = new Color(0.72f, 0.78f, 0.78f);
+        var black = new Color(0.005f, 0.006f, 0.008f);
+        var neon = new Color(0.72f, 0.9f, 0.08f);
+        var white = new Color(0.92f, 0.94f, 0.9f);
+
+        animator.hips = FindHumanoidBone(character.transform, humanAnimator, HumanBodyBones.Hips, "pelvis");
+        animator.torso = FindHumanoidBone(character.transform, humanAnimator, HumanBodyBones.Chest, "spine_03");
+        animator.head = FindHumanoidBone(character.transform, humanAnimator, HumanBodyBones.Head, "head");
+        animator.leftArm = FindHumanoidBone(character.transform, humanAnimator, HumanBodyBones.LeftUpperArm, "upperarm_l");
+        animator.rightArm = FindHumanoidBone(character.transform, humanAnimator, HumanBodyBones.RightUpperArm, "upperarm_r");
+        animator.leftHand = leftHand;
+        animator.rightHand = rightHand;
+        animator.leftThigh = FindHumanoidBone(character.transform, humanAnimator, HumanBodyBones.LeftUpperLeg, "thigh_l");
+        animator.rightThigh = FindHumanoidBone(character.transform, humanAnimator, HumanBodyBones.RightUpperLeg, "thigh_r");
+        animator.leftShin = FindHumanoidBone(character.transform, humanAnimator, HumanBodyBones.LeftLowerLeg, "calf_l");
+        animator.rightShin = FindHumanoidBone(character.transform, humanAnimator, HumanBodyBones.RightLowerLeg, "calf_r");
+        animator.leftFoot = leftFoot;
+        animator.rightFoot = rightFoot;
+
+        animator.leftSki = CreateFootAttachedRollerSki(leftFoot, "Left Adventure Roller Ski", -1f, aluminium, black, neon);
+        animator.rightSki = CreateFootAttachedRollerSki(rightFoot, "Right Adventure Roller Ski", 1f, aluminium, black, neon);
+        AddBootDetails(leftFoot, "Left", neon, black);
+        AddBootDetails(rightFoot, "Right", neon, black);
+        animator.leftPole = CreatePole(leftHand, "Left Adventure Ski Pole", -1f, black, white);
+        animator.rightPole = CreatePole(rightHand, "Right Adventure Ski Pole", 1f, black, white);
+        return true;
+    }
+
+    private static Transform FindHumanoidBone(Transform root, Animator humanAnimator, HumanBodyBones humanBone, string fallbackName)
+    {
+        if (humanAnimator != null && humanAnimator.avatar != null && humanAnimator.avatar.isHuman)
+        {
+            var bone = humanAnimator.GetBoneTransform(humanBone);
+            if (bone != null)
+            {
+                return bone;
+            }
+        }
+
+        return FindDeepChild(root, fallbackName);
+    }
+
     private static Transform FindDeepChild(Transform parent, string name)
     {
         if (parent == null)
@@ -266,51 +335,15 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         return null;
     }
 
-    private static void CreateAnimationProxyRig(Transform visualRoot, RollerSkierAnimator animator)
+    private static Transform CreateFootAttachedRollerSki(Transform foot, string name, float side, Color frameColor, Color wheelColor, Color accentColor)
     {
-        var proxyRoot = CreateChild(visualRoot, AnimationProxyRootName, Vector3.zero);
-
-        animator.hips = CreateChild(proxyRoot, "Adventure Proxy Hips", new Vector3(0f, 0.91f, 0.16f));
-        animator.torso = CreateChild(proxyRoot, "Adventure Proxy Torso", new Vector3(0f, 1.08f, 0.14f));
-        animator.head = CreateChild(proxyRoot, "Adventure Proxy Head", new Vector3(0f, 1.78f, -0.08f));
-
-        animator.leftArm = CreateChild(proxyRoot, "Adventure Proxy Left Arm", new Vector3(-0.31f, 1.36f, 0.02f));
-        animator.rightArm = CreateChild(proxyRoot, "Adventure Proxy Right Arm", new Vector3(0.31f, 1.36f, 0.02f));
-        animator.leftHand = CreateChild(animator.leftArm, "Adventure Proxy Left Hand", new Vector3(-0.035f, -0.66f, 0.13f));
-        animator.rightHand = CreateChild(animator.rightArm, "Adventure Proxy Right Hand", new Vector3(0.035f, -0.66f, 0.13f));
-
-        animator.leftThigh = CreateChild(proxyRoot, "Adventure Proxy Left Thigh", new Vector3(-0.145f, 0.67f, 0.16f));
-        animator.rightThigh = CreateChild(proxyRoot, "Adventure Proxy Right Thigh", new Vector3(0.145f, 0.67f, 0.16f));
-        animator.leftShin = CreateChild(proxyRoot, "Adventure Proxy Left Calf", new Vector3(-0.165f, 0.3f, 0.075f));
-        animator.rightShin = CreateChild(proxyRoot, "Adventure Proxy Right Calf", new Vector3(0.165f, 0.3f, 0.075f));
-        animator.leftFoot = CreateChild(proxyRoot, "Adventure Proxy Left Foot", new Vector3(-0.22f, 0.16f, 0.08f));
-        animator.rightFoot = CreateChild(proxyRoot, "Adventure Proxy Right Foot", new Vector3(0.22f, 0.16f, 0.08f));
-    }
-
-    private static void AddRollerSkiEquipment(Transform visualRoot, RollerSkierAnimator animator)
-    {
-        var aluminium = new Color(0.72f, 0.78f, 0.78f);
-        var black = new Color(0.005f, 0.006f, 0.008f);
-        var neon = new Color(0.72f, 0.9f, 0.08f);
-        var white = new Color(0.92f, 0.94f, 0.9f);
-
-        animator.leftSki = CreateRollerSki(visualRoot, "Left Adventure Roller Ski", -0.22f, aluminium, black, neon);
-        animator.rightSki = CreateRollerSki(visualRoot, "Right Adventure Roller Ski", 0.22f, aluminium, black, neon);
-
-        AddBootDetails(animator.leftFoot, "Left", neon, black);
-        AddBootDetails(animator.rightFoot, "Right", neon, black);
-
-        animator.leftPole = CreatePole(animator.leftHand, "Left Adventure Ski Pole", -1f, black, white);
-        animator.rightPole = CreatePole(animator.rightHand, "Right Adventure Ski Pole", 1f, black, white);
-    }
-
-    private static Transform CreateRollerSki(Transform parent, string name, float x, Color frameColor, Color wheelColor, Color accentColor)
-    {
-        var ski = CreateChild(parent, name, new Vector3(x, 0.03f, 0.14f));
-        AddPart(ski, "Slim Roller Ski Frame", PrimitiveType.Cube, new Vector3(0f, 0.08f, 0.18f), new Vector3(EquipmentSkiWidth, 0.025f, EquipmentSkiLength), frameColor, Vector3.zero);
-        AddPart(ski, "Front Roller Wheel", PrimitiveType.Cylinder, new Vector3(0f, 0.03f, 0.67f), new Vector3(EquipmentWheelRadius * 2f, 0.085f, EquipmentWheelRadius * 2f), wheelColor, new Vector3(0f, 0f, 90f));
-        AddPart(ski, "Rear Roller Wheel", PrimitiveType.Cylinder, new Vector3(0f, 0.03f, -0.37f), new Vector3(EquipmentWheelRadius * 2f, 0.085f, EquipmentWheelRadius * 2f), wheelColor, new Vector3(0f, 0f, 90f));
-        AddPart(ski, "Classic Binding Block", PrimitiveType.Cube, new Vector3(0f, 0.13f, 0.03f), new Vector3(0.1f, 0.055f, 0.12f), accentColor, Vector3.zero);
+        var ski = CreateChild(foot, name, new Vector3(0f, -0.09f, 0.12f));
+        ski.localRotation = Quaternion.identity;
+        AddPart(ski, "Slim Roller Ski Frame", PrimitiveType.Cube, new Vector3(0f, -0.015f, 0.18f), new Vector3(EquipmentSkiWidth, 0.025f, EquipmentSkiLength), frameColor, Vector3.zero);
+        AddPart(ski, "Front Roller Wheel", PrimitiveType.Cylinder, new Vector3(0f, -0.06f, 0.67f), new Vector3(EquipmentWheelRadius * 2f, 0.085f, EquipmentWheelRadius * 2f), wheelColor, new Vector3(0f, 0f, 90f));
+        AddPart(ski, "Rear Roller Wheel", PrimitiveType.Cylinder, new Vector3(0f, -0.06f, -0.37f), new Vector3(EquipmentWheelRadius * 2f, 0.085f, EquipmentWheelRadius * 2f), wheelColor, new Vector3(0f, 0f, 90f));
+        AddPart(ski, "Classic Binding Block", PrimitiveType.Cube, new Vector3(0f, 0.025f, 0.03f), new Vector3(0.1f, 0.055f, 0.12f), accentColor, Vector3.zero);
+        AddPart(ski, "Foot Locked Ski Connector", PrimitiveType.Cube, new Vector3(0f, 0.06f, 0.02f), new Vector3(0.12f, 0.035f, 0.18f), accentColor, Vector3.zero);
         return ski;
     }
 
@@ -332,9 +365,9 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
             return;
         }
 
-        AddPart(foot, sideName + " Roller Ski Boot Shell", PrimitiveType.Cube, new Vector3(0f, 0.02f, 0.03f), new Vector3(0.13f, 0.1f, 0.28f), bootColor, Vector3.zero);
-        AddPart(foot, sideName + " Neon Boot Cuff", PrimitiveType.Cube, new Vector3(0f, 0.085f, -0.03f), new Vector3(0.14f, 0.05f, 0.08f), accentColor, Vector3.zero);
-        AddPart(foot, sideName + " Heel Binding Accent", PrimitiveType.Cube, new Vector3(0f, 0.015f, -0.13f), new Vector3(0.12f, 0.04f, 0.06f), accentColor, Vector3.zero);
+        AddPart(foot, sideName + " Roller Ski Boot Shell", PrimitiveType.Cube, new Vector3(0f, -0.025f, 0.04f), new Vector3(0.13f, 0.1f, 0.28f), bootColor, Vector3.zero);
+        AddPart(foot, sideName + " Neon Boot Cuff", PrimitiveType.Cube, new Vector3(0f, 0.04f, -0.03f), new Vector3(0.14f, 0.05f, 0.08f), accentColor, Vector3.zero);
+        AddPart(foot, sideName + " Heel Binding Accent", PrimitiveType.Cube, new Vector3(0f, -0.03f, -0.13f), new Vector3(0.12f, 0.04f, 0.06f), accentColor, Vector3.zero);
     }
 
     private static void AddHelmetOverlay(Transform visualRoot)
