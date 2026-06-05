@@ -7,12 +7,13 @@ A small Unity prototype for a SkiErg-inspired movement game.
 - A runtime-generated 5 km road with large, clearly visible sweeping training-course turns
 - Visible uphill and downhill road sections generated from the course profile
 - White edge lines and dashed center road markings that follow the curves and slopes
+- At least 15 meters of open terrain on each side of the road before trees, hills, or mountains begin
 - Roadside speed posts every 25 meters
 - Low-poly turn warning signs placed before upcoming bends
-- Green grass shoulders on both sides of the road
-- Dense simple low-poly trees placed along both sides of the course
-- Obvious low-poly rolling hills close to the road
-- A huge 3x mountain backdrop built from lightweight low-poly meshes
+- Green open grass shoulders on both sides of the road
+- Set-back simple low-poly trees placed outside the open road margin
+- Rolling low-poly hills moved further away from the road
+- A distant mountain backdrop built from lightweight low-poly meshes only as background scenery
 - Start and finish gates with road line markers
 - A proper low-poly roller skier with realistic proportions, parallel roller skis, wheels, poles, helmet, and double-poling stance
 - Synchronized double-poling arm and pole animation that works with the current movement controller
@@ -20,7 +21,7 @@ A small Unity prototype for a SkiErg-inspired movement game.
 - `W` increases forward speed
 - `S` decreases forward speed
 - A top-left TextMeshPro HUD showing speed in km/h and distance in km
-- EditMode tests for speed, distance, HUD formatting, camera FOV, camera look-ahead, camera shake, dramatic course path behavior, and roller skier animation behavior
+- EditMode tests for speed, distance, HUD formatting, camera FOV, camera look-ahead, camera shake, dramatic course path behavior, environment clearance, and roller skier animation behavior
 
 ## Open in Unity
 
