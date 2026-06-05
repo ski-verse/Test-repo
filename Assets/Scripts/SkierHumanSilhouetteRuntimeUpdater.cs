@@ -10,8 +10,11 @@ public class SkierHumanSilhouetteRuntimeUpdater : MonoBehaviour
     public const float VisibleShortsPanelWidth = 0.42f;
     public const float VisibleGluteAccentWidth = 0.2f;
     public const float VisibleGripContrastRadius = 0.083f;
-    public const float VisiblePoleOutsideOffset = 0.2f;
-    public const float GameplayReadablePoleRadius = 0.042f;
+    public const float VisiblePoleOutsideOffset = 0.36f;
+    public const float GameplayReadablePoleRadius = 0.056f;
+    public const float RearVisiblePoleRadius = 0.064f;
+    public const float RearVisiblePoleOutsideOffset = 0.46f;
+    public const float RearVisiblePolePlantRadius = 0.105f;
     public const float NaturalUpperArmRadius = 0.086f;
     public const float NaturalForearmRadius = 0.067f;
 
@@ -82,6 +85,7 @@ public class SkierHumanSilhouetteRuntimeUpdater : MonoBehaviour
         var suitBackBlue = new Color(0.018f, 0.09f, 0.34f);
         var suitSeam = new Color(0.004f, 0.006f, 0.01f);
         var gloveBlack = new Color(0.006f, 0.007f, 0.009f);
+        var poleBlack = new Color(0f, 0.001f, 0.002f);
         var highlight = new Color(0.92f, 0.95f, 0.88f);
 
         RecolorAndResize(visualRoot, "Tight Suit Endurance Torso", suitDark, new Vector3(ReducedBlueTorsoWidth, ReducedBlueTorsoHeight, 0.14f));
@@ -110,12 +114,14 @@ public class SkierHumanSilhouetteRuntimeUpdater : MonoBehaviour
 
         AddGripReadability(animator.leftHand, animator.leftPole, -1f, gloveBlack, highlight);
         AddGripReadability(animator.rightHand, animator.rightPole, 1f, gloveBlack, highlight);
-        MovePoleOutside(animator.leftPole, -1f, gloveBlack, highlight);
-        MovePoleOutside(animator.rightPole, 1f, gloveBlack, highlight);
+        MovePoleOutside(animator.leftPole, -1f, poleBlack, highlight);
+        MovePoleOutside(animator.rightPole, 1f, poleBlack, highlight);
+        AddRearVisiblePoleSilhouette(animator.leftPole, -1f, poleBlack, highlight);
+        AddRearVisiblePoleSilhouette(animator.rightPole, 1f, poleBlack, highlight);
 
         new GameObject(HumanSilhouetteAppliedMarkerName).transform.SetParent(visualRoot, false);
         animator.ResetBasePose();
-        Debug.Log("[Ski-Verse] Human silhouette pass applied: reduced blue mannequin mass, added animated back/shorts panels, clearer hands and poles.");
+        Debug.Log("[Ski-Verse] Human silhouette pass applied: reduced blue mannequin mass, added animated back/shorts panels, and made poles visible from gameplay camera.");
         return true;
     }
 
@@ -186,7 +192,7 @@ public class SkierHumanSilhouetteRuntimeUpdater : MonoBehaviour
         var shaft = FindDescendant(pole, "Dark Visible Pole Shaft");
         if (shaft != null)
         {
-            shaft.localPosition = new Vector3(VisiblePoleOutsideOffset * side, -0.72f, 0.34f);
+            shaft.localPosition = new Vector3(VisiblePoleOutsideOffset * side, -0.72f, 0.22f);
             shaft.localScale = new Vector3(GameplayReadablePoleRadius, ProperRollerSkierRuntimeUpdater.VisiblePoleShaftLength, GameplayReadablePoleRadius);
             SetColor(shaft, poleColor);
         }
@@ -194,18 +200,30 @@ public class SkierHumanSilhouetteRuntimeUpdater : MonoBehaviour
         var upper = FindDescendant(pole, "Upper Pole Motion Marker");
         if (upper != null)
         {
-            upper.localPosition = new Vector3(VisiblePoleOutsideOffset * side, -0.32f, 0.16f);
-            upper.localScale = new Vector3(GameplayReadablePoleRadius * 1.2f, 0.052f, GameplayReadablePoleRadius * 1.2f);
+            upper.localPosition = new Vector3(VisiblePoleOutsideOffset * side, -0.32f, 0.08f);
+            upper.localScale = new Vector3(GameplayReadablePoleRadius * 1.25f, 0.06f, GameplayReadablePoleRadius * 1.25f);
             SetColor(upper, highlightColor);
         }
 
         var lower = FindDescendant(pole, "Lower Pole Motion Marker");
         if (lower != null)
         {
-            lower.localPosition = new Vector3(VisiblePoleOutsideOffset * side, -1.06f, 0.58f);
-            lower.localScale = new Vector3(GameplayReadablePoleRadius * 1.2f, 0.052f, GameplayReadablePoleRadius * 1.2f);
+            lower.localPosition = new Vector3(VisiblePoleOutsideOffset * side, -1.06f, 0.42f);
+            lower.localScale = new Vector3(GameplayReadablePoleRadius * 1.25f, 0.06f, GameplayReadablePoleRadius * 1.25f);
             SetColor(lower, highlightColor);
         }
+    }
+
+    private static void AddRearVisiblePoleSilhouette(Transform pole, float side, Color poleColor, Color highlightColor)
+    {
+        if (pole == null)
+        {
+            return;
+        }
+
+        AddBodyPart(pole, "Gameplay Rear Visible Pole Shaft", PrimitiveType.Cylinder, new Vector3(RearVisiblePoleOutsideOffset * side, -0.76f, -0.04f), new Vector3(RearVisiblePoleRadius, ProperRollerSkierRuntimeUpdater.VisiblePoleShaftLength * 0.96f, RearVisiblePoleRadius), poleColor, new Vector3(24f, 0f, -2f * side));
+        AddBodyPart(pole, "Gameplay Rear Upper Pole Glint", PrimitiveType.Cylinder, new Vector3(RearVisiblePoleOutsideOffset * side, -0.3f, -0.12f), new Vector3(RearVisiblePoleRadius * 1.15f, 0.055f, RearVisiblePoleRadius * 1.15f), highlightColor, new Vector3(24f, 0f, -2f * side));
+        AddBodyPart(pole, "Gameplay Rear Pole Plant Dot", PrimitiveType.Sphere, new Vector3((RearVisiblePoleOutsideOffset + 0.1f) * side, -1.46f, 0.55f), new Vector3(RearVisiblePolePlantRadius, RearVisiblePolePlantRadius, RearVisiblePolePlantRadius), poleColor, Vector3.zero);
     }
 
     private static void SetColor(Transform part, Color color)
