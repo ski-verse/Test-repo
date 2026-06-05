@@ -78,6 +78,8 @@ public class RollerSkierVisualModelTests
         Assert.IsNotNull(FindChildRecursive(animator.hips, "Human Shorts Leg Split"));
         Assert.IsNotNull(FindChildRecursive(animator.leftHand, "Visible Glove Grip Wrap"));
         Assert.IsNotNull(FindChildRecursive(animator.rightHand, "Visible Glove Grip Wrap"));
+        Assert.AreEqual(SkierHumanSilhouetteRuntimeUpdater.NaturalUpperArmRadius, FindChildRecursive(animator.leftArm, "Relaxed Upper Arm").localScale.x, 0.001f);
+        Assert.AreEqual(SkierHumanSilhouetteRuntimeUpdater.NaturalUpperArmRadius, FindChildRecursive(animator.rightArm, "Relaxed Upper Arm").localScale.x, 0.001f);
         Assert.AreEqual(animator.leftHand, animator.leftPole.parent);
         Assert.AreEqual(animator.rightHand, animator.rightPole.parent);
 
