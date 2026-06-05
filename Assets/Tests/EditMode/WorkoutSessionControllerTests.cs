@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class WorkoutSessionControllerTests
 {
@@ -73,9 +74,14 @@ public class WorkoutSessionControllerTests
     }
 
     [Test]
-    public void AdvanceSession_ShowsFinishSummaryAtFiveKilometers()
+    public void AdvanceSession_ShowsFinishSummaryAtFiveKilometersAndStopsPlayer()
     {
+        var playerObject = new GameObject("Player");
+        var player = playerObject.AddComponent<PlayerSpeedController>();
+        player.CurrentSpeed = 9f;
+
         var session = new GameObject("Workout Session").AddComponent<WorkoutSessionController>();
+        session.player = player;
         session.elapsedTimeText = new GameObject("Elapsed Time").AddComponent<TextMeshProUGUI>();
         session.finishSummaryText = new GameObject("Summary Text").AddComponent<TextMeshProUGUI>();
         session.finishSummaryPanel = new GameObject("Finish Summary Panel");
@@ -86,6 +92,8 @@ public class WorkoutSessionControllerTests
 
         Assert.IsTrue(session.IsFinished);
         Assert.IsTrue(session.finishSummaryPanel.activeSelf);
+        Assert.IsFalse(player.enabled);
+        Assert.AreEqual(0f, player.CurrentSpeed, 0.001f);
         StringAssert.Contains("Time: 16:40", session.finishSummaryText.text);
         StringAssert.Contains("Distance: 5.00 km", session.finishSummaryText.text);
         StringAssert.Contains("Average speed: 18.0 km/h", session.finishSummaryText.text);
@@ -95,5 +103,65 @@ public class WorkoutSessionControllerTests
         Object.DestroyImmediate(session.finishSummaryText.gameObject);
         Object.DestroyImmediate(session.finishSummaryPanel);
         Object.DestroyImmediate(session.gameObject);
+        Object.DestroyImmediate(playerObject);
+    }
+
+    [Test]
+    public void ReturnToStartSession_ResetsPlayerAndStartsNewSessionWithoutReloadingScene()
+    {
+        var playerObject = new GameObject("Player");
+        var player = playerObject.AddComponent<PlayerSpeedController>();
+        player.AlignToCourse(1200f);
+        player.SetStartDistanceZ(0f);
+        player.CurrentSpeed = 12f;
+
+        var session = new GameObject("Workout Session").AddComponent<WorkoutSessionController>();
+        session.player = player;
+        session.elapsedTimeText = new GameObject("Elapsed Time").AddComponent<TextMeshProUGUI>();
+        session.finishSummaryText = new GameObject("Summary Text").AddComponent<TextMeshProUGUI>();
+        session.finishSummaryPanel = new GameObject("Finish Summary Panel");
+
+        session.StartSession();
+        session.AdvanceSession(1000f, 5f, 40f);
+        session.ReturnToStartSession();
+
+        Assert.IsFalse(session.IsFinished);
+        Assert.IsTrue(player.enabled);
+        Assert.AreEqual(0f, session.ElapsedTimeSeconds, 0.001f);
+        Assert.AreEqual(0f, session.MaxSpeedKmh, 0.001f);
+        Assert.AreEqual(4f, player.CurrentSpeed, 0.001f);
+        Assert.AreEqual(0f, player.DistanceKm, 0.001f);
+        Assert.AreEqual("Time: 00:00", session.elapsedTimeText.text);
+        Assert.IsFalse(session.finishSummaryPanel.activeSelf);
+
+        Object.DestroyImmediate(session.elapsedTimeText.gameObject);
+        Object.DestroyImmediate(session.finishSummaryText.gameObject);
+        Object.DestroyImmediate(session.finishSummaryPanel);
+        Object.DestroyImmediate(session.gameObject);
+        Object.DestroyImmediate(playerObject);
+    }
+
+    [Test]
+    public void RuntimeUi_CreatesFinishButtonsAndEventSystemAutomatically()
+    {
+        var sessionObject = new GameObject("Workout Session");
+        var session = sessionObject.AddComponent<WorkoutSessionController>();
+
+        session.SendMessage("Start");
+
+        Assert.IsNotNull(session.elapsedTimeText);
+        Assert.IsNotNull(session.finishSummaryPanel);
+        Assert.IsNotNull(session.finishSummaryText);
+        Assert.IsNotNull(session.restartButton);
+        Assert.IsNotNull(session.returnToStartButton);
+        Assert.IsNotNull(Object.FindFirstObjectByType<EventSystem>());
+        Assert.IsFalse(session.finishSummaryPanel.activeSelf);
+
+        Object.DestroyImmediate(sessionObject);
+        var eventSystem = Object.FindFirstObjectByType<EventSystem>();
+        if (eventSystem != null)
+        {
+            Object.DestroyImmediate(eventSystem.gameObject);
+        }
     }
 }
