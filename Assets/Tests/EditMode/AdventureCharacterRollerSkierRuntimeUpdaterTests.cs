@@ -39,6 +39,10 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
         Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.LegChainLateralCompression, 0.3f);
         Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.LowerLegChainLateralCompression, 0.15f);
         Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.LowerLegChainLateralCompression, 0.35f);
+        Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.NarrowFootTrackHalfWidth, 0.08f);
+        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.NarrowFootTrackHalfWidth, 0.13f);
+        Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.NarrowUpperLegTrackHalfWidth, AdventureCharacterRollerSkierRuntimeUpdater.NarrowFootTrackHalfWidth);
+        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.NarrowUpperLegTrackHalfWidth, 0.18f);
     }
 
     [Test]
@@ -78,6 +82,37 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
 
             Assert.AreSame(hand, pole.parent);
             Assert.AreEqual(hand.position, pole.position);
+        }
+        finally
+        {
+            Object.DestroyImmediate(root.gameObject);
+        }
+    }
+
+    [Test]
+    public void AdventureEquipmentBoneFollower_CanLockFootEquipmentToNarrowSkiTrack()
+    {
+        var root = new GameObject("Player Visual Root").transform;
+        var foot = new GameObject("Wide Imported Foot Bone").transform;
+        var ski = new GameObject("Narrow Roller Ski").transform;
+
+        try
+        {
+            foot.SetParent(root, false);
+            ski.SetParent(root, false);
+            foot.localPosition = new Vector3(0.45f, 0.2f, 0.1f);
+
+            var follower = ski.gameObject.AddComponent<AdventureEquipmentBoneFollower>();
+            follower.target = foot;
+            follower.orientationRoot = root;
+            follower.lockRootSpaceX = true;
+            follower.lockedRootSpaceX = AdventureCharacterRollerSkierRuntimeUpdater.NarrowFootTrackHalfWidth;
+            follower.ApplyNow();
+
+            var rootSpaceSkiPosition = root.InverseTransformPoint(ski.position);
+            Assert.AreEqual(AdventureCharacterRollerSkierRuntimeUpdater.NarrowFootTrackHalfWidth, rootSpaceSkiPosition.x, 0.001f);
+            Assert.AreEqual(foot.localPosition.y, rootSpaceSkiPosition.y, 0.001f);
+            Assert.AreEqual(foot.localPosition.z, rootSpaceSkiPosition.z, 0.001f);
         }
         finally
         {
