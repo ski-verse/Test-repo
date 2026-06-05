@@ -34,6 +34,7 @@ public class ProperRollerSkierRuntimeUpdaterTests
         var rightPole = visualRoot.transform.Find("Right Ski Pole");
 
         Assert.IsNotNull(torsoPivot.Find("Athletic Forward Leaning Torso"));
+        Assert.IsNotNull(torsoPivot.Find("Narrow Waist"));
         Assert.IsNotNull(torsoPivot.Find("Low Poly Helmet"));
         Assert.IsNotNull(torsoPivot.Find("Helmet Visor"));
         Assert.IsNotNull(leftSki.Find("Front Roller Wheel"));
@@ -41,9 +42,9 @@ public class ProperRollerSkierRuntimeUpdaterTests
         Assert.IsNotNull(rightSki.Find("Front Roller Wheel"));
         Assert.IsNotNull(rightSki.Find("Rear Roller Wheel"));
         Assert.IsNotNull(leftPole.Find("Pole Shaft"));
-        Assert.IsNotNull(leftPole.Find("Pole Handle"));
+        Assert.IsNotNull(leftPole.Find("Ergonomic Pole Grip"));
         Assert.IsNotNull(rightPole.Find("Pole Shaft"));
-        Assert.IsNotNull(rightPole.Find("Pole Handle"));
+        Assert.IsNotNull(rightPole.Find("Ergonomic Pole Grip"));
 
         Object.DestroyImmediate(skier);
     }
@@ -78,7 +79,7 @@ public class ProperRollerSkierRuntimeUpdaterTests
 
         ProperRollerSkierRuntimeUpdater.ApplyProperRollerSkierModel();
 
-        var hips = visualRoot.transform.Find("Hips");
+        var hips = visualRoot.transform.Find("Narrow Athletic Hips");
         var torsoPivot = visualRoot.transform.Find("Torso Pivot");
         var head = torsoPivot.Find("Head");
         var leftSki = visualRoot.transform.Find("Left Parallel Roller Ski");
@@ -89,6 +90,58 @@ public class ProperRollerSkierRuntimeUpdaterTests
         Assert.Less(leftSki.localPosition.y, hips.localPosition.y);
         Assert.Less(rightSki.localPosition.y, hips.localPosition.y);
         Assert.AreEqual(-leftSki.localPosition.x, rightSki.localPosition.x, 0.001f);
+
+        Object.DestroyImmediate(skier);
+    }
+
+    [Test]
+    public void ApplyProperRollerSkierModel_UsesCompactRealisticRollerSkiProportions()
+    {
+        var skier = CreateSkierRoot(out var visualRoot, out _);
+
+        ProperRollerSkierRuntimeUpdater.ApplyProperRollerSkierModel();
+
+        var leftSki = visualRoot.transform.Find("Left Parallel Roller Ski");
+        var deck = leftSki.Find("Roller Ski Deck");
+        var innerRail = leftSki.Find("Inner Side Rail");
+        var outerRail = leftSki.Find("Outer Side Rail");
+        var frontWheel = leftSki.Find("Front Roller Wheel");
+        var rearWheel = leftSki.Find("Rear Roller Wheel");
+        var binding = leftSki.Find("Binding Plate");
+        var wheelbase = frontWheel.localPosition.z - rearWheel.localPosition.z;
+
+        Assert.Greater(deck.localScale.z, 1.3f);
+        Assert.Less(deck.localScale.z, 1.6f);
+        Assert.IsNotNull(innerRail);
+        Assert.IsNotNull(outerRail);
+        Assert.Greater(wheelbase, 1.2f);
+        Assert.Less(wheelbase, 1.4f);
+        Assert.Greater(binding.localPosition.y, deck.localPosition.y);
+
+        Object.DestroyImmediate(skier);
+    }
+
+    [Test]
+    public void ApplyProperRollerSkierModel_UsesSlenderPolesWithGripStrapBasketAndTip()
+    {
+        var skier = CreateSkierRoot(out var visualRoot, out _);
+
+        ProperRollerSkierRuntimeUpdater.ApplyProperRollerSkierModel();
+
+        var leftPole = visualRoot.transform.Find("Left Ski Pole");
+        var shaft = leftPole.Find("Pole Shaft");
+        var grip = leftPole.Find("Ergonomic Pole Grip");
+        var strap = leftPole.Find("Wrist Strap");
+        var basket = leftPole.Find("Compact Pole Basket");
+        var tip = leftPole.Find("Pole Tip");
+
+        Assert.IsNotNull(grip);
+        Assert.IsNotNull(strap);
+        Assert.IsNotNull(basket);
+        Assert.IsNotNull(tip);
+        Assert.Less(shaft.localScale.x, 0.02f);
+        Assert.Greater(shaft.localScale.y, 1f);
+        Assert.Less(basket.localScale.x, 0.08f);
 
         Object.DestroyImmediate(skier);
     }
