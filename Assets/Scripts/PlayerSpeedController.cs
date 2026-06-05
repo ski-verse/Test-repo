@@ -3,6 +3,9 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class PlayerSpeedController : MonoBehaviour
 {
+    public const float GradientSpeedReductionPerPercent = 0.055f;
+    public const float MinimumClimbSpeedMultiplier = 0.5f;
+
     [Header("Speed")]
     public float acceleration = 3f;
     public float deceleration = 4f;
@@ -37,7 +40,11 @@ public class PlayerSpeedController : MonoBehaviour
         set => currentSpeed = Mathf.Clamp(value, minSpeed, maxSpeed);
     }
 
-    public float SpeedKmh => CurrentSpeed * 3.6f;
+    public float CurrentGradientPercent => CoursePath.GradientPercentAtDistance(transform.position.z);
+
+    public float EffectiveCurrentSpeed => CurrentSpeed * CalculateGradientSpeedMultiplier(CurrentGradientPercent);
+
+    public float SpeedKmh => EffectiveCurrentSpeed * 3.6f;
 
     public float DistanceKm => Mathf.Max(0f, transform.position.z - startDistanceZ) / 1000f;
 
@@ -58,6 +65,16 @@ public class PlayerSpeedController : MonoBehaviour
     {
         ApplyInputSource(Time.deltaTime);
         MoveAlongCourse(Time.deltaTime);
+    }
+
+    public static float CalculateGradientSpeedMultiplier(float gradientPercent)
+    {
+        if (gradientPercent <= 0f)
+        {
+            return 1f;
+        }
+
+        return Mathf.Clamp(1f - gradientPercent * GradientSpeedReductionPerPercent, MinimumClimbSpeedMultiplier, 1f);
     }
 
     public void EnsureInputSource()
@@ -118,7 +135,7 @@ public class PlayerSpeedController : MonoBehaviour
 
     public Vector3 CalculateNextPosition(Vector3 startPosition, Vector3 forwardDirection, float deltaTime)
     {
-        return startPosition + forwardDirection.normalized * CurrentSpeed * deltaTime;
+        return startPosition + forwardDirection.normalized * EffectiveCurrentSpeed * deltaTime;
     }
 
     public void AlignToCourse(float zPosition)
@@ -134,7 +151,7 @@ public class PlayerSpeedController : MonoBehaviour
 
     private void MoveAlongCourse(float deltaTime)
     {
-        var nextZ = transform.position.z + CurrentSpeed * deltaTime;
+        var nextZ = transform.position.z + EffectiveCurrentSpeed * deltaTime;
         AlignToCourse(nextZ);
     }
 }
