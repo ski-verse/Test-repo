@@ -37,6 +37,8 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
         Assert.LessOrEqual(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseLegInwardMuscle, 0.02f);
         Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.LegChainLateralCompression, 0.15f);
         Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.LegChainLateralCompression, 0.3f);
+        Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.LowerLegChainLateralCompression, 0.15f);
+        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.LowerLegChainLateralCompression, 0.35f);
     }
 
     [Test]
