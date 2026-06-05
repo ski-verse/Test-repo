@@ -102,15 +102,21 @@ public class ProperRollerSkierRuntimeUpdater : MonoBehaviour
     private static Transform CreateRollerSki(Transform parent, string name, float xPosition, Color skiColor, Color wheelColor, Color bootColor)
     {
         var ski = CreateChild(parent, name, new Vector3(xPosition, 0f, 0.13f));
-        AddBodyPart(ski, "Slim Long Roller Ski Deck", PrimitiveType.Capsule, new Vector3(0f, 0.09f, 0f), new Vector3(0.06f, 0.98f, 0.035f), skiColor, new Vector3(90f, 0f, 0f));
-        AddBodyPart(ski, "Inner Side Rail", PrimitiveType.Cube, new Vector3(-0.04f, 0.105f, 0f), new Vector3(0.012f, 0.024f, 2.15f), skiColor, Vector3.zero);
-        AddBodyPart(ski, "Outer Side Rail", PrimitiveType.Cube, new Vector3(0.04f, 0.105f, 0f), new Vector3(0.012f, 0.024f, 2.15f), skiColor, Vector3.zero);
-        AddBodyPart(ski, "Front Axle", PrimitiveType.Cylinder, new Vector3(0f, 0.08f, 1.02f), new Vector3(0.016f, 0.12f, 0.016f), bootColor, new Vector3(0f, 0f, 90f));
-        AddBodyPart(ski, "Rear Axle", PrimitiveType.Cylinder, new Vector3(0f, 0.08f, -1f), new Vector3(0.016f, 0.12f, 0.016f), bootColor, new Vector3(0f, 0f, 90f));
-        AddBodyPart(ski, "Front Roller Wheel", PrimitiveType.Cylinder, new Vector3(0f, 0.035f, 1.08f), new Vector3(0.105f, 0.042f, 0.105f), wheelColor, new Vector3(0f, 0f, 90f));
-        AddBodyPart(ski, "Rear Roller Wheel", PrimitiveType.Cylinder, new Vector3(0f, 0.035f, -1.06f), new Vector3(0.105f, 0.042f, 0.105f), wheelColor, new Vector3(0f, 0f, 90f));
-        AddBodyPart(ski, "Binding Plate", PrimitiveType.Cube, new Vector3(0f, 0.14f, 0.08f), new Vector3(0.105f, 0.032f, 0.34f), bootColor, Vector3.zero);
-        AddBodyPart(ski, "Heel Stop", PrimitiveType.Cube, new Vector3(0f, 0.17f, -0.1f), new Vector3(0.085f, 0.05f, 0.075f), bootColor, Vector3.zero);
+        AddBodyPart(ski, "Slim Foot Platform", PrimitiveType.Capsule, new Vector3(0f, 0.125f, -0.03f), new Vector3(0.055f, 0.33f, 0.032f), skiColor, new Vector3(90f, 0f, 0f));
+        AddBodyPart(ski, "Classic Roller Ski Frame", PrimitiveType.Cube, new Vector3(0f, 0.105f, 0.5f), new Vector3(0.09f, 0.026f, 1.8f), skiColor, Vector3.zero);
+        AddBodyPart(ski, "Inner Side Rail", PrimitiveType.Cube, new Vector3(-0.046f, 0.118f, 0.5f), new Vector3(0.012f, 0.03f, 1.86f), skiColor, Vector3.zero);
+        AddBodyPart(ski, "Outer Side Rail", PrimitiveType.Cube, new Vector3(0.046f, 0.118f, 0.5f), new Vector3(0.012f, 0.03f, 1.86f), skiColor, Vector3.zero);
+        AddBodyPart(ski, "Front Fork Bridge", PrimitiveType.Cube, new Vector3(0f, 0.11f, 1.25f), new Vector3(0.18f, 0.035f, 0.11f), skiColor, Vector3.zero);
+        AddBodyPart(ski, "Rear Fork Bridge", PrimitiveType.Cube, new Vector3(0f, 0.11f, -0.28f), new Vector3(0.18f, 0.035f, 0.11f), skiColor, Vector3.zero);
+        AddBodyPart(ski, "Front Axle", PrimitiveType.Cylinder, new Vector3(0f, 0.08f, 1.29f), new Vector3(0.018f, 0.15f, 0.018f), bootColor, new Vector3(0f, 0f, 90f));
+        AddBodyPart(ski, "Rear Axle", PrimitiveType.Cylinder, new Vector3(0f, 0.08f, -0.31f), new Vector3(0.018f, 0.15f, 0.018f), bootColor, new Vector3(0f, 0f, 90f));
+        AddBodyPart(ski, "Front Roller Wheel", PrimitiveType.Cylinder, new Vector3(0f, 0.032f, 1.36f), new Vector3(0.13f, 0.055f, 0.13f), wheelColor, new Vector3(0f, 0f, 90f));
+        AddBodyPart(ski, "Rear Roller Wheel", PrimitiveType.Cylinder, new Vector3(0f, 0.032f, -0.36f), new Vector3(0.13f, 0.055f, 0.13f), wheelColor, new Vector3(0f, 0f, 90f));
+        AddBodyPart(ski, "Wheel Hub Accent Front", PrimitiveType.Cylinder, new Vector3(0f, 0.032f, 1.36f), new Vector3(0.052f, 0.059f, 0.052f), skiColor, new Vector3(0f, 0f, 90f));
+        AddBodyPart(ski, "Wheel Hub Accent Rear", PrimitiveType.Cylinder, new Vector3(0f, 0.032f, -0.36f), new Vector3(0.052f, 0.059f, 0.052f), skiColor, new Vector3(0f, 0f, 90f));
+        AddBodyPart(ski, "Binding Plate", PrimitiveType.Cube, new Vector3(0f, 0.155f, -0.035f), new Vector3(0.105f, 0.032f, 0.42f), bootColor, Vector3.zero);
+        AddBodyPart(ski, "Toe Binding Clamp", PrimitiveType.Cube, new Vector3(0f, 0.19f, 0.155f), new Vector3(0.115f, 0.055f, 0.06f), bootColor, Vector3.zero);
+        AddBodyPart(ski, "Heel Stop", PrimitiveType.Cube, new Vector3(0f, 0.18f, -0.21f), new Vector3(0.09f, 0.06f, 0.07f), bootColor, Vector3.zero);
         return ski;
     }
 
