@@ -26,14 +26,16 @@ public class RollerSkierTechniqueTests
     }
 
     [Test]
-    public void ProperRollerSkierVisual_UsesVisibleHighContrastPoles()
+    public void ProperRollerSkierVisual_UsesVisibleGameplayCameraPoles()
     {
-        Assert.GreaterOrEqual(ProperRollerSkierRuntimeUpdater.VisiblePoleShaftRadius, 0.017f);
-        Assert.GreaterOrEqual(ProperRollerSkierRuntimeUpdater.VisiblePoleGripRadius, 0.045f);
+        Assert.GreaterOrEqual(ProperRollerSkierRuntimeUpdater.VisiblePoleShaftRadius, 0.027f);
+        Assert.GreaterOrEqual(ProperRollerSkierRuntimeUpdater.VisiblePoleGripRadius, 0.06f);
+        Assert.GreaterOrEqual(ProperRollerSkierRuntimeUpdater.VisiblePoleLateralOffset, 0.12f);
+        Assert.GreaterOrEqual(ProperRollerSkierRuntimeUpdater.VisiblePoleTipLateralOffset, 0.28f);
         Assert.GreaterOrEqual(ProperRollerSkierRuntimeUpdater.VisiblePoleShaftLength, 1.38f);
         Assert.LessOrEqual(ProperRollerSkierRuntimeUpdater.VisiblePoleShaftLength, 1.45f);
-        Assert.Greater(CalculateLuminance(ProperRollerSkierRuntimeUpdater.VisiblePoleShaftColor), 0.78f);
-        Assert.Greater(CalculateLuminance(ProperRollerSkierRuntimeUpdater.VisiblePoleShaftColor) - CalculateLuminance(ProperRollerSkierRuntimeUpdater.PoleGripColor), 0.65f);
+        Assert.Less(CalculateLuminance(ProperRollerSkierRuntimeUpdater.VisiblePoleShaftColor), 0.08f);
+        Assert.Greater(CalculateLuminance(ProperRollerSkierRuntimeUpdater.PoleHighlightColor) - CalculateLuminance(ProperRollerSkierRuntimeUpdater.VisiblePoleShaftColor), 0.75f);
     }
 
     [Test]
