@@ -16,22 +16,22 @@ public static class MountainRangeMeshBuilder
         {
             var x = CalculateProfileX(index, segmentCount, seed);
             var height = CalculatePeakHeight(index, seed);
-            var shoulderHeight = height * Mathf.Lerp(0.24f, 0.36f, Noise01(seed * 0.29f + index * 3.17f));
-            var ridgeZ = Mathf.Lerp(-0.18f, 0.18f, Noise01(seed * 0.41f + index * 2.23f));
-            var frontShoulderZ = Mathf.Lerp(-0.44f, -0.28f, Noise01(seed * 0.53f + index * 1.81f));
-            var backShoulderZ = Mathf.Lerp(0.28f, 0.44f, Noise01(seed * 0.67f + index * 2.71f));
+            var shoulderHeight = height * Mathf.Lerp(0.28f, 0.34f, SmoothNoise01(seed * 0.29f + index * 3.17f));
+            var ridgeZ = Mathf.Lerp(-0.12f, 0.12f, SmoothNoise01(seed * 0.41f + index * 2.23f));
+            var frontShoulderZ = Mathf.Lerp(-0.43f, -0.31f, SmoothNoise01(seed * 0.53f + index * 1.81f));
+            var backShoulderZ = Mathf.Lerp(0.31f, 0.43f, SmoothNoise01(seed * 0.67f + index * 2.71f));
 
             if (index == 0 || index == segmentCount)
             {
-                height *= 0.62f;
-                shoulderHeight *= 0.7f;
+                height *= 0.78f;
+                shoulderHeight *= 0.82f;
             }
 
             var vertexIndex = index * VerticesPerProfile;
             vertices[vertexIndex] = new Vector3(x, 0f, -0.62f);
             vertices[vertexIndex + 1] = new Vector3(x, shoulderHeight, frontShoulderZ);
             vertices[vertexIndex + 2] = new Vector3(x, height, ridgeZ);
-            vertices[vertexIndex + 3] = new Vector3(x, shoulderHeight * 0.92f, backShoulderZ);
+            vertices[vertexIndex + 3] = new Vector3(x, shoulderHeight * 0.94f, backShoulderZ);
             vertices[vertexIndex + 4] = new Vector3(x, 0f, 0.62f);
         }
 
@@ -54,7 +54,7 @@ public static class MountainRangeMeshBuilder
 
         var mesh = new Mesh
         {
-            name = "Natural Low Poly Mountain Range Mesh",
+            name = "Rounded Low Poly Mountain Range Mesh",
             vertices = vertices,
             triangles = triangles
         };
@@ -65,10 +65,9 @@ public static class MountainRangeMeshBuilder
 
     public static float CalculatePeakHeight(int index, float seed)
     {
-        var primary = Noise01(seed + index * 1.73f);
-        var secondary = Noise01(seed * 0.37f + index * 4.91f);
-        var saddle = Mathf.Lerp(0.86f, 1.06f, Noise01(seed * 0.11f + index * 7.07f));
-        return Mathf.Lerp(0.48f, 1f, primary) * Mathf.Lerp(0.82f, 1.08f, secondary) * saddle;
+        var broadWave = Mathf.Sin(seed * 0.13f + index * 0.72f) * 0.5f + 0.5f;
+        var secondaryWave = Mathf.Sin(seed * 0.31f + index * 1.08f) * 0.5f + 0.5f;
+        return Mathf.Lerp(0.44f, 0.72f, broadWave * 0.7f + secondaryWave * 0.3f);
     }
 
     private static float CalculateProfileX(int index, int segmentCount, float seed)
@@ -80,7 +79,7 @@ public static class MountainRangeMeshBuilder
             return x;
         }
 
-        return x + Mathf.Lerp(-0.025f, 0.025f, Noise01(seed * 0.73f + index * 5.19f));
+        return x + Mathf.Lerp(-0.012f, 0.012f, SmoothNoise01(seed * 0.73f + index * 5.19f));
     }
 
     private static void AddQuad(int[] triangles, ref int triangleIndex, int a, int b, int c, int d)
@@ -112,8 +111,9 @@ public static class MountainRangeMeshBuilder
         triangleIndex += 3;
     }
 
-    private static float Noise01(float value)
+    private static float SmoothNoise01(float value)
     {
-        return Mathf.Repeat(Mathf.Sin(value * 12.9898f) * 43758.5453f, 1f);
+        var noise = Mathf.Repeat(Mathf.Sin(value * 12.9898f) * 43758.5453f, 1f);
+        return Mathf.SmoothStep(0f, 1f, noise);
     }
 }
