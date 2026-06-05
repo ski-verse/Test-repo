@@ -9,11 +9,27 @@ public class PlayerSpeedController : MonoBehaviour
     public float minSpeed = 0f;
     public float maxSpeed = 18f;
 
+    [Header("Input")]
+    [SerializeField]
+    private MonoBehaviour inputSourceBehaviour;
+
     [Header("Runtime")]
     [SerializeField]
     private float currentSpeed = 4f;
     [SerializeField]
     private float startDistanceZ;
+
+    private IPlayerInputSource inputSource;
+
+    public IPlayerInputSource InputSource
+    {
+        get => inputSource;
+        set
+        {
+            inputSource = value;
+            inputSourceBehaviour = value as MonoBehaviour;
+        }
+    }
 
     public float CurrentSpeed
     {
@@ -25,8 +41,14 @@ public class PlayerSpeedController : MonoBehaviour
 
     public float DistanceKm => Mathf.Max(0f, transform.position.z - startDistanceZ) / 1000f;
 
+    private void Awake()
+    {
+        EnsureInputSource();
+    }
+
     private void Start()
     {
+        EnsureInputSource();
         CurrentSpeed = currentSpeed;
         startDistanceZ = transform.position.z;
         AlignToCourse(transform.position.z);
@@ -34,18 +56,54 @@ public class PlayerSpeedController : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKey(KeyCode.W))
+        ApplyInputSource(Time.deltaTime);
+        MoveAlongCourse(Time.deltaTime);
+    }
+
+    public void EnsureInputSource()
+    {
+        if (inputSource != null)
         {
-            IncreaseSpeed(Time.deltaTime);
+            return;
         }
 
-        if (Input.GetKey(KeyCode.S))
+        if (inputSourceBehaviour is IPlayerInputSource configuredSource)
         {
-            DecreaseSpeed(Time.deltaTime);
+            inputSource = configuredSource;
+            return;
         }
 
-        var nextZ = transform.position.z + CurrentSpeed * Time.deltaTime;
-        AlignToCourse(nextZ);
+        foreach (var behaviour in GetComponents<MonoBehaviour>())
+        {
+            if (behaviour is IPlayerInputSource discoveredSource)
+            {
+                inputSourceBehaviour = behaviour;
+                inputSource = discoveredSource;
+                return;
+            }
+        }
+
+        var keyboardInput = gameObject.AddComponent<KeyboardPlayerInputSource>();
+        inputSourceBehaviour = keyboardInput;
+        inputSource = keyboardInput;
+    }
+
+    public void ApplyInputSource(float deltaTime)
+    {
+        EnsureInputSource();
+        ApplyMovementInput(inputSource != null ? inputSource.ReadMovementInput() : PlayerMovementInput.None, deltaTime);
+    }
+
+    public void ApplyMovementInput(PlayerMovementInput movementInput, float deltaTime)
+    {
+        if (movementInput.SpeedAxis > 0f)
+        {
+            IncreaseSpeed(deltaTime * movementInput.SpeedAxis);
+        }
+        else if (movementInput.SpeedAxis < 0f)
+        {
+            DecreaseSpeed(deltaTime * -movementInput.SpeedAxis);
+        }
     }
 
     public void IncreaseSpeed(float deltaTime)
@@ -72,5 +130,11 @@ public class PlayerSpeedController : MonoBehaviour
     public void SetStartDistanceZ(float zPosition)
     {
         startDistanceZ = zPosition;
+    }
+
+    private void MoveAlongCourse(float deltaTime)
+    {
+        var nextZ = transform.position.z + CurrentSpeed * deltaTime;
+        AlignToCourse(nextZ);
     }
 }
