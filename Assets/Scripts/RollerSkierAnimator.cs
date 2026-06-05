@@ -99,32 +99,32 @@ public class RollerSkierAnimator : MonoBehaviour
 
     public static float CalculateTorsoForwardDrive(float phase)
     {
-        return CalculateBodyWeightTransfer(phase) * 0.18f - CalculateReturnLift(phase) * 0.03f;
+        return CalculateBodyWeightTransfer(phase) * 0.19f - CalculateReturnLift(phase) * 0.028f;
     }
 
     public static float CalculateHipHingeForwardDrive(float phase)
     {
-        return CalculateBodyWeightTransfer(phase) * 0.11f - CalculateReturnLift(phase) * 0.018f;
+        return CalculateBodyWeightTransfer(phase) * 0.12f - CalculateReturnLift(phase) * 0.018f;
     }
 
     public static float CalculateHandForwardDrive(float phase)
     {
-        return CalculatePolePressure(phase) * 0.085f;
+        return CalculatePolePressure(phase) * 0.072f;
     }
 
     public static float CalculateHandOutwardDrift(float phase)
     {
-        return CalculatePolePressure(phase) * 0.012f;
+        return CalculatePolePressure(phase) * 0.008f;
     }
 
     public static float CalculateHandRecoveryLift(float phase)
     {
-        return CalculateReturnLift(phase) * 0.08f;
+        return CalculateReturnLift(phase) * 0.07f;
     }
 
     public static float CalculatePolePlantForwardOffset(float phase)
     {
-        return CalculatePolePressure(phase) * 0.09f;
+        return CalculatePolePressure(phase) * 0.095f;
     }
 
     public static float CalculateHeadCounterPitch(float phase)
@@ -136,21 +136,21 @@ public class RollerSkierAnimator : MonoBehaviour
     {
         var polePressure = CalculatePolePressure(phase);
         var returnLift = CalculateReturnLift(phase);
-        return Mathf.Lerp(-36f, 20f, polePressure) - returnLift * 4f;
+        return Mathf.Lerp(-34f, 17f, polePressure) - returnLift * 3f;
     }
 
     public static float CalculatePolePitch(float phase)
     {
         var polePressure = CalculatePolePressure(phase);
         var returnLift = CalculateReturnLift(phase);
-        return Mathf.Lerp(22f, -42f, polePressure) + returnLift * 5f;
+        return Mathf.Lerp(24f, -43f, polePressure) + returnLift * 4f;
     }
 
     public static float CalculateTorsoPitch(float phase)
     {
         var bodyWeightTransfer = CalculateBodyWeightTransfer(phase);
         var returnLift = CalculateReturnLift(phase);
-        return Mathf.Lerp(9f, 36f, bodyWeightTransfer) - returnLift * 5f;
+        return Mathf.Lerp(10f, 37f, bodyWeightTransfer) - returnLift * 4f;
     }
 
     public void ApplyPose(float posePhase)
@@ -193,14 +193,14 @@ public class RollerSkierAnimator : MonoBehaviour
 
         if (leftArm != null)
         {
-            leftArm.localPosition = leftArmBasePosition + new Vector3(handOutwardDrift, -compression * 0.42f + handRecoveryLift, handDrive + polePlantForwardOffset * 0.35f);
-            leftArm.localRotation = Quaternion.Euler(armPitch, -0.5f, -0.3f);
+            leftArm.localPosition = leftArmBasePosition + new Vector3(handOutwardDrift, -compression * 0.36f + handRecoveryLift, handDrive + polePlantForwardOffset * 0.35f);
+            leftArm.localRotation = Quaternion.Euler(armPitch, -0.3f, -0.2f);
         }
 
         if (rightArm != null)
         {
-            rightArm.localPosition = rightArmBasePosition + new Vector3(-handOutwardDrift, -compression * 0.42f + handRecoveryLift, handDrive + polePlantForwardOffset * 0.35f);
-            rightArm.localRotation = Quaternion.Euler(armPitch, 0.5f, 0.3f);
+            rightArm.localPosition = rightArmBasePosition + new Vector3(-handOutwardDrift, -compression * 0.36f + handRecoveryLift, handDrive + polePlantForwardOffset * 0.35f);
+            rightArm.localRotation = Quaternion.Euler(armPitch, 0.3f, 0.2f);
         }
 
         if (leftHand != null)
