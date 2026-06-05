@@ -17,7 +17,7 @@ A small Unity prototype for a SkiErg-inspired movement game.
 - Distant low-poly forest bands between the road corridor and mountain ranges
 - Rounded low-poly Scandinavian mountain chains with reduced height, smoother silhouettes, and a supporting horizon role while staying outside the road corridor
 - Start and finish gates with road line markers
-- A more realistic low-poly roller skier resembling an endurance Vasalopp-style skier, with longer legs, narrower waist, athletic upper body, natural shoulder width, smaller head, small forward lean from the hips, neutral head position, long roller skis, and long slender poles
+- A more realistic low-poly roller skier resembling an endurance Vasalopp/Ski Classics athlete, with longer legs, a narrower waist, broader relaxed shoulders, a slight V-shape torso, smaller head, small forward lean from the hips, neutral head position, longer slimmer roller skis, and longer slender poles
 - Larger on-screen skier presence with a scaled visual rig, an extra 25% runtime presence boost, and a higher simulator-style follow camera that keeps the road horizon visible
 - Stable SkiErg-inspired double-poling animation with fixed body-part pivots, safe torso lean, closer arms, reduced outward swing, parallel pole motion, and speed-scaled cycle timing
 - A lightweight workout session flow that starts on Play, tracks elapsed time, distance, average speed, and max speed, then shows a 5.0 km finish summary with a restart button
@@ -25,7 +25,7 @@ A small Unity prototype for a SkiErg-inspired movement game.
 - `W` increases forward speed
 - `S` decreases forward speed
 - A top-left TextMeshPro HUD showing speed in km/h, distance in km, and elapsed time
-- EditMode tests for speed, distance, HUD formatting, camera FOV, focused player camera framing, camera look-ahead, camera shake, dramatic course path behavior, environment clearance, visible mountain placement, rounded mountain range mesh shape, skier screen presence, realistic skier silhouette, improved skier proportions, proper roller skier model replacement, refined roller ski and pole proportions, stable double-poling animation hierarchy, narrowed arm technique, workout session flow, speed feeling runtime updates, and roller skier animation behavior
+- EditMode tests for speed, distance, HUD formatting, camera FOV, focused player camera framing, camera look-ahead, camera shake, dramatic course path behavior, environment clearance, visible mountain placement, rounded mountain range mesh shape, skier screen presence, realistic skier silhouette, improved skier proportions, Vasalopp-style athletic torso shape, proper roller skier model replacement, refined roller ski and pole proportions, stable double-poling animation hierarchy, narrowed arm technique, workout session flow, speed feeling runtime updates, and roller skier animation behavior
 
 ## Open in Unity
 
