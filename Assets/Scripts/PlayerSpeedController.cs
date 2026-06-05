@@ -135,7 +135,7 @@ public class PlayerSpeedController : MonoBehaviour
 
     public Vector3 CalculateNextPosition(Vector3 startPosition, Vector3 forwardDirection, float deltaTime)
     {
-        return startPosition + forwardDirection.normalized * EffectiveCurrentSpeed * deltaTime;
+        return startPosition + forwardDirection.normalized * CurrentSpeed * deltaTime;
     }
 
     public void AlignToCourse(float zPosition)
