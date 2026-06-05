@@ -65,6 +65,29 @@ public class SkiClassicsSkierModelBuilderTests
     }
 
     [Test]
+    public void CreateModel_UsesReferenceVideoRearViewSilhouette()
+    {
+        var parent = new GameObject("Model Parent").transform;
+
+        var model = SkiClassicsSkierModelBuilder.CreateModel(parent);
+
+        Assert.IsNotNull(FindChildRecursive(model, "Dark Rear Racing Suit Panel"));
+        Assert.IsNotNull(FindChildRecursive(model, "Left Shoulder Blade"));
+        Assert.IsNotNull(FindChildRecursive(model, "Right Shoulder Blade"));
+        Assert.IsNotNull(FindChildRecursive(model, "Left Glute Shape"));
+        Assert.IsNotNull(FindChildRecursive(model, "Right Glute Shape"));
+        Assert.IsNotNull(FindChildRecursive(model, "Left Outside Pole Silhouette"));
+        Assert.IsNotNull(FindChildRecursive(model, "Right Outside Pole Silhouette"));
+
+        var torsoRenderer = FindChildRecursive(model, "Athletic Torso").GetComponent<Renderer>();
+        Assert.Less(torsoRenderer.sharedMaterial.color.b, 0.16f);
+        Assert.LessOrEqual(FindChildRecursive(model, "Compact Head").localScale.x, 0.16f);
+        Assert.Less(FindChildRecursive(model, "Narrow Waist").localScale.x, FindChildRecursive(model, "Visible Shoulder Line").localScale.x * 0.4f);
+
+        Object.DestroyImmediate(parent.gameObject);
+    }
+
+    [Test]
     public void CreateModel_DoesNotRequireOrModifyExistingGameplaySkier()
     {
         var existingSkier = new GameObject("Low Poly Roller Skier");
