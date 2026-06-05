@@ -53,7 +53,14 @@ public class SkierTechniqueRuntimeUpdater : MonoBehaviour
 
         AttachPoleToHand(animator.leftPole, animator.leftHand);
         AttachPoleToHand(animator.rightPole, animator.rightHand);
-        return animator.leftHand != null && animator.rightHand != null && animator.leftPole != null && animator.rightPole != null;
+
+        var rigReady = animator.leftHand != null && animator.rightHand != null && animator.leftPole != null && animator.rightPole != null;
+        if (rigReady)
+        {
+            animator.ResetBasePose();
+        }
+
+        return rigReady;
     }
 
     private static bool ConfigureIfAvailable()
