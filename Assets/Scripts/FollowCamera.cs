@@ -5,14 +5,16 @@ public class FollowCamera : MonoBehaviour
 {
     public Transform target;
     public PlayerSpeedController player;
-    public Vector3 offset = new Vector3(0f, 3f, -6.4f);
-    public float positionSmoothTime = 0.16f;
-    public float rotationSmoothSpeed = 10f;
-    public float lookAheadDistance = 7f;
-    public float baseFieldOfView = 64f;
-    public float maxFieldOfView = 82f;
+    public Vector3 offset = new Vector3(0f, 3.1f, -6.8f);
+    public float positionSmoothTime = 0.14f;
+    public float rotationSmoothSpeed = 11f;
+    public float baseLookAheadDistance = 8f;
+    public float maxLookAheadDistance = 24f;
+    public float speedForMaxLookAheadKmh = 72f;
+    public float baseFieldOfView = 60f;
+    public float maxFieldOfView = 96f;
     public float speedForMaxFieldOfViewKmh = 72f;
-    public float fieldOfViewSmoothTime = 0.18f;
+    public float fieldOfViewSmoothTime = 0.14f;
     public float maxShakeAmplitude = 0.18f;
     public float speedForMaxShakeKmh = 72f;
     public float shakeFrequency = 18f;
@@ -36,13 +38,15 @@ public class FollowCamera : MonoBehaviour
         var desiredPosition = target.position + target.TransformDirection(offset) + CalculateShakeOffset();
         transform.position = Vector3.SmoothDamp(transform.position, desiredPosition, ref positionVelocity, positionSmoothTime);
 
+        var speedKmh = player != null ? player.SpeedKmh : 0f;
+        var lookAheadDistance = CalculateLookAheadDistance(speedKmh);
         var lookTarget = target.position + Vector3.up * 1.1f + target.forward * lookAheadDistance;
         var desiredRotation = Quaternion.LookRotation(lookTarget - transform.position, Vector3.up);
         transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation, rotationSmoothSpeed * Time.deltaTime);
 
-        if (followCamera != null && player != null)
+        if (followCamera != null)
         {
-            var targetFieldOfView = CalculateTargetFieldOfView(player.SpeedKmh);
+            var targetFieldOfView = CalculateTargetFieldOfView(speedKmh);
             followCamera.fieldOfView = Mathf.SmoothDamp(followCamera.fieldOfView, targetFieldOfView, ref fieldOfViewVelocity, fieldOfViewSmoothTime);
         }
     }
@@ -51,6 +55,12 @@ public class FollowCamera : MonoBehaviour
     {
         var speedRatio = Mathf.Clamp01(speedKmh / speedForMaxFieldOfViewKmh);
         return Mathf.Lerp(baseFieldOfView, maxFieldOfView, speedRatio);
+    }
+
+    public float CalculateLookAheadDistance(float speedKmh)
+    {
+        var speedRatio = Mathf.Clamp01(speedKmh / speedForMaxLookAheadKmh);
+        return Mathf.Lerp(baseLookAheadDistance, maxLookAheadDistance, speedRatio);
     }
 
     public float CalculateShakeAmplitude(float speedKmh)
