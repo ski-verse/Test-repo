@@ -41,8 +41,14 @@ public class ProperRollerSkierRuntimeUpdaterTests
         Assert.IsNotNull(torsoPivot.Find("Right Soft Shoulder Cap"));
         Assert.IsNotNull(torsoPivot.Find("Low Poly Helmet"));
         Assert.IsNotNull(torsoPivot.Find("Helmet Visor"));
+        Assert.IsNotNull(leftSki.Find("Classic Roller Ski Frame"));
+        Assert.IsNotNull(leftSki.Find("Front Fork Bridge"));
+        Assert.IsNotNull(leftSki.Find("Rear Fork Bridge"));
         Assert.IsNotNull(leftSki.Find("Front Roller Wheel"));
         Assert.IsNotNull(leftSki.Find("Rear Roller Wheel"));
+        Assert.IsNotNull(leftSki.Find("Wheel Hub Accent Front"));
+        Assert.IsNotNull(leftSki.Find("Wheel Hub Accent Rear"));
+        Assert.IsNotNull(leftSki.Find("Toe Binding Clamp"));
         Assert.IsNotNull(rightSki.Find("Front Roller Wheel"));
         Assert.IsNotNull(rightSki.Find("Rear Roller Wheel"));
         Assert.IsNotNull(leftPole.Find("Pole Shaft"));
@@ -154,7 +160,8 @@ public class ProperRollerSkierRuntimeUpdaterTests
         ProperRollerSkierRuntimeUpdater.ApplyProperRollerSkierModel();
 
         var leftSki = visualRoot.transform.Find("Left Parallel Roller Ski");
-        var deck = leftSki.Find("Slim Long Roller Ski Deck");
+        var platform = leftSki.Find("Slim Foot Platform");
+        var frame = leftSki.Find("Classic Roller Ski Frame");
         var innerRail = leftSki.Find("Inner Side Rail");
         var outerRail = leftSki.Find("Outer Side Rail");
         var frontWheel = leftSki.Find("Front Roller Wheel");
@@ -162,13 +169,53 @@ public class ProperRollerSkierRuntimeUpdaterTests
         var binding = leftSki.Find("Binding Plate");
         var wheelbase = frontWheel.localPosition.z - rearWheel.localPosition.z;
 
-        Assert.Greater(deck.localScale.y, 0.95f);
-        Assert.Less(deck.localScale.x, 0.065f);
-        Assert.Greater(innerRail.localScale.z, 2.1f);
-        Assert.Greater(outerRail.localScale.z, 2.1f);
-        Assert.Greater(wheelbase, 2.1f);
-        Assert.Less(wheelbase, 2.2f);
-        Assert.Greater(binding.localPosition.y, deck.localPosition.y);
+        Assert.Less(platform.localScale.x, 0.06f);
+        Assert.Greater(frame.localScale.z, 1.75f);
+        Assert.Greater(innerRail.localScale.z, 1.8f);
+        Assert.Greater(outerRail.localScale.z, 1.8f);
+        Assert.Greater(wheelbase, 1.7f);
+        Assert.Less(wheelbase, 1.75f);
+        Assert.Greater(binding.localPosition.y, frame.localPosition.y);
+
+        Object.DestroyImmediate(skier);
+    }
+
+    [Test]
+    public void ApplyProperRollerSkierModel_UsesClassicRollerSkiWheelAndBindingPlacement()
+    {
+        var skier = CreateSkierRoot(out var visualRoot, out _);
+
+        ProperRollerSkierRuntimeUpdater.ApplyProperRollerSkierModel();
+
+        var leftSki = visualRoot.transform.Find("Left Parallel Roller Ski");
+        var boot = visualRoot.transform.Find("Left Boot");
+        var frontWheel = leftSki.Find("Front Roller Wheel");
+        var rearWheel = leftSki.Find("Rear Roller Wheel");
+        var frontHub = leftSki.Find("Wheel Hub Accent Front");
+        var rearHub = leftSki.Find("Wheel Hub Accent Rear");
+        var binding = leftSki.Find("Binding Plate");
+        var heelStop = leftSki.Find("Heel Stop");
+        var frame = leftSki.Find("Classic Roller Ski Frame");
+        var bootHeelZ = boot.localPosition.z - boot.localScale.z * 0.5f;
+        var bootToeZ = boot.localPosition.z + boot.localScale.z * 0.5f;
+        var rearWheelWorldZ = leftSki.localPosition.z + rearWheel.localPosition.z;
+        var frontWheelWorldZ = leftSki.localPosition.z + frontWheel.localPosition.z;
+        var heelStopWorldZ = leftSki.localPosition.z + heelStop.localPosition.z;
+        var bindingWorldZ = leftSki.localPosition.z + binding.localPosition.z;
+
+        Assert.IsNotNull(frontHub);
+        Assert.IsNotNull(rearHub);
+        Assert.Less(Mathf.Abs(heelStopWorldZ - bootHeelZ), 0.05f);
+        Assert.Less(rearWheelWorldZ, bootHeelZ);
+        Assert.Less(bootHeelZ - rearWheelWorldZ, 0.22f);
+        Assert.Greater(frontWheelWorldZ - bootToeZ, 1.1f);
+        Assert.Greater(bindingWorldZ, bootHeelZ);
+        Assert.Less(bindingWorldZ, bootToeZ);
+        Assert.Greater(frame.localPosition.z, rearWheel.localPosition.z);
+        Assert.Less(frame.localPosition.z, frontWheel.localPosition.z);
+        Assert.Greater(frontWheel.localScale.x, 0.12f);
+        Assert.Greater(frontWheel.localScale.y, 0.05f);
+        Assert.AreEqual(frontWheel.localScale.x, rearWheel.localScale.x, 0.001f);
 
         Object.DestroyImmediate(skier);
     }
