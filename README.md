@@ -7,13 +7,14 @@ A small Unity prototype for a SkiErg-inspired movement game.
 - A runtime-generated 5 km road with large, clearly visible sweeping training-course turns
 - Visible uphill and downhill road sections generated from the course profile
 - White edge lines and dashed center road markings that follow the curves and slopes
-- At least 15 meters of open terrain on each side of the road before trees, hills, or mountains begin
+- At least 15 meters of open terrain on each side of the road before trees, hills, forests, or mountains begin
 - Roadside speed posts every 25 meters
 - Low-poly turn warning signs placed before upcoming bends
 - Green open grass shoulders on both sides of the road
 - Set-back simple low-poly trees placed outside the open road margin
 - Rolling low-poly hills moved further away from the road
-- A distant mountain backdrop built from lightweight low-poly meshes only as background scenery
+- Distant low-poly forest bands between the road corridor and mountain ranges
+- Large Nordic mountain ranges on both sides of the world, close enough to frame the road and horizon while staying outside the road corridor
 - Start and finish gates with road line markers
 - A proper low-poly roller skier with realistic proportions, parallel roller skis, wheels, poles, helmet, and double-poling stance
 - Synchronized double-poling arm and pole animation that works with the current movement controller
@@ -21,7 +22,7 @@ A small Unity prototype for a SkiErg-inspired movement game.
 - `W` increases forward speed
 - `S` decreases forward speed
 - A top-left TextMeshPro HUD showing speed in km/h and distance in km
-- EditMode tests for speed, distance, HUD formatting, camera FOV, camera look-ahead, camera shake, dramatic course path behavior, environment clearance, and roller skier animation behavior
+- EditMode tests for speed, distance, HUD formatting, camera FOV, camera look-ahead, camera shake, dramatic course path behavior, environment clearance, visible mountain placement, and roller skier animation behavior
 
 ## Open in Unity
 
