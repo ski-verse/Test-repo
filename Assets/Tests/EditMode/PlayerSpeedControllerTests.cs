@@ -125,13 +125,13 @@ public class PlayerSpeedControllerTests
     public void CalculateLookAheadDistance_LooksFurtherAheadAtHighSpeed()
     {
         var followCamera = new GameObject("Follow Camera").AddComponent<FollowCamera>();
-        followCamera.baseLookAheadDistance = 8f;
-        followCamera.maxLookAheadDistance = 24f;
+        followCamera.baseLookAheadDistance = 12f;
+        followCamera.maxLookAheadDistance = 38f;
         followCamera.speedForMaxLookAheadKmh = 72f;
 
-        Assert.AreEqual(8f, followCamera.CalculateLookAheadDistance(0f), 0.001f);
-        Assert.AreEqual(16f, followCamera.CalculateLookAheadDistance(36f), 0.001f);
-        Assert.AreEqual(24f, followCamera.CalculateLookAheadDistance(90f), 0.001f);
+        Assert.AreEqual(12f, followCamera.CalculateLookAheadDistance(0f), 0.001f);
+        Assert.AreEqual(25f, followCamera.CalculateLookAheadDistance(36f), 0.001f);
+        Assert.AreEqual(38f, followCamera.CalculateLookAheadDistance(90f), 0.001f);
 
         Object.DestroyImmediate(followCamera.gameObject);
     }
@@ -151,13 +151,18 @@ public class PlayerSpeedControllerTests
     }
 
     [Test]
-    public void CoursePath_HasClearlyVisibleCurvesAndNormalizedDirection()
+    public void CoursePath_HasLongSweepingTurnsAndVisibleElevationChanges()
     {
-        var start = CoursePath.CenterXAtDistance(0f);
-        var later = CoursePath.CenterXAtDistance(400f);
-        var direction = CoursePath.DirectionAtDistance(400f);
+        var start = CoursePath.CenterPointAtDistance(0f);
+        var firstTurn = CoursePath.CenterPointAtDistance(220f);
+        var climb = CoursePath.HeightAtDistance(320f) - CoursePath.HeightAtDistance(0f);
+        var descent = CoursePath.HeightAtDistance(900f) - CoursePath.HeightAtDistance(320f);
+        var direction = CoursePath.DirectionAtDistance(160f);
 
-        Assert.Greater(Mathf.Abs(later - start), 12f);
+        Assert.Greater(Mathf.Abs(firstTurn.x - start.x), 45f);
+        Assert.Greater(climb, 16f);
+        Assert.Less(descent, -20f);
         Assert.AreEqual(1f, direction.magnitude, 0.001f);
+        Assert.Greater(Mathf.Abs(direction.y), 0.01f);
     }
 }
