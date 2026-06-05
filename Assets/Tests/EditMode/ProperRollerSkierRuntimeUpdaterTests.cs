@@ -95,7 +95,7 @@ public class ProperRollerSkierRuntimeUpdaterTests
     }
 
     [Test]
-    public void ApplyProperRollerSkierModel_UsesCompactRealisticRollerSkiProportions()
+    public void ApplyProperRollerSkierModel_UsesLongerReadableRollerSkiProportions()
     {
         var skier = CreateSkierRoot(out var visualRoot, out _);
 
@@ -110,19 +110,19 @@ public class ProperRollerSkierRuntimeUpdaterTests
         var binding = leftSki.Find("Binding Plate");
         var wheelbase = frontWheel.localPosition.z - rearWheel.localPosition.z;
 
-        Assert.Greater(deck.localScale.z, 1.3f);
-        Assert.Less(deck.localScale.z, 1.6f);
-        Assert.IsNotNull(innerRail);
-        Assert.IsNotNull(outerRail);
-        Assert.Greater(wheelbase, 1.2f);
-        Assert.Less(wheelbase, 1.4f);
+        Assert.Greater(deck.localScale.z, 1.6f);
+        Assert.Less(deck.localScale.z, 1.8f);
+        Assert.Greater(innerRail.localScale.z, deck.localScale.z);
+        Assert.Greater(outerRail.localScale.z, deck.localScale.z);
+        Assert.Greater(wheelbase, 1.55f);
+        Assert.Less(wheelbase, 1.7f);
         Assert.Greater(binding.localPosition.y, deck.localPosition.y);
 
         Object.DestroyImmediate(skier);
     }
 
     [Test]
-    public void ApplyProperRollerSkierModel_UsesSlenderPolesWithGripStrapBasketAndTip()
+    public void ApplyProperRollerSkierModel_UsesSlightlyLongerPolesWithGripStrapBasketAndTip()
     {
         var skier = CreateSkierRoot(out var visualRoot, out _);
 
@@ -140,8 +140,48 @@ public class ProperRollerSkierRuntimeUpdaterTests
         Assert.IsNotNull(basket);
         Assert.IsNotNull(tip);
         Assert.Less(shaft.localScale.x, 0.02f);
-        Assert.Greater(shaft.localScale.y, 1f);
+        Assert.Greater(shaft.localScale.y, 1.1f);
         Assert.Less(basket.localScale.x, 0.08f);
+        Assert.Less(tip.localPosition.y, -1.2f);
+
+        Object.DestroyImmediate(skier);
+    }
+
+    [Test]
+    public void ApplyProperRollerSkierModel_UsesSlightlyLongerArmsForReadableDoublePoling()
+    {
+        var skier = CreateSkierRoot(out var visualRoot, out _);
+
+        ProperRollerSkierRuntimeUpdater.ApplyProperRollerSkierModel();
+
+        var leftArm = visualRoot.transform.Find("Left Connected Double-Poling Arm");
+        var upperArm = leftArm.Find("Upper Arm");
+        var forearm = leftArm.Find("Forearm");
+        var hand = leftArm.Find("Hand On Pole Grip");
+
+        Assert.Greater(upperArm.localScale.y, 0.3f);
+        Assert.Greater(forearm.localScale.y, 0.36f);
+        Assert.Less(hand.localPosition.y, -0.8f);
+
+        Object.DestroyImmediate(skier);
+    }
+
+    [Test]
+    public void ApplyProperRollerSkierModel_KeepsAthleticPostureWithSmallForwardLean()
+    {
+        var skier = CreateSkierRoot(out var visualRoot, out _);
+
+        ProperRollerSkierRuntimeUpdater.ApplyProperRollerSkierModel();
+
+        var hips = visualRoot.transform.Find("Narrow Athletic Hips");
+        var torsoPivot = visualRoot.transform.Find("Torso Pivot");
+        var chestPanel = torsoPivot.Find("Chest Panel");
+        var waist = torsoPivot.Find("Narrow Waist");
+
+        Assert.Less(hips.localEulerAngles.x, 360f);
+        Assert.Greater(Mathf.DeltaAngle(0f, chestPanel.localEulerAngles.x), 5f);
+        Assert.Less(waist.localScale.x, chestPanel.localScale.x);
+        Assert.AreEqual(10f, RollerSkierAnimator.CalculateTorsoPitch(0.15f), 0.001f);
 
         Object.DestroyImmediate(skier);
     }
