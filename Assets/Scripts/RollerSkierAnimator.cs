@@ -181,7 +181,7 @@ public class RollerSkierAnimator : MonoBehaviour
 
         if (torso != null)
         {
-            torso.localPosition = torsoBasePosition + new Vector3(0f, -compression * 0.42f + recoveryExtension, torsoForwardDrive);
+            torso.localPosition = torsoBasePosition + new Vector3(0f, -compression * 0.3f + recoveryExtension, torsoForwardDrive);
             torso.localRotation = Quaternion.Euler(torsoPitch, 0f, 0f);
         }
 
