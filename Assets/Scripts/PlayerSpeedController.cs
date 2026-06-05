@@ -3,7 +3,12 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class PlayerSpeedController : MonoBehaviour
 {
-    public const float GradientResistanceDecelerationPerPercent = 0.32f;
+    public const float UphillAccelerationReductionPerPercent = 0.07f;
+    public const float MinimumUphillAccelerationMultiplier = 0.45f;
+    public const float UphillMaxSpeedReductionPerPercent = 0.075f;
+    public const float MinimumUphillMaxSpeedMultiplier = 0.4f;
+    public const float UphillCoastDecelerationPerPercent = 0.08f;
+    public const float MinimumUphillMovementSpeed = 1.4f;
 
     [Header("Speed")]
     public float acceleration = 3f;
@@ -66,14 +71,35 @@ public class PlayerSpeedController : MonoBehaviour
         MoveAlongCourse(Time.deltaTime);
     }
 
-    public static float CalculateGradientResistanceDeceleration(float gradientPercent)
+    public static float CalculateUphillAccelerationMultiplier(float gradientPercent)
+    {
+        if (gradientPercent <= 0f)
+        {
+            return 1f;
+        }
+
+        return Mathf.Clamp(1f - gradientPercent * UphillAccelerationReductionPerPercent, MinimumUphillAccelerationMultiplier, 1f);
+    }
+
+    public static float CalculateUphillMaxSpeed(float baseMaxSpeed, float gradientPercent)
+    {
+        if (gradientPercent <= 0f)
+        {
+            return baseMaxSpeed;
+        }
+
+        var multiplier = Mathf.Clamp(1f - gradientPercent * UphillMaxSpeedReductionPerPercent, MinimumUphillMaxSpeedMultiplier, 1f);
+        return Mathf.Max(MinimumUphillMovementSpeed, baseMaxSpeed * multiplier);
+    }
+
+    public static float CalculateUphillCoastDeceleration(float gradientPercent)
     {
         if (gradientPercent <= 0f)
         {
             return 0f;
         }
 
-        return gradientPercent * GradientResistanceDecelerationPerPercent;
+        return gradientPercent * UphillCoastDecelerationPerPercent;
     }
 
     public void EnsureInputSource()
@@ -112,8 +138,24 @@ public class PlayerSpeedController : MonoBehaviour
 
     public void ApplyMovementInputAndGradientResistance(PlayerMovementInput movementInput, float deltaTime)
     {
-        ApplyMovementInput(movementInput, deltaTime);
-        ApplyGradientResistance(deltaTime);
+        var safeDeltaTime = Mathf.Max(0f, deltaTime);
+        var gradientPercent = CurrentGradientPercent;
+
+        if (movementInput.SpeedAxis > 0f)
+        {
+            IncreaseSpeed(safeDeltaTime * movementInput.SpeedAxis * CalculateUphillAccelerationMultiplier(gradientPercent));
+            ApplyMinimumUphillMovementSpeed(gradientPercent);
+        }
+        else if (movementInput.SpeedAxis < 0f)
+        {
+            DecreaseSpeed(safeDeltaTime * -movementInput.SpeedAxis);
+        }
+        else
+        {
+            ApplyUphillCoastDecay(gradientPercent, safeDeltaTime);
+        }
+
+        ApplyUphillMaxSpeedLimit(gradientPercent);
     }
 
     public void ApplyMovementInput(PlayerMovementInput movementInput, float deltaTime)
@@ -126,11 +168,6 @@ public class PlayerSpeedController : MonoBehaviour
         {
             DecreaseSpeed(deltaTime * -movementInput.SpeedAxis);
         }
-    }
-
-    public void ApplyGradientResistance(float deltaTime)
-    {
-        CurrentSpeed -= CalculateGradientResistanceDeceleration(CurrentGradientPercent) * Mathf.Max(0f, deltaTime);
     }
 
     public void IncreaseSpeed(float deltaTime)
@@ -157,6 +194,26 @@ public class PlayerSpeedController : MonoBehaviour
     public void SetStartDistanceZ(float zPosition)
     {
         startDistanceZ = zPosition;
+    }
+
+    private void ApplyMinimumUphillMovementSpeed(float gradientPercent)
+    {
+        if (gradientPercent <= 0f)
+        {
+            return;
+        }
+
+        CurrentSpeed = Mathf.Max(CurrentSpeed, Mathf.Min(MinimumUphillMovementSpeed, CalculateUphillMaxSpeed(maxSpeed, gradientPercent)));
+    }
+
+    private void ApplyUphillCoastDecay(float gradientPercent, float deltaTime)
+    {
+        CurrentSpeed -= CalculateUphillCoastDeceleration(gradientPercent) * deltaTime;
+    }
+
+    private void ApplyUphillMaxSpeedLimit(float gradientPercent)
+    {
+        CurrentSpeed = Mathf.Min(CurrentSpeed, CalculateUphillMaxSpeed(maxSpeed, gradientPercent));
     }
 
     private void MoveAlongCourse(float deltaTime)
