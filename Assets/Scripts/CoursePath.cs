@@ -5,7 +5,7 @@ public static class CoursePath
     public const float CourseLengthMeters = 5000f;
     public const float MajorClimbStartMeters = 2100f;
     public const float MajorClimbLengthMeters = 700f;
-    public const float MajorClimbGradePercent = 6.5f;
+    public const float MajorClimbGradePercent = 5.5f;
     public const float MajorClimbEndMeters = MajorClimbStartMeters + MajorClimbLengthMeters;
 
     private const float MajorClimbDescentStartMeters = 3300f;
