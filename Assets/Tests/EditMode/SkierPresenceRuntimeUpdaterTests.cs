@@ -22,9 +22,12 @@ public class SkierPresenceRuntimeUpdaterTests
     [Test]
     public void CameraDefaults_DoNotMoveFurtherAwayWhenSkierPresenceIncreases()
     {
-        Assert.AreEqual(new Vector3(0f, 2.75f, -4.8f), FollowCamera.FocusedPlayerOffset);
-        Assert.AreEqual(14f, new GameObject("Follow Camera").AddComponent<FollowCamera>().baseLookAheadDistance, 0.001f);
+        var cameraObject = new GameObject("Follow Camera");
+        var followCamera = cameraObject.AddComponent<FollowCamera>();
 
-        Object.DestroyImmediate(GameObject.Find("Follow Camera"));
+        Assert.AreEqual(new Vector3(0f, 2.75f, -4.8f), FollowCamera.FocusedPlayerOffset);
+        Assert.AreEqual(14f, followCamera.baseLookAheadDistance, 0.001f);
+
+        Object.DestroyImmediate(cameraObject);
     }
 }
