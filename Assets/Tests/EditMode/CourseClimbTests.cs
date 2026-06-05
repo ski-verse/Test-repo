@@ -79,4 +79,19 @@ public class CourseClimbTests
         Object.DestroyImmediate(hud.gameObject);
         Object.DestroyImmediate(player);
     }
+
+    [Test]
+    public void GradientHudRuntimeUpdater_CreatesGradientTextAutomatically()
+    {
+        var hud = new GameObject("Race HUD").AddComponent<SpeedDistanceDisplay>();
+
+        var created = GradientHudRuntimeUpdater.EnsureGradientText(hud);
+
+        Assert.IsTrue(created);
+        Assert.IsNotNull(hud.gradientText);
+        Assert.AreEqual("Gradient Text", hud.gradientText.gameObject.name);
+
+        Object.DestroyImmediate(hud.gradientText.gameObject);
+        Object.DestroyImmediate(hud.gameObject);
+    }
 }
