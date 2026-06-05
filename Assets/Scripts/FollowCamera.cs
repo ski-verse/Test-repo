@@ -5,11 +5,11 @@ public class FollowCamera : MonoBehaviour
 {
     public Transform target;
     public PlayerSpeedController player;
-    public Vector3 offset = new Vector3(0f, 3.1f, -6.8f);
-    public float positionSmoothTime = 0.14f;
-    public float rotationSmoothSpeed = 11f;
-    public float baseLookAheadDistance = 8f;
-    public float maxLookAheadDistance = 24f;
+    public Vector3 offset = new Vector3(0f, 3.8f, -8.2f);
+    public float positionSmoothTime = 0.16f;
+    public float rotationSmoothSpeed = 10f;
+    public float baseLookAheadDistance = 12f;
+    public float maxLookAheadDistance = 38f;
     public float speedForMaxLookAheadKmh = 72f;
     public float baseFieldOfView = 60f;
     public float maxFieldOfView = 96f;
