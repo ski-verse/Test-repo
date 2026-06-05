@@ -4,113 +4,88 @@ using UnityEngine;
 public class RollerSkierDoublePolingAnimationTests
 {
     [Test]
-    public void DoublePolingCycle_HasVeryObviousPlantAndRecoveryPhases()
+    public void DoublePolingCycle_UsesSafeReadableArmMovement()
     {
         var recoveryArmPitch = RollerSkierAnimator.CalculateArmPitch(0.05f);
         var plantArmPitch = RollerSkierAnimator.CalculateArmPitch(0.42f);
         var returnArmPitch = RollerSkierAnimator.CalculateArmPitch(0.85f);
 
-        Assert.Less(recoveryArmPitch, -100f);
-        Assert.Greater(plantArmPitch, 80f);
-        Assert.Less(returnArmPitch, -105f);
-        Assert.Greater(plantArmPitch - returnArmPitch, 185f);
+        Assert.Less(recoveryArmPitch, -45f);
+        Assert.Greater(plantArmPitch, 25f);
+        Assert.Less(returnArmPitch, -45f);
+        Assert.Less(plantArmPitch, 45f);
+        Assert.Greater(plantArmPitch - returnArmPitch, 75f);
     }
 
     [Test]
-    public void DoublePolingCycle_LeansBodySignificantlyFurtherForwardDuringPolePlant()
+    public void DoublePolingCycle_KeepsTorsoUprightWithModerateForwardLean()
     {
         var recoveryTorsoPitch = RollerSkierAnimator.CalculateTorsoPitch(0.05f);
         var plantTorsoPitch = RollerSkierAnimator.CalculateTorsoPitch(0.42f);
         var returnTorsoPitch = RollerSkierAnimator.CalculateTorsoPitch(0.85f);
 
-        Assert.Less(recoveryTorsoPitch, 17f);
-        Assert.Greater(plantTorsoPitch, 58f);
-        Assert.Less(returnTorsoPitch, 18f);
+        Assert.GreaterOrEqual(recoveryTorsoPitch, 8f);
+        Assert.Less(recoveryTorsoPitch, 13f);
+        Assert.Greater(plantTorsoPitch, 25f);
+        Assert.Less(plantTorsoPitch, 35f);
+        Assert.Less(returnTorsoPitch, 12f);
     }
 
     [Test]
-    public void DoublePolingCycle_MakesPolePlantAndRecoveryMuchMoreVisible()
+    public void DoublePolingCycle_KeepsPolesReadableWithoutExtremeSwing()
     {
         var recoveryPolePitch = RollerSkierAnimator.CalculatePolePitch(0.05f);
         var plantPolePitch = RollerSkierAnimator.CalculatePolePitch(0.42f);
         var returnPolePitch = RollerSkierAnimator.CalculatePolePitch(0.85f);
 
-        Assert.Greater(recoveryPolePitch, 70f);
-        Assert.Less(plantPolePitch, -95f);
-        Assert.Greater(returnPolePitch, 70f);
-        Assert.Greater(recoveryPolePitch - plantPolePitch, 165f);
+        Assert.Greater(recoveryPolePitch, 25f);
+        Assert.Less(plantPolePitch, -30f);
+        Assert.Greater(returnPolePitch, 30f);
+        Assert.Less(returnPolePitch, 45f);
+        Assert.Greater(recoveryPolePitch - plantPolePitch, 60f);
     }
 
     [Test]
-    public void PowerPhase_DoublesVisibleHandTravelTowardKnees()
-    {
-        var recoveryLeftHand = RollerSkierAnimator.CalculateArmPivotPosition(-1f, 0.05f);
-        var plantLeftHand = RollerSkierAnimator.CalculateArmPivotPosition(-1f, 0.42f);
-        var plantRightHand = RollerSkierAnimator.CalculateArmPivotPosition(1f, 0.42f);
-
-        Assert.Less(Mathf.Abs(plantLeftHand.x), 0.23f);
-        Assert.AreEqual(-plantLeftHand.x, plantRightHand.x, 0.001f);
-        Assert.Less(plantLeftHand.y, recoveryLeftHand.y - 0.72f);
-        Assert.Greater(plantLeftHand.z, recoveryLeftHand.z + 0.52f);
-    }
-
-    [Test]
-    public void PowerPhase_PlantsBothPolesClearlyInFrontAndSymmetrically()
-    {
-        var recoveryLeftPole = RollerSkierAnimator.CalculatePolePivotPosition(-1f, 0.05f);
-        var plantLeftPole = RollerSkierAnimator.CalculatePolePivotPosition(-1f, 0.42f);
-        var plantRightPole = RollerSkierAnimator.CalculatePolePivotPosition(1f, 0.42f);
-
-        Assert.Less(Mathf.Abs(plantLeftPole.x), 0.3f);
-        Assert.AreEqual(-plantLeftPole.x, plantRightPole.x, 0.001f);
-        Assert.AreEqual(plantLeftPole.y, plantRightPole.y, 0.001f);
-        Assert.Greater(plantLeftPole.z, recoveryLeftPole.z + 0.58f);
-    }
-
-    [Test]
-    public void DrivePhase_CompressesUpperBodyAndTransfersWeightIntoPoles()
-    {
-        var recoveryTorso = RollerSkierAnimator.CalculateTorsoPivotPosition(0.05f);
-        var driveTorso = RollerSkierAnimator.CalculateTorsoPivotPosition(0.42f);
-        var recoveryArm = RollerSkierAnimator.CalculateArmPivotPosition(-1f, 0.05f);
-        var driveArm = RollerSkierAnimator.CalculateArmPivotPosition(-1f, 0.42f);
-        var recoveryPole = RollerSkierAnimator.CalculatePolePivotPosition(-1f, 0.05f);
-        var drivePole = RollerSkierAnimator.CalculatePolePivotPosition(-1f, 0.42f);
-
-        Assert.Less(driveTorso.y, recoveryTorso.y - 0.16f);
-        Assert.Greater(driveTorso.z, recoveryTorso.z + 0.1f);
-        Assert.AreEqual(driveArm.z - recoveryArm.z, drivePole.z - recoveryPole.z, 0.08f);
-    }
-
-    [Test]
-    public void PlantCurve_EasesSmoothlyAroundTheDriveInsteadOfSnapping()
-    {
-        var beforeDrive = RollerSkierAnimator.CalculateArmPivotPosition(-1f, 0.34f);
-        var drive = RollerSkierAnimator.CalculateArmPivotPosition(-1f, 0.42f);
-        var afterDrive = RollerSkierAnimator.CalculateArmPivotPosition(-1f, 0.5f);
-
-        Assert.Greater(drive.z - beforeDrive.z, 0.05f);
-        Assert.Less(drive.z - beforeDrive.z, 0.25f);
-        Assert.Less(afterDrive.z - drive.z, 0.18f);
-        Assert.Greater(afterDrive.y, drive.y - 0.08f);
-    }
-
-    [Test]
-    public void ApplyPose_KeepsArmsTogetherPolesParallelAndTorsoCompressed()
+    public void ApplyPose_DoesNotMoveRigPivotsOutOfHierarchy()
     {
         var root = new GameObject("Roller Skier Rig");
         var animator = root.AddComponent<RollerSkierAnimator>();
-        animator.leftArm = new GameObject("Left Arm Pivot").transform;
-        animator.rightArm = new GameObject("Right Arm Pivot").transform;
-        animator.leftPole = new GameObject("Left Pole Pivot").transform;
-        animator.rightPole = new GameObject("Right Pole Pivot").transform;
-        animator.torso = new GameObject("Torso Pivot").transform;
+        animator.leftArm = CreateChild(root.transform, "Left Arm Pivot", new Vector3(-0.31f, 1.46f, -0.04f));
+        animator.rightArm = CreateChild(root.transform, "Right Arm Pivot", new Vector3(0.31f, 1.46f, -0.04f));
+        animator.leftPole = CreateChild(root.transform, "Left Pole Pivot", new Vector3(-0.48f, 0.9f, 0.16f));
+        animator.rightPole = CreateChild(root.transform, "Right Pole Pivot", new Vector3(0.48f, 0.9f, 0.16f));
+        animator.torso = CreateChild(root.transform, "Torso Pivot", new Vector3(0f, 1.08f, 0.04f));
 
-        animator.leftArm.SetParent(root.transform);
-        animator.rightArm.SetParent(root.transform);
-        animator.leftPole.SetParent(root.transform);
-        animator.rightPole.SetParent(root.transform);
-        animator.torso.SetParent(root.transform);
+        var leftArmPosition = animator.leftArm.localPosition;
+        var rightArmPosition = animator.rightArm.localPosition;
+        var leftPolePosition = animator.leftPole.localPosition;
+        var rightPolePosition = animator.rightPole.localPosition;
+        var torsoPosition = animator.torso.localPosition;
+
+        animator.ApplyPose(0.42f);
+        animator.ApplyPose(0.85f);
+
+        AssertVector3Approximately(leftArmPosition, animator.leftArm.localPosition);
+        AssertVector3Approximately(rightArmPosition, animator.rightArm.localPosition);
+        AssertVector3Approximately(leftPolePosition, animator.leftPole.localPosition);
+        AssertVector3Approximately(rightPolePosition, animator.rightPole.localPosition);
+        AssertVector3Approximately(torsoPosition, animator.torso.localPosition);
+
+        Object.DestroyImmediate(root);
+    }
+
+    [Test]
+    public void ApplyPose_KeepsArmsTogetherPolesParallelAndSkisStable()
+    {
+        var root = new GameObject("Roller Skier Rig");
+        var animator = root.AddComponent<RollerSkierAnimator>();
+        animator.leftArm = CreateChild(root.transform, "Left Arm Pivot", new Vector3(-0.31f, 1.46f, -0.04f));
+        animator.rightArm = CreateChild(root.transform, "Right Arm Pivot", new Vector3(0.31f, 1.46f, -0.04f));
+        animator.leftPole = CreateChild(root.transform, "Left Pole Pivot", new Vector3(-0.48f, 0.9f, 0.16f));
+        animator.rightPole = CreateChild(root.transform, "Right Pole Pivot", new Vector3(0.48f, 0.9f, 0.16f));
+        animator.torso = CreateChild(root.transform, "Torso Pivot", new Vector3(0f, 1.08f, 0.04f));
+        animator.leftSki = CreateChild(root.transform, "Left Ski", new Vector3(-0.24f, 0f, 0.22f));
+        animator.rightSki = CreateChild(root.transform, "Right Ski", new Vector3(0.24f, 0f, 0.22f));
 
         animator.ApplyPose(0.42f);
 
@@ -118,10 +93,11 @@ public class RollerSkierDoublePolingAnimationTests
         Assert.AreEqual(animator.leftPole.localEulerAngles.x, animator.rightPole.localEulerAngles.x, 0.001f);
         Assert.AreEqual(0f, animator.leftPole.localEulerAngles.y, 0.001f);
         Assert.AreEqual(0f, animator.rightPole.localEulerAngles.y, 0.001f);
-        Assert.AreEqual(-animator.leftArm.localPosition.x, animator.rightArm.localPosition.x, 0.001f);
-        Assert.AreEqual(-animator.leftPole.localPosition.x, animator.rightPole.localPosition.x, 0.001f);
-        Assert.Greater(animator.torso.localEulerAngles.x, 58f);
-        Assert.Less(animator.torso.localPosition.y, -0.16f);
+        Assert.AreEqual(Quaternion.identity, animator.leftSki.localRotation);
+        Assert.AreEqual(Quaternion.identity, animator.rightSki.localRotation);
+        Assert.Greater(Mathf.DeltaAngle(0f, animator.torso.localEulerAngles.x), 25f);
+        Assert.Greater(Mathf.DeltaAngle(0f, animator.leftArm.localEulerAngles.x), 25f);
+        Assert.Less(Mathf.DeltaAngle(0f, animator.leftPole.localEulerAngles.x), -30f);
 
         Object.DestroyImmediate(root);
     }
@@ -135,5 +111,20 @@ public class RollerSkierDoublePolingAnimationTests
         Assert.AreEqual(0.325f, slowPhase, 0.001f);
         Assert.AreEqual(0.973f, fastPhase, 0.001f);
         Assert.Greater(fastPhase, slowPhase);
+    }
+
+    private static Transform CreateChild(Transform parent, string name, Vector3 localPosition)
+    {
+        var child = new GameObject(name).transform;
+        child.SetParent(parent, false);
+        child.localPosition = localPosition;
+        return child;
+    }
+
+    private static void AssertVector3Approximately(Vector3 expected, Vector3 actual)
+    {
+        Assert.AreEqual(expected.x, actual.x, 0.001f);
+        Assert.AreEqual(expected.y, actual.y, 0.001f);
+        Assert.AreEqual(expected.z, actual.z, 0.001f);
     }
 }
