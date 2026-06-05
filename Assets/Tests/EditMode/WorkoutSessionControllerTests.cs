@@ -144,6 +144,7 @@ public class WorkoutSessionControllerTests
     [Test]
     public void RuntimeUi_CreatesFinishButtonsAndEventSystemAutomatically()
     {
+        var existingEventSystem = Object.FindFirstObjectByType<EventSystem>();
         var sessionObject = new GameObject("Workout Session");
         var session = sessionObject.AddComponent<WorkoutSessionController>();
 
@@ -159,7 +160,7 @@ public class WorkoutSessionControllerTests
 
         Object.DestroyImmediate(sessionObject);
         var eventSystem = Object.FindFirstObjectByType<EventSystem>();
-        if (eventSystem != null)
+        if (existingEventSystem == null && eventSystem != null)
         {
             Object.DestroyImmediate(eventSystem.gameObject);
         }
