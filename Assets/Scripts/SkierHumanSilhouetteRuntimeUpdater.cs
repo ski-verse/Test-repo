@@ -89,10 +89,10 @@ public class SkierHumanSilhouetteRuntimeUpdater : MonoBehaviour
         RecolorAndResize(visualRoot, "Broad Relaxed Shoulder Line", suitBlue, new Vector3(0.76f, 0.085f, 0.14f));
         RecolorAndResize(visualRoot, "Left Defined Shoulder Cap", suitBlue, new Vector3(0.145f, 0.105f, 0.122f));
         RecolorAndResize(visualRoot, "Right Defined Shoulder Cap", suitBlue, new Vector3(0.145f, 0.105f, 0.122f));
-        RecolorAndResize(visualRoot, "Relaxed Upper Arm", suitBlue, new Vector3(NaturalUpperArmRadius, 0.365f, NaturalUpperArmRadius));
-        RecolorAndResize(visualRoot, "Long Close Forearm", suitBlue, new Vector3(NaturalForearmRadius, 0.445f, NaturalForearmRadius));
-        RecolorAndResize(visualRoot, "Hand On Pole Grip", gloveBlack, new Vector3(0.078f, 0.068f, 0.078f));
-        RecolorAndResize(visualRoot, "Glove Wrapped Around Grip", gloveBlack, new Vector3(VisibleGripContrastRadius, 0.06f, VisibleGripContrastRadius));
+        RecolorAndResizeAll(visualRoot, "Relaxed Upper Arm", suitBlue, new Vector3(NaturalUpperArmRadius, 0.365f, NaturalUpperArmRadius));
+        RecolorAndResizeAll(visualRoot, "Long Close Forearm", suitBlue, new Vector3(NaturalForearmRadius, 0.445f, NaturalForearmRadius));
+        RecolorAndResizeAll(visualRoot, "Hand On Pole Grip", gloveBlack, new Vector3(0.078f, 0.068f, 0.078f));
+        RecolorAndResizeAll(visualRoot, "Glove Wrapped Around Grip", gloveBlack, new Vector3(VisibleGripContrastRadius, 0.06f, VisibleGripContrastRadius));
 
         var torsoParent = animator.torso != null ? animator.torso : visualRoot;
         AddBodyPart(torsoParent, "Human Dark Back Panel", PrimitiveType.Cube, new Vector3(0f, 0.43f, 0.11f), new Vector3(VisibleBackPanelWidth, 0.46f, 0.04f), suitBackBlue, new Vector3(-4f, 0f, 0f));
@@ -127,6 +127,29 @@ public class SkierHumanSilhouetteRuntimeUpdater : MonoBehaviour
             return;
         }
 
+        ApplyColorAndScale(part, color, localScale);
+    }
+
+    private static void RecolorAndResizeAll(Transform root, string partName, Color color, Vector3 localScale)
+    {
+        if (root == null)
+        {
+            return;
+        }
+
+        if (root.name == partName)
+        {
+            ApplyColorAndScale(root, color, localScale);
+        }
+
+        for (var i = 0; i < root.childCount; i++)
+        {
+            RecolorAndResizeAll(root.GetChild(i), partName, color, localScale);
+        }
+    }
+
+    private static void ApplyColorAndScale(Transform part, Color color, Vector3 localScale)
+    {
         part.localScale = localScale;
         var renderer = part.GetComponent<Renderer>();
         if (renderer != null)
