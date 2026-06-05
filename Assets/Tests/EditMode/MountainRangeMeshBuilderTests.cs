@@ -4,17 +4,18 @@ using UnityEngine;
 public class MountainRangeMeshBuilderTests
 {
     [Test]
-    public void CreateRangeMesh_BuildsIrregularLightweightMountainChain()
+    public void CreateRangeMesh_BuildsNaturalContinuousLightweightMountainChain()
     {
         var mesh = MountainRangeMeshBuilder.CreateRangeMesh(8, 12.5f);
 
-        Assert.Greater(mesh.vertexCount, 20);
-        Assert.Less(mesh.vertexCount, 32);
-        Assert.Less(mesh.triangles.Length / 3, 60);
+        Assert.Greater(mesh.vertexCount, 40);
+        Assert.Less(mesh.vertexCount, 56);
+        Assert.Less(mesh.triangles.Length / 3, 90);
         Assert.Greater(mesh.bounds.size.x, 0.9f);
         Assert.Greater(mesh.bounds.size.y, 0.45f);
-        Assert.Greater(mesh.bounds.size.z, 1f);
+        Assert.Greater(mesh.bounds.size.z, 1.1f);
         Assert.Greater(CountDistinctHighPoints(mesh.vertices), 3);
+        Assert.Greater(CountShoulderPoints(mesh.vertices), 12);
 
         Object.DestroyImmediate(mesh);
     }
@@ -50,6 +51,21 @@ public class MountainRangeMeshBuilderTests
         }
 
         return distinctCount;
+    }
+
+    private static int CountShoulderPoints(Vector3[] vertices)
+    {
+        var shoulderCount = 0;
+
+        for (var index = 0; index < vertices.Length; index++)
+        {
+            if (vertices[index].y > 0.08f && vertices[index].y < 0.42f)
+            {
+                shoulderCount++;
+            }
+        }
+
+        return shoulderCount;
     }
 
     private static bool Contains(float[] values, int count, float value)
