@@ -3,6 +3,7 @@ using UnityEngine;
 public static class SkiClassicsSkierModelBuilder
 {
     public const string DefaultModelName = "Ski Classics Roller Skier Model";
+    public const string GameplayModelAppliedMarkerName = "Ski Classics Gameplay Model Applied";
 
     public const float ShoulderWidth = 0.7f;
     public const float WaistWidth = 0.22f;
@@ -61,8 +62,40 @@ public static class SkiClassicsSkierModelBuilder
         AddBodyPart(headPivot, "Compact Head", PrimitiveType.Sphere, Vector3.zero, new Vector3(HeadDiameter, 0.18f, HeadDiameter), skin, Vector3.zero);
         AddBodyPart(headPivot, "Low Poly Helmet", PrimitiveType.Sphere, new Vector3(0f, 0.095f, 0f), new Vector3(0.21f, 0.115f, 0.21f), helmet, Vector3.zero);
 
-        CreateArmAndPole(modelRoot, torsoPivot, "Left", -1f, suitBlue, bootBlack, poleBlack, poleHighlight);
-        CreateArmAndPole(modelRoot, torsoPivot, "Right", 1f, suitBlue, bootBlack, poleBlack, poleHighlight);
+        CreateArmAndPole(modelRoot, "Left", -1f, suitBlue, bootBlack, poleBlack, poleHighlight);
+        CreateArmAndPole(modelRoot, "Right", 1f, suitBlue, bootBlack, poleBlack, poleHighlight);
+
+        return modelRoot;
+    }
+
+    public static Transform CreateGameplayModel(Transform parent, RollerSkierAnimator animator, string modelName = DefaultModelName)
+    {
+        Transform modelRoot = CreateModel(parent, modelName);
+        if (animator != null)
+        {
+            animator.hips = FindChildRecursive(modelRoot, "Readable Hips");
+            animator.torso = FindChildRecursive(modelRoot, "Forward Lean Body Pivot");
+            animator.head = FindChildRecursive(modelRoot, "Neutral Head Looking Forward");
+            animator.leftArm = FindChildRecursive(modelRoot, "Left Pole Arm");
+            animator.rightArm = FindChildRecursive(modelRoot, "Right Pole Arm");
+            animator.leftHand = FindChildRecursive(modelRoot, "Left Gloved Hand");
+            animator.rightHand = FindChildRecursive(modelRoot, "Right Gloved Hand");
+            animator.leftPole = FindChildRecursive(modelRoot, "Left Ski Pole");
+            animator.rightPole = FindChildRecursive(modelRoot, "Right Ski Pole");
+            animator.leftThigh = FindChildRecursive(modelRoot, "Left Thigh");
+            animator.rightThigh = FindChildRecursive(modelRoot, "Right Thigh");
+            animator.leftShin = FindChildRecursive(modelRoot, "Left Calf");
+            animator.rightShin = FindChildRecursive(modelRoot, "Right Calf");
+            animator.leftFoot = FindChildRecursive(modelRoot, "Left Roller Ski Boot");
+            animator.rightFoot = FindChildRecursive(modelRoot, "Right Roller Ski Boot");
+            animator.leftSki = FindChildRecursive(modelRoot, "Left Classic Roller Ski");
+            animator.rightSki = FindChildRecursive(modelRoot, "Right Classic Roller Ski");
+        }
+
+        if (parent != null && parent.Find(GameplayModelAppliedMarkerName) == null)
+        {
+            CreateChild(parent, GameplayModelAppliedMarkerName, Vector3.zero);
+        }
 
         return modelRoot;
     }
@@ -91,7 +124,7 @@ public static class SkiClassicsSkierModelBuilder
         AddBodyPart(ski, "Toe Binding Block", PrimitiveType.Cube, new Vector3(0f, 0.205f, 0.15f), new Vector3(0.11f, 0.055f, 0.07f), bindingColor, Vector3.zero);
     }
 
-    private static void CreateArmAndPole(Transform modelRoot, Transform torsoPivot, string sideName, float side, Color suitColor, Color gloveColor, Color poleColor, Color highlightColor)
+    private static void CreateArmAndPole(Transform modelRoot, string sideName, float side, Color suitColor, Color gloveColor, Color poleColor, Color highlightColor)
     {
         var arm = CreateChild(modelRoot, sideName + " Pole Arm", new Vector3(0.33f * side, 1.48f, -0.04f));
         arm.localRotation = Quaternion.Euler(-6f, 0f, 1.5f * -side);
@@ -131,5 +164,29 @@ public static class SkiClassicsSkierModelBuilder
         part.transform.localScale = localScale;
         part.GetComponent<Renderer>().material.color = color;
         return part.transform;
+    }
+
+    private static Transform FindChildRecursive(Transform root, string name)
+    {
+        if (root == null)
+        {
+            return null;
+        }
+
+        if (root.name == name)
+        {
+            return root;
+        }
+
+        foreach (Transform child in root)
+        {
+            Transform result = FindChildRecursive(child, name);
+            if (result != null)
+            {
+                return result;
+            }
+        }
+
+        return null;
     }
 }
