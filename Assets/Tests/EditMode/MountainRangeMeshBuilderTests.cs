@@ -4,7 +4,7 @@ using UnityEngine;
 public class MountainRangeMeshBuilderTests
 {
     [Test]
-    public void CreateRangeMesh_BuildsNaturalContinuousLightweightMountainChain()
+    public void CreateRangeMesh_BuildsRoundedSupportingMountainChain()
     {
         var mesh = MountainRangeMeshBuilder.CreateRangeMesh(8, 12.5f);
 
@@ -12,12 +12,31 @@ public class MountainRangeMeshBuilderTests
         Assert.Less(mesh.vertexCount, 56);
         Assert.Less(mesh.triangles.Length / 3, 90);
         Assert.Greater(mesh.bounds.size.x, 0.9f);
-        Assert.Greater(mesh.bounds.size.y, 0.45f);
+        Assert.Greater(mesh.bounds.size.y, 0.35f);
+        Assert.Less(mesh.bounds.size.y, 0.75f);
         Assert.Greater(mesh.bounds.size.z, 1.1f);
         Assert.Greater(CountDistinctHighPoints(mesh.vertices), 3);
         Assert.Greater(CountShoulderPoints(mesh.vertices), 12);
+        Assert.Less(CalculateLargestAdjacentHeightJump(mesh.vertices), 0.24f);
 
         Object.DestroyImmediate(mesh);
+    }
+
+    [Test]
+    public void CalculatePeakHeight_StaysRoundedAndModerate()
+    {
+        var previousHeight = MountainRangeMeshBuilder.CalculatePeakHeight(0, 12.5f);
+        var highestJump = 0f;
+
+        for (var index = 1; index <= 8; index++)
+        {
+            var height = MountainRangeMeshBuilder.CalculatePeakHeight(index, 12.5f);
+            highestJump = Mathf.Max(highestJump, Mathf.Abs(height - previousHeight));
+            Assert.Less(height, 0.76f);
+            previousHeight = height;
+        }
+
+        Assert.Less(highestJump, 0.24f);
     }
 
     [Test]
@@ -34,7 +53,7 @@ public class MountainRangeMeshBuilderTests
 
         for (var index = 0; index < vertices.Length; index++)
         {
-            if (vertices[index].y <= 0.25f)
+            if (vertices[index].y <= 0.2f)
             {
                 continue;
             }
@@ -59,13 +78,28 @@ public class MountainRangeMeshBuilderTests
 
         for (var index = 0; index < vertices.Length; index++)
         {
-            if (vertices[index].y > 0.08f && vertices[index].y < 0.42f)
+            if (vertices[index].y > 0.06f && vertices[index].y < 0.3f)
             {
                 shoulderCount++;
             }
         }
 
         return shoulderCount;
+    }
+
+    private static float CalculateLargestAdjacentHeightJump(Vector3[] vertices)
+    {
+        var largestJump = 0f;
+        var previousHeight = vertices[2].y;
+
+        for (var index = 7; index < vertices.Length; index += 5)
+        {
+            var currentHeight = vertices[index].y;
+            largestJump = Mathf.Max(largestJump, Mathf.Abs(currentHeight - previousHeight));
+            previousHeight = currentHeight;
+        }
+
+        return largestJump;
     }
 
     private static bool Contains(float[] values, int count, float value)
