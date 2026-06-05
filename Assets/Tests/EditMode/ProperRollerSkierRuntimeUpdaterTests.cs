@@ -33,6 +33,9 @@ public class ProperRollerSkierRuntimeUpdaterTests
         var leftPole = visualRoot.transform.Find("Left Ski Pole");
         var rightPole = visualRoot.transform.Find("Right Ski Pole");
 
+        Assert.IsNotNull(visualRoot.transform.Find("Forward Hinged Athletic Hips"));
+        Assert.IsNotNull(visualRoot.transform.Find("Left Knee Bend Joint"));
+        Assert.IsNotNull(visualRoot.transform.Find("Right Knee Bend Joint"));
         Assert.IsNotNull(torsoPivot.Find("Athletic Forward Leaning Torso"));
         Assert.IsNotNull(torsoPivot.Find("V Shape Upper Torso"));
         Assert.IsNotNull(torsoPivot.Find("Narrow Waist"));
@@ -89,7 +92,7 @@ public class ProperRollerSkierRuntimeUpdaterTests
 
         ProperRollerSkierRuntimeUpdater.ApplyProperRollerSkierModel();
 
-        var hips = visualRoot.transform.Find("Narrow Athletic Hips");
+        var hips = visualRoot.transform.Find("Forward Hinged Athletic Hips");
         var torsoPivot = visualRoot.transform.Find("Torso Pivot");
         var head = torsoPivot.Find("Head");
         var leftSki = visualRoot.transform.Find("Left Parallel Roller Ski");
@@ -226,6 +229,39 @@ public class ProperRollerSkierRuntimeUpdaterTests
     }
 
     [Test]
+    public void ApplyProperRollerSkierModel_UsesAthleticLowerBodyStanceReadyForPolePower()
+    {
+        var skier = CreateSkierRoot(out var visualRoot, out _);
+
+        ProperRollerSkierRuntimeUpdater.ApplyProperRollerSkierModel();
+
+        var hips = visualRoot.transform.Find("Forward Hinged Athletic Hips");
+        var leftThigh = visualRoot.transform.Find("Left Long Athletic Thigh");
+        var leftLowerLeg = visualRoot.transform.Find("Left Long Lower Leg");
+        var leftKnee = visualRoot.transform.Find("Left Knee Bend Joint");
+        var rightKnee = visualRoot.transform.Find("Right Knee Bend Joint");
+        var leftBoot = visualRoot.transform.Find("Left Boot");
+        var torsoPivot = visualRoot.transform.Find("Torso Pivot");
+        var leftSki = visualRoot.transform.Find("Left Parallel Roller Ski");
+        var rightSki = visualRoot.transform.Find("Right Parallel Roller Ski");
+
+        Assert.Less(hips.localPosition.y, 0.98f);
+        Assert.Greater(hips.localPosition.z, leftBoot.localPosition.z);
+        Assert.Greater(torsoPivot.localPosition.z, 0.08f);
+        Assert.Less(Mathf.DeltaAngle(0f, hips.localEulerAngles.x), -12f);
+        Assert.Less(Mathf.DeltaAngle(0f, leftThigh.localEulerAngles.x), -28f);
+        Assert.Greater(Mathf.DeltaAngle(0f, leftLowerLeg.localEulerAngles.x), 14f);
+        Assert.Greater(leftKnee.localPosition.y, leftLowerLeg.localPosition.y);
+        Assert.Less(leftKnee.localPosition.y, leftThigh.localPosition.y);
+        Assert.Greater(leftKnee.localPosition.z, leftBoot.localPosition.z);
+        Assert.AreEqual(-leftKnee.localPosition.x, rightKnee.localPosition.x, 0.001f);
+        Assert.AreEqual(0f, Mathf.DeltaAngle(0f, leftSki.localEulerAngles.y), 0.001f);
+        Assert.AreEqual(0f, Mathf.DeltaAngle(0f, rightSki.localEulerAngles.y), 0.001f);
+
+        Object.DestroyImmediate(skier);
+    }
+
+    [Test]
     public void ApplyProperRollerSkierModel_UsesLongSlenderPolesWithParallelPlantParts()
     {
         var skier = CreateSkierRoot(out var visualRoot, out _);
@@ -285,13 +321,13 @@ public class ProperRollerSkierRuntimeUpdaterTests
 
         ProperRollerSkierRuntimeUpdater.ApplyProperRollerSkierModel();
 
-        var hips = visualRoot.transform.Find("Narrow Athletic Hips");
+        var hips = visualRoot.transform.Find("Forward Hinged Athletic Hips");
         var torsoPivot = visualRoot.transform.Find("Torso Pivot");
         var chestPanel = torsoPivot.Find("V Shape Upper Torso");
         var head = torsoPivot.Find("Head");
         var waist = torsoPivot.Find("Narrow Waist");
 
-        Assert.Less(Mathf.DeltaAngle(0f, hips.localEulerAngles.x), -8f);
+        Assert.Less(Mathf.DeltaAngle(0f, hips.localEulerAngles.x), -12f);
         Assert.Greater(Mathf.DeltaAngle(0f, chestPanel.localEulerAngles.x), 5f);
         Assert.AreEqual(0f, Mathf.DeltaAngle(0f, head.localEulerAngles.x), 0.001f);
         Assert.Less(waist.localScale.x, chestPanel.localScale.x);
