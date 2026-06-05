@@ -18,6 +18,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     public const float CharacterYawDegrees = 0f;
     public const float CharacterWidthScale = 0.72f;
     public const float LegChainLateralCompression = 0.22f;
+    public const float LowerLegChainLateralCompression = 0.24f;
     public const float FootBindingLateralOffset = 0f;
     public const float BasePoseUpperArmDropMuscle = 0.46f;
     public const float BasePoseForearmBendMuscle = 0.2f;
@@ -136,7 +137,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
             PoleVisibilityRuntimeUpdater.ApplyPoleVisibilityPass();
         }
 
-        Debug.Log("[Ski-Verse] Adventure Character connected rig applied with tight parallel roller skier legs, feet on bindings, and hand-attached poles.");
+        Debug.Log("[Ski-Verse] Adventure Character connected rig applied with tight full-leg roller ski stance, feet on bindings, and hand-attached poles.");
         return true;
 #else
         return false;
@@ -200,7 +201,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
             pose.muscles = muscles;
             poseHandler.SetHumanPose(ref pose);
             humanoidAnimator.enabled = false;
-            Debug.Log("[Ski-Verse] Adventure Character humanoid base pose applied with tight parallel roller skier legs.");
+            Debug.Log("[Ski-Verse] Adventure Character humanoid base pose applied with tight full-leg roller ski stance.");
             return true;
         }
         catch (System.Exception exception)
@@ -245,16 +246,20 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         ApplyLocalRotationDelta(root, "thigh_r", Vector3.zero);
         ApplyLocalRotationDelta(root, "calf_l", new Vector3(-0.5f, 0f, 0f));
         ApplyLocalRotationDelta(root, "calf_r", new Vector3(-0.5f, 0f, 0f));
-        Debug.Log("[Ski-Verse] Adventure Character fallback base pose applied with tight parallel roller skier legs.");
+        Debug.Log("[Ski-Verse] Adventure Character fallback base pose applied with tight full-leg roller ski stance.");
     }
 
     private static void ApplyParallelLegChainSpacing(Transform root)
     {
-        CompressBoneLateralPosition(root, "thigh_l");
-        CompressBoneLateralPosition(root, "thigh_r");
+        CompressBoneLateralPosition(root, "thigh_l", LegChainLateralCompression);
+        CompressBoneLateralPosition(root, "thigh_r", LegChainLateralCompression);
+        CompressBoneLateralPosition(root, "calf_l", LowerLegChainLateralCompression);
+        CompressBoneLateralPosition(root, "calf_r", LowerLegChainLateralCompression);
+        CompressBoneLateralPosition(root, "foot_l", LowerLegChainLateralCompression);
+        CompressBoneLateralPosition(root, "foot_r", LowerLegChainLateralCompression);
     }
 
-    private static void CompressBoneLateralPosition(Transform root, string boneName)
+    private static void CompressBoneLateralPosition(Transform root, string boneName, float compression)
     {
         var bone = FindDeepChild(root, boneName);
         if (bone == null)
@@ -263,7 +268,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         }
 
         var localPosition = bone.localPosition;
-        bone.localPosition = new Vector3(localPosition.x * LegChainLateralCompression, localPosition.y, localPosition.z);
+        bone.localPosition = new Vector3(localPosition.x * compression, localPosition.y, localPosition.z);
     }
 
     private static void ApplyLocalRotationDelta(Transform root, string boneName, Vector3 localEulerDelta)
