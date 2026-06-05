@@ -105,4 +105,19 @@ public class PlayerSpeedControllerTests
         Object.DestroyImmediate(hud.gameObject);
         Object.DestroyImmediate(player);
     }
+
+    [Test]
+    public void CalculateTargetFieldOfView_WidensAsSpeedIncreases()
+    {
+        var followCamera = new GameObject("Follow Camera").AddComponent<FollowCamera>();
+        followCamera.baseFieldOfView = 62f;
+        followCamera.maxFieldOfView = 78f;
+        followCamera.speedForMaxFieldOfViewKmh = 72f;
+
+        Assert.AreEqual(62f, followCamera.CalculateTargetFieldOfView(0f), 0.001f);
+        Assert.AreEqual(70f, followCamera.CalculateTargetFieldOfView(36f), 0.001f);
+        Assert.AreEqual(78f, followCamera.CalculateTargetFieldOfView(90f), 0.001f);
+
+        Object.DestroyImmediate(followCamera.gameObject);
+    }
 }
