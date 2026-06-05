@@ -29,6 +29,7 @@ public class PlayerSpeedController : MonoBehaviour
     {
         CurrentSpeed = currentSpeed;
         startDistanceZ = transform.position.z;
+        AlignToCourse(transform.position.z);
     }
 
     private void Update()
@@ -43,7 +44,8 @@ public class PlayerSpeedController : MonoBehaviour
             DecreaseSpeed(Time.deltaTime);
         }
 
-        transform.position = CalculateNextPosition(transform.position, transform.forward, Time.deltaTime);
+        var nextZ = transform.position.z + CurrentSpeed * Time.deltaTime;
+        AlignToCourse(nextZ);
     }
 
     public void IncreaseSpeed(float deltaTime)
@@ -59,6 +61,12 @@ public class PlayerSpeedController : MonoBehaviour
     public Vector3 CalculateNextPosition(Vector3 startPosition, Vector3 forwardDirection, float deltaTime)
     {
         return startPosition + forwardDirection.normalized * CurrentSpeed * deltaTime;
+    }
+
+    public void AlignToCourse(float zPosition)
+    {
+        transform.position = CoursePath.PointAtDistance(zPosition, 0f);
+        transform.rotation = CoursePath.RotationAtDistance(zPosition);
     }
 
     public void SetStartDistanceZ(float zPosition)
