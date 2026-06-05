@@ -5,13 +5,16 @@ public class ProperRollerSkierRuntimeUpdater : MonoBehaviour
 {
     private const string VisualRootName = "Roller Skier Visual";
 
-    public const float VisiblePoleGripRadius = 0.045f;
-    public const float VisiblePoleShaftRadius = 0.018f;
+    public const float VisiblePoleGripRadius = 0.06f;
+    public const float VisiblePoleShaftRadius = 0.027f;
     public const float VisiblePoleShaftLength = 1.38f;
-    public static readonly Color VisiblePoleShaftColor = new Color(0.92f, 0.96f, 0.98f);
-    public static readonly Color PoleGripColor = new Color(0.015f, 0.018f, 0.02f);
+    public const float VisiblePoleLateralOffset = 0.12f;
+    public const float VisiblePoleTipLateralOffset = 0.3f;
+    public static readonly Color VisiblePoleShaftColor = new Color(0.012f, 0.014f, 0.016f);
+    public static readonly Color PoleGripColor = new Color(0.006f, 0.007f, 0.008f);
+    public static readonly Color PoleHighlightColor = new Color(0.94f, 0.96f, 0.88f);
 
-    private static readonly Color PoleTipColor = new Color(0.025f, 0.028f, 0.032f);
+    private static readonly Color PoleTipColor = new Color(0.015f, 0.017f, 0.019f);
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void InstallRuntimeUpdater()
@@ -142,11 +145,13 @@ public class ProperRollerSkierRuntimeUpdater : MonoBehaviour
     private static Transform CreatePole(Transform parent, string name, Vector3 localPosition, float side)
     {
         var polePivot = CreateChild(parent, name, localPosition);
-        AddBodyPart(polePivot, "Ergonomic Pole Grip", PrimitiveType.Capsule, new Vector3(0.008f * side, -0.035f, 0.02f), new Vector3(VisiblePoleGripRadius, 0.13f, VisiblePoleGripRadius), PoleGripColor, new Vector3(14f, 0f, 0f));
-        AddBodyPart(polePivot, "Wrist Strap", PrimitiveType.Cube, new Vector3(0.045f * side, -0.12f, 0.04f), new Vector3(0.014f, 0.22f, 0.038f), PoleGripColor, new Vector3(18f, 0f, 10f * side));
-        AddBodyPart(polePivot, "High Contrast Pole Shaft", PrimitiveType.Cylinder, new Vector3(0.045f * side, -0.7f, 0.4f), new Vector3(VisiblePoleShaftRadius, VisiblePoleShaftLength, VisiblePoleShaftRadius), VisiblePoleShaftColor, new Vector3(24f, 0f, -2f * side));
-        AddBodyPart(polePivot, "Compact Pole Basket", PrimitiveType.Cylinder, new Vector3(0.165f * side, -1.37f, 0.78f), new Vector3(0.06f, 0.01f, 0.06f), PoleTipColor, new Vector3(90f, 0f, 0f));
-        AddBodyPart(polePivot, "Pole Tip", PrimitiveType.Sphere, new Vector3(0.185f * side, -1.48f, 0.84f), new Vector3(0.035f, 0.035f, 0.035f), PoleTipColor, Vector3.zero);
+        AddBodyPart(polePivot, "Ergonomic Pole Grip", PrimitiveType.Capsule, new Vector3(0.018f * side, -0.035f, 0.02f), new Vector3(VisiblePoleGripRadius, 0.13f, VisiblePoleGripRadius), PoleGripColor, new Vector3(14f, 0f, 0f));
+        AddBodyPart(polePivot, "Wrist Strap", PrimitiveType.Cube, new Vector3(0.065f * side, -0.12f, 0.04f), new Vector3(0.018f, 0.22f, 0.042f), PoleGripColor, new Vector3(18f, 0f, 10f * side));
+        AddBodyPart(polePivot, "Dark Visible Pole Shaft", PrimitiveType.Cylinder, new Vector3(VisiblePoleLateralOffset * side, -0.7f, 0.34f), new Vector3(VisiblePoleShaftRadius, VisiblePoleShaftLength, VisiblePoleShaftRadius), VisiblePoleShaftColor, new Vector3(24f, 0f, -2f * side));
+        AddBodyPart(polePivot, "Upper Pole Motion Marker", PrimitiveType.Cylinder, new Vector3(VisiblePoleLateralOffset * side, -0.32f, 0.16f), new Vector3(VisiblePoleShaftRadius * 1.18f, 0.045f, VisiblePoleShaftRadius * 1.18f), PoleHighlightColor, new Vector3(24f, 0f, -2f * side));
+        AddBodyPart(polePivot, "Lower Pole Motion Marker", PrimitiveType.Cylinder, new Vector3(VisiblePoleLateralOffset * side, -1.04f, 0.58f), new Vector3(VisiblePoleShaftRadius * 1.18f, 0.045f, VisiblePoleShaftRadius * 1.18f), PoleHighlightColor, new Vector3(24f, 0f, -2f * side));
+        AddBodyPart(polePivot, "Compact Pole Basket", PrimitiveType.Cylinder, new Vector3(VisiblePoleTipLateralOffset * side, -1.37f, 0.78f), new Vector3(0.075f, 0.012f, 0.075f), PoleTipColor, new Vector3(90f, 0f, 0f));
+        AddBodyPart(polePivot, "Pole Tip", PrimitiveType.Sphere, new Vector3(VisiblePoleTipLateralOffset * side, -1.48f, 0.84f), new Vector3(0.045f, 0.045f, 0.045f), PoleTipColor, Vector3.zero);
         return polePivot;
     }
 
