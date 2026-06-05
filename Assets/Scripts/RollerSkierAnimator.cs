@@ -3,9 +3,12 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class RollerSkierAnimator : MonoBehaviour
 {
+    public const float DefaultPropulsionWattsThreshold = 25f;
+
     private const float PlantStartPhase = 0.18f;
     private const float PlantPeakPhase = 0.46f;
     private const float ReturnEndPhase = 0.92f;
+    private const float IdlePhase = 0f;
 
     public PlayerSpeedController player;
     public Transform torso;
@@ -17,18 +20,37 @@ public class RollerSkierAnimator : MonoBehaviour
     public Transform rightSki;
     public float baseCycleRate = 0.65f;
     public float speedCycleRate = 0.018f;
+    public float idleReturnRate = 2.5f;
+    public float propulsionWattsThreshold = DefaultPropulsionWattsThreshold;
 
     private float phase;
 
     private void LateUpdate()
     {
         var speedKmh = player != null ? player.SpeedKmh : 0f;
-        phase = CalculateNextPhase(phase, speedKmh, Time.deltaTime, baseCycleRate, speedCycleRate);
+        var movementInput = player != null ? player.LastMovementInput : PlayerMovementInput.None;
+        var shouldDoublePole = ShouldDoublePole(movementInput, propulsionWattsThreshold);
+        phase = CalculateNextPhase(phase, speedKmh, Time.deltaTime, baseCycleRate, speedCycleRate, shouldDoublePole, idleReturnRate);
         ApplyPose(phase);
+    }
+
+    public static bool ShouldDoublePole(PlayerMovementInput movementInput, float wattsThreshold)
+    {
+        return movementInput.SpeedAxis > 0f || movementInput.PropulsionWatts > Mathf.Max(0f, wattsThreshold);
     }
 
     public static float CalculateNextPhase(float currentPhase, float speedKmh, float deltaTime, float baseRate, float speedRate)
     {
+        return CalculateNextPhase(currentPhase, speedKmh, deltaTime, baseRate, speedRate, true, 0f);
+    }
+
+    public static float CalculateNextPhase(float currentPhase, float speedKmh, float deltaTime, float baseRate, float speedRate, bool shouldDoublePole, float idleReturnRate)
+    {
+        if (!shouldDoublePole)
+        {
+            return Mathf.MoveTowards(Mathf.Repeat(currentPhase, 1f), IdlePhase, Mathf.Max(0f, idleReturnRate) * Mathf.Max(0f, deltaTime));
+        }
+
         var cycleRate = Mathf.Max(0f, baseRate + speedKmh * speedRate);
         return Mathf.Repeat(currentPhase + cycleRate * deltaTime, 1f);
     }
