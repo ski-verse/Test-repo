@@ -184,6 +184,11 @@ public class RollerSkierAnimator : MonoBehaviour
         }
     }
 
+    public void ResetBasePose()
+    {
+        capturedBasePose = false;
+    }
+
     private void CaptureBasePoseIfNeeded()
     {
         if (capturedBasePose)
