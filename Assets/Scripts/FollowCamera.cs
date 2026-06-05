@@ -3,13 +3,16 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class FollowCamera : MonoBehaviour
 {
+    public static readonly Vector3 FocusedPlayerOffset = new Vector3(0f, 2.75f, -4.8f);
+    public const float FocusedLookTargetHeight = 1.25f;
+
     public Transform target;
     public PlayerSpeedController player;
-    public Vector3 offset = new Vector3(0f, 3.8f, -8.2f);
+    public Vector3 offset = FocusedPlayerOffset;
     public float positionSmoothTime = 0.16f;
     public float rotationSmoothSpeed = 10f;
-    public float baseLookAheadDistance = 12f;
-    public float maxLookAheadDistance = 38f;
+    public float baseLookAheadDistance = 14f;
+    public float maxLookAheadDistance = 42f;
     public float speedForMaxLookAheadKmh = 72f;
     public float baseFieldOfView = 60f;
     public float maxFieldOfView = 96f;
@@ -40,7 +43,7 @@ public class FollowCamera : MonoBehaviour
 
         var speedKmh = player != null ? player.SpeedKmh : 0f;
         var lookAheadDistance = CalculateLookAheadDistance(speedKmh);
-        var lookTarget = target.position + Vector3.up * 1.1f + target.forward * lookAheadDistance;
+        var lookTarget = target.position + Vector3.up * FocusedLookTargetHeight + target.forward * lookAheadDistance;
         var desiredRotation = Quaternion.LookRotation(lookTarget - transform.position, Vector3.up);
         transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation, rotationSmoothSpeed * Time.deltaTime);
 
