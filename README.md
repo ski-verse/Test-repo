@@ -19,11 +19,12 @@ A small Unity prototype for a SkiErg-inspired movement game.
 - A proper low-poly roller skier with realistic proportions, parallel roller skis, wheels, poles, helmet, and double-poling stance
 - Larger on-screen skier presence with a scaled visual rig, an extra 25% runtime presence boost, and a higher simulator-style follow camera that keeps the road horizon visible
 - Stable SkiErg-inspired double-poling animation with fixed body-part pivots, safe torso lean, closer arms, reduced outward swing, parallel pole motion, and speed-scaled cycle timing
+- A lightweight workout session flow that starts on Play, tracks elapsed time, distance, average speed, and max speed, then shows a 5.0 km finish summary with a restart button
 - A smoother speed-responsive camera with noticeable speed-based field of view, longer high-speed look-ahead, higher composition, and light camera shake
 - `W` increases forward speed
 - `S` decreases forward speed
-- A top-left TextMeshPro HUD showing speed in km/h and distance in km
-- EditMode tests for speed, distance, HUD formatting, camera FOV, focused player camera framing, camera look-ahead, camera shake, dramatic course path behavior, environment clearance, visible mountain placement, rounded mountain range mesh shape, skier screen presence, stable double-poling animation hierarchy, narrowed arm technique, and roller skier animation behavior
+- A top-left TextMeshPro HUD showing speed in km/h, distance in km, and elapsed time
+- EditMode tests for speed, distance, HUD formatting, camera FOV, focused player camera framing, camera look-ahead, camera shake, dramatic course path behavior, environment clearance, visible mountain placement, rounded mountain range mesh shape, skier screen presence, stable double-poling animation hierarchy, narrowed arm technique, workout session flow, and roller skier animation behavior
 
 ## Open in Unity
 
@@ -33,7 +34,7 @@ A small Unity prototype for a SkiErg-inspired movement game.
 4. Open any empty scene or create a new one.
 5. Press Play.
 
-The prototype scene is created automatically at runtime by `Assets/Scripts/SkiErgGameBootstrap.cs`, with `Assets/Scripts/MountainRangeSceneUpdater.cs` replacing the placeholder mountains with Nordic low-poly mountain chains and `Assets/Scripts/SkierPresenceRuntimeUpdater.cs` increasing the skier's visual presence.
+The prototype scene is created automatically at runtime by `Assets/Scripts/SkiErgGameBootstrap.cs`, with `Assets/Scripts/MountainRangeSceneUpdater.cs` replacing the placeholder mountains with Nordic low-poly mountain chains, `Assets/Scripts/SkierPresenceRuntimeUpdater.cs` increasing the skier's visual presence, and `Assets/Scripts/WorkoutSessionController.cs` adding the lightweight workout session flow.
 
 ## Controls
 
