@@ -76,6 +76,58 @@ public class RollerSkierTechniqueTests
     }
 
     [Test]
+    public void ApplyPose_PreservesTorsoHipClearanceDuringDrive()
+    {
+        var root = new GameObject("Roller Skier Rig");
+        var animator = root.AddComponent<RollerSkierAnimator>();
+        animator.torso = new GameObject("Torso Pivot").transform;
+        animator.hips = new GameObject("Forward Hinged Athletic Hips").transform;
+
+        animator.torso.SetParent(root.transform, false);
+        animator.hips.SetParent(root.transform, false);
+        animator.torso.localPosition = new Vector3(0f, 1.105f, 0.085f);
+        animator.hips.localPosition = new Vector3(0f, 0.955f, 0.105f);
+
+        animator.ApplyPose(0.42f);
+
+        Assert.Greater(animator.torso.localPosition.y, animator.hips.localPosition.y);
+        Assert.Greater(animator.torso.localPosition.y - animator.hips.localPosition.y, 0.12f);
+
+        Object.DestroyImmediate(root);
+    }
+
+    [Test]
+    public void ApplyPose_FeetDriveStableRollerSkis()
+    {
+        var root = new GameObject("Roller Skier Rig");
+        var animator = root.AddComponent<RollerSkierAnimator>();
+        animator.leftFoot = new GameObject("Left Boot").transform;
+        animator.rightFoot = new GameObject("Right Boot").transform;
+        animator.leftSki = new GameObject("Left Parallel Roller Ski").transform;
+        animator.rightSki = new GameObject("Right Parallel Roller Ski").transform;
+
+        animator.leftFoot.SetParent(root.transform, false);
+        animator.rightFoot.SetParent(root.transform, false);
+        animator.leftSki.SetParent(root.transform, false);
+        animator.rightSki.SetParent(root.transform, false);
+        animator.leftFoot.localPosition = new Vector3(-0.24f, 0.15f, 0.1f);
+        animator.rightFoot.localPosition = new Vector3(0.24f, 0.15f, 0.1f);
+        animator.leftSki.localPosition = new Vector3(-0.24f, 0f, 0.13f);
+        animator.rightSki.localPosition = new Vector3(0.24f, 0f, 0.13f);
+
+        animator.ApplyPose(0.42f);
+
+        var leftFootPitch = Mathf.Abs(NormalizeAngle(animator.leftFoot.localEulerAngles.x));
+        var leftSkiPitch = Mathf.Abs(NormalizeAngle(animator.leftSki.localEulerAngles.x));
+        Assert.Greater(leftFootPitch, leftSkiPitch * 2f);
+        Assert.AreEqual(animator.leftSki.localEulerAngles.x, animator.rightSki.localEulerAngles.x, 0.001f);
+        Assert.Less(Mathf.Abs(animator.leftSki.localPosition.y), 0.01f);
+        Assert.Less(Mathf.Abs(animator.rightSki.localPosition.y), 0.01f);
+
+        Object.DestroyImmediate(root);
+    }
+
+    [Test]
     public void ResetBasePose_RecapturesLateAssignedHandPosition()
     {
         var root = new GameObject("Roller Skier Rig");
@@ -128,5 +180,10 @@ public class RollerSkierTechniqueTests
         Assert.AreEqual(Vector3.zero, rightPole.localPosition);
 
         Object.DestroyImmediate(root);
+    }
+
+    private static float NormalizeAngle(float angle)
+    {
+        return angle > 180f ? angle - 360f : angle;
     }
 }
