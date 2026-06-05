@@ -12,7 +12,14 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
         Assert.AreEqual("Adventure Stable Equipment Constraint Rig", AdventureCharacterRollerSkierRuntimeUpdater.BoneAttachedEquipmentRootName);
         Assert.IsTrue(AdventureCharacterRollerSkierRuntimeUpdater.DisableProceduralAnimationForAdventure);
         Assert.IsTrue(AdventureCharacterRollerSkierRuntimeUpdater.SkipGenericPoleVisibilityForAdventure);
+        Assert.IsFalse(AdventureCharacterRollerSkierRuntimeUpdater.UseAdventureCharacterPrefabInGameplay);
         Assert.AreEqual(0f, AdventureCharacterRollerSkierRuntimeUpdater.CharacterYawDegrees);
+    }
+
+    [Test]
+    public void ApplyAdventureCharacterSwap_IsDisabledForGameplayUntilImportedRigIsStable()
+    {
+        Assert.IsFalse(AdventureCharacterRollerSkierRuntimeUpdater.ApplyAdventureCharacterSwap());
     }
 
     [Test]

@@ -15,6 +15,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     public const bool DisableProceduralAnimationForAdventure = true;
     public const bool SkipGenericPoleVisibilityForAdventure = true;
     public const bool AttachAdventurePolesDirectlyToHands = true;
+    public const bool UseAdventureCharacterPrefabInGameplay = false;
     public const float CharacterYawDegrees = 0f;
     public const float CharacterWidthScale = 0.72f;
     public const float LegChainLateralCompression = 0.22f;
@@ -43,6 +44,11 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void InstallRuntimeUpdater()
     {
+        if (!UseAdventureCharacterPrefabInGameplay)
+        {
+            return;
+        }
+
         if (Object.FindFirstObjectByType<AdventureCharacterRollerSkierRuntimeUpdater>() != null)
         {
             return;
@@ -80,6 +86,11 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
 
     public static bool ApplyAdventureCharacterSwap()
     {
+        if (!UseAdventureCharacterPrefabInGameplay)
+        {
+            return false;
+        }
+
         var animator = Object.FindFirstObjectByType<RollerSkierAnimator>();
         if (animator == null)
         {

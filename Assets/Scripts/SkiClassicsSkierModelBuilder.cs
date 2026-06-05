@@ -15,6 +15,10 @@ public static class SkiClassicsSkierModelBuilder
     public const float ClassicRollerSkiLength = 1.12f;
     public const float ClassicRollerSkiWidth = 0.048f;
     public const float WheelDiameter = 0.23f;
+    public const float StanceHalfWidth = 0.11f;
+    public const float SkiTrackHalfWidth = StanceHalfWidth;
+    public const float BootTrackHalfWidth = StanceHalfWidth;
+    public const float LegTrackHalfWidth = 0.125f;
     public const float PoleShaftRadius = 0.04f;
     public const float PoleAttachmentForwardOffset = 0.26f;
     public const float PoleAttachmentLateralOffset = 0.42f;
@@ -39,8 +43,8 @@ public static class SkiClassicsSkierModelBuilder
         var poleBlack = new Color(0f, 0.001f, 0.002f);
         var poleHighlight = new Color(0.92f, 0.95f, 0.86f);
 
-        CreateClassicRollerSki(modelRoot, "Left", -0.22f, aluminium, wheelBlack, bootBlack, bootNeon);
-        CreateClassicRollerSki(modelRoot, "Right", 0.22f, aluminium, wheelBlack, bootBlack, bootNeon);
+        CreateClassicRollerSki(modelRoot, "Left", -SkiTrackHalfWidth, aluminium, wheelBlack, bootBlack, bootNeon);
+        CreateClassicRollerSki(modelRoot, "Right", SkiTrackHalfWidth, aluminium, wheelBlack, bootBlack, bootNeon);
 
         AddBodyPart(modelRoot, "Readable Hips", PrimitiveType.Capsule, new Vector3(0f, 0.94f, 0.12f), new Vector3(HipWidth, 0.17f, 0.22f), shortsBlack, new Vector3(-12f, 0f, 90f));
         AddBodyPart(modelRoot, "Black Bib Shorts", PrimitiveType.Capsule, new Vector3(0f, 0.99f, 0.15f), new Vector3(0.4f, 0.28f, 0.22f), shortsBlack, new Vector3(-10f, 0f, 90f));
@@ -50,8 +54,8 @@ public static class SkiClassicsSkierModelBuilder
         AddBodyPart(modelRoot, "Right Glute Shape", PrimitiveType.Sphere, new Vector3(0.11f, 0.89f, 0.23f), new Vector3(0.19f, 0.12f, 0.16f), shortsBlack, new Vector3(-8f, 0f, 0f));
         AddBodyPart(modelRoot, "Shorts Separation", PrimitiveType.Cube, new Vector3(0f, 1.04f, 0.03f), new Vector3(0.35f, 0.035f, 0.17f), shortsHighlight, new Vector3(-8f, 0f, 0f));
 
-        CreateLeg(modelRoot, "Left", -0.145f, skin, skinShadow, shortsBlack, bootBlack, bootNeon);
-        CreateLeg(modelRoot, "Right", 0.145f, skin, skinShadow, shortsBlack, bootBlack, bootNeon);
+        CreateLeg(modelRoot, "Left", -LegTrackHalfWidth, -BootTrackHalfWidth, skin, skinShadow, shortsBlack, bootBlack, bootNeon);
+        CreateLeg(modelRoot, "Right", LegTrackHalfWidth, BootTrackHalfWidth, skin, skinShadow, shortsBlack, bootBlack, bootNeon);
 
         var torsoPivot = CreateChild(modelRoot, "Forward Lean Body Pivot", new Vector3(0f, 1.08f, 0.08f));
         torsoPivot.localRotation = Quaternion.Euler(11f, 0f, 0f);
@@ -110,22 +114,22 @@ public static class SkiClassicsSkierModelBuilder
         return modelRoot;
     }
 
-    private static void CreateLeg(Transform parent, string sideName, float x, Color skinColor, Color skinShadowColor, Color shortsColor, Color bootColor, Color bootAccentColor)
+    private static void CreateLeg(Transform parent, string sideName, float legX, float bootX, Color skinColor, Color skinShadowColor, Color shortsColor, Color bootColor, Color bootAccentColor)
     {
         var side = sideName == "Left" ? -1f : 1f;
-        var thigh = CreateChild(parent, sideName + " Thigh", new Vector3(x, 0.67f, 0.16f));
-        thigh.localRotation = Quaternion.Euler(-28f, 0f, 3f * side);
+        var thigh = CreateChild(parent, sideName + " Thigh", new Vector3(legX, 0.68f, 0.13f));
+        thigh.localRotation = Quaternion.Euler(-10f, 0f, 1.5f * side);
         AddBodyPart(thigh, sideName + " Bare Thigh", PrimitiveType.Capsule, Vector3.zero, new Vector3(0.086f, ThighLength, 0.086f), skinColor, Vector3.zero);
         AddBodyPart(thigh, sideName + " Shorts Leg", PrimitiveType.Capsule, new Vector3(0f, 0.16f, 0.01f), new Vector3(0.096f, 0.2f, 0.096f), shortsColor, Vector3.zero);
-        AddBodyPart(parent, sideName + " Knee", PrimitiveType.Sphere, new Vector3(x - 0.01f * side, 0.48f, 0.18f), new Vector3(0.072f, 0.066f, 0.072f), skinShadowColor, Vector3.zero);
-        var calf = CreateChild(parent, sideName + " Calf", new Vector3(x - 0.02f * side, 0.3f, 0.075f));
-        calf.localRotation = Quaternion.Euler(15f, 0f, -2f * side);
+        AddBodyPart(parent, sideName + " Knee", PrimitiveType.Sphere, new Vector3(Mathf.Lerp(legX, bootX, 0.45f), 0.49f, 0.13f), new Vector3(0.072f, 0.066f, 0.072f), skinShadowColor, Vector3.zero);
+        var calf = CreateChild(parent, sideName + " Calf", new Vector3(Mathf.Lerp(legX, bootX, 0.75f), 0.31f, 0.07f));
+        calf.localRotation = Quaternion.Euler(5f, 0f, -1f * side);
         AddBodyPart(calf, sideName + " Bare Calf", PrimitiveType.Capsule, Vector3.zero, new Vector3(0.062f, CalfLength, 0.062f), skinColor, Vector3.zero);
-        var boot = AddBodyPart(parent, sideName + " Roller Ski Boot", PrimitiveType.Cube, new Vector3(x - 0.075f * side, 0.155f, 0.08f), new Vector3(0.105f, 0.09f, 0.34f), bootColor, Vector3.zero);
+        var boot = AddBodyPart(parent, sideName + " Roller Ski Boot", PrimitiveType.Cube, new Vector3(bootX, 0.155f, 0.08f), new Vector3(0.105f, 0.09f, 0.34f), bootColor, Vector3.zero);
         AddBodyPart(boot, sideName + " Boot Neon Cuff", PrimitiveType.Cube, new Vector3(0f, 0.03f, -0.08f), new Vector3(1.08f, 0.22f, 0.16f), bootAccentColor, Vector3.zero);
         AddBodyPart(boot, sideName + " Boot Heel Accent", PrimitiveType.Cube, new Vector3(0f, -0.02f, -0.18f), new Vector3(0.95f, 0.2f, 0.12f), bootAccentColor, Vector3.zero);
-        AddBodyPart(parent, sideName + " Boot Cuff", PrimitiveType.Capsule, new Vector3(x - 0.075f * side, 0.27f, 0.045f), new Vector3(0.098f, 0.165f, 0.088f), bootColor, new Vector3(-8f, 0f, 90f));
-        AddBodyPart(parent, sideName + " Classic Binding", PrimitiveType.Cube, new Vector3(x - 0.075f * side, 0.21f, 0.15f), new Vector3(0.11f, 0.055f, 0.07f), bootAccentColor, Vector3.zero);
+        AddBodyPart(parent, sideName + " Boot Cuff", PrimitiveType.Capsule, new Vector3(bootX, 0.27f, 0.045f), new Vector3(0.098f, 0.165f, 0.088f), bootColor, new Vector3(-8f, 0f, 90f));
+        AddBodyPart(parent, sideName + " Classic Binding", PrimitiveType.Cube, new Vector3(bootX, 0.21f, 0.15f), new Vector3(0.11f, 0.055f, 0.07f), bootAccentColor, Vector3.zero);
     }
 
     private static void CreateClassicRollerSki(Transform parent, string sideName, float x, Color aluminiumColor, Color wheelColor, Color bootColor, Color bindingColor)

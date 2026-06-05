@@ -21,6 +21,10 @@ public class SkiClassicsSkierModelBuilderTests
         Assert.GreaterOrEqual(SkiClassicsSkierModelBuilder.ClassicRollerSkiLength, 1.08f);
         Assert.LessOrEqual(SkiClassicsSkierModelBuilder.ClassicRollerSkiWidth, 0.052f);
         Assert.GreaterOrEqual(SkiClassicsSkierModelBuilder.WheelDiameter, 0.22f);
+        Assert.GreaterOrEqual(SkiClassicsSkierModelBuilder.StanceHalfWidth, 0.09f);
+        Assert.LessOrEqual(SkiClassicsSkierModelBuilder.StanceHalfWidth, 0.13f);
+        Assert.AreEqual(SkiClassicsSkierModelBuilder.StanceHalfWidth, SkiClassicsSkierModelBuilder.SkiTrackHalfWidth, 0.001f);
+        Assert.AreEqual(SkiClassicsSkierModelBuilder.StanceHalfWidth, SkiClassicsSkierModelBuilder.BootTrackHalfWidth, 0.001f);
         Assert.GreaterOrEqual(SkiClassicsSkierModelBuilder.PoleShaftRadius, 0.038f);
         Assert.GreaterOrEqual(SkiClassicsSkierModelBuilder.PoleAttachmentForwardOffset, 0.22f);
         Assert.GreaterOrEqual(SkiClassicsSkierModelBuilder.PoleAttachmentLateralOffset, 0.34f);
@@ -60,6 +64,23 @@ public class SkiClassicsSkierModelBuilderTests
         Assert.IsNotNull(FindChildRecursive(model, "Right Pole Grip Attachment"));
         Assert.IsNotNull(FindChildRecursive(model, "Left Ski Pole"));
         Assert.IsNotNull(FindChildRecursive(model, "Right Ski Pole"));
+
+        Object.DestroyImmediate(parent.gameObject);
+    }
+
+    [Test]
+    public void CreateModel_PlacesBootsBindingsAndRollerSkisOnTheSameNarrowTrack()
+    {
+        var parent = new GameObject("Model Parent").transform;
+
+        var model = SkiClassicsSkierModelBuilder.CreateModel(parent);
+
+        Assert.AreEqual(-SkiClassicsSkierModelBuilder.StanceHalfWidth, FindChildRecursive(model, "Left Classic Roller Ski").localPosition.x, 0.001f);
+        Assert.AreEqual(SkiClassicsSkierModelBuilder.StanceHalfWidth, FindChildRecursive(model, "Right Classic Roller Ski").localPosition.x, 0.001f);
+        Assert.AreEqual(-SkiClassicsSkierModelBuilder.StanceHalfWidth, FindChildRecursive(model, "Left Roller Ski Boot").localPosition.x, 0.001f);
+        Assert.AreEqual(SkiClassicsSkierModelBuilder.StanceHalfWidth, FindChildRecursive(model, "Right Roller Ski Boot").localPosition.x, 0.001f);
+        Assert.AreEqual(-SkiClassicsSkierModelBuilder.StanceHalfWidth, FindChildRecursive(model, "Left Classic Binding").localPosition.x, 0.001f);
+        Assert.AreEqual(SkiClassicsSkierModelBuilder.StanceHalfWidth, FindChildRecursive(model, "Right Classic Binding").localPosition.x, 0.001f);
 
         Object.DestroyImmediate(parent.gameObject);
     }
