@@ -120,4 +120,29 @@ public class PlayerSpeedControllerTests
 
         Object.DestroyImmediate(followCamera.gameObject);
     }
+
+    [Test]
+    public void CalculateShakeAmplitude_GrowsWithSpeedAndClamps()
+    {
+        var followCamera = new GameObject("Follow Camera").AddComponent<FollowCamera>();
+        followCamera.maxShakeAmplitude = 0.18f;
+        followCamera.speedForMaxShakeKmh = 72f;
+
+        Assert.AreEqual(0f, followCamera.CalculateShakeAmplitude(0f), 0.001f);
+        Assert.AreEqual(0.09f, followCamera.CalculateShakeAmplitude(36f), 0.001f);
+        Assert.AreEqual(0.18f, followCamera.CalculateShakeAmplitude(100f), 0.001f);
+
+        Object.DestroyImmediate(followCamera.gameObject);
+    }
+
+    [Test]
+    public void CoursePath_HasCurvedCenterLineAndNormalizedDirection()
+    {
+        var start = CoursePath.CenterXAtDistance(0f);
+        var later = CoursePath.CenterXAtDistance(900f);
+        var direction = CoursePath.DirectionAtDistance(900f);
+
+        Assert.AreNotEqual(start, later);
+        Assert.AreEqual(1f, direction.magnitude, 0.001f);
+    }
 }
