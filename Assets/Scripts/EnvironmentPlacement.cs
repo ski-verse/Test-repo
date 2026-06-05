@@ -8,6 +8,10 @@ public static class EnvironmentPlacement
     public const float FarTreeOffset = 44f;
     public const float MaxTreeRadius = 1.9f;
 
+    public const float NearForestOffset = 56f;
+    public const float FarForestOffset = 78f;
+    public const float MaxForestTreeRadius = 2.4f;
+
     public const float TurnSignOffset = 20.5f;
 
     public const float NearHillOffset = 58f;
@@ -15,12 +19,12 @@ public static class EnvironmentPlacement
     public const float NearHillHalfWidth = 17f;
     public const float FarHillHalfWidth = 20f;
 
-    public const float MountainFirstDistance = 1200f;
-    public const float MountainSpacing = 950f;
-    public const float NearMountainOffset = 520f;
-    public const float FarMountainOffset = 640f;
-    public const float NearMountainHalfWidth = 138f;
-    public const float FarMountainHalfWidth = 177f;
+    public const float MountainFirstDistance = 520f;
+    public const float MountainSpacing = 620f;
+    public const float NearMountainOffset = 180f;
+    public const float FarMountainOffset = 280f;
+    public const float NearMountainHalfWidth = 95f;
+    public const float FarMountainHalfWidth = 125f;
 
     public static bool HasOpenRoadMargin(float centerOffset, float halfWidth)
     {
