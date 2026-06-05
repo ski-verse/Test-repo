@@ -103,6 +103,27 @@ public class RollerSkierDoublePolingAnimationTests
     }
 
     [Test]
+    public void ApplyPose_KeepsArmsCloseToBodyWithMinimalOutwardSwing()
+    {
+        var root = new GameObject("Roller Skier Rig");
+        var animator = root.AddComponent<RollerSkierAnimator>();
+        animator.leftArm = CreateChild(root.transform, "Left Arm Pivot", new Vector3(-0.31f, 1.46f, -0.04f));
+        animator.rightArm = CreateChild(root.transform, "Right Arm Pivot", new Vector3(0.31f, 1.46f, -0.04f));
+        animator.leftPole = CreateChild(root.transform, "Left Pole Pivot", new Vector3(-0.48f, 0.9f, 0.16f));
+        animator.rightPole = CreateChild(root.transform, "Right Pole Pivot", new Vector3(0.48f, 0.9f, 0.16f));
+
+        animator.ApplyPose(0.42f);
+
+        Assert.AreEqual(-1.5f, Mathf.DeltaAngle(0f, animator.leftArm.localEulerAngles.y), 0.001f);
+        Assert.AreEqual(1.5f, Mathf.DeltaAngle(0f, animator.rightArm.localEulerAngles.y), 0.001f);
+        Assert.AreEqual(-1f, Mathf.DeltaAngle(0f, animator.leftArm.localEulerAngles.z), 0.001f);
+        Assert.AreEqual(1f, Mathf.DeltaAngle(0f, animator.rightArm.localEulerAngles.z), 0.001f);
+        Assert.AreEqual(animator.leftPole.localRotation, animator.rightPole.localRotation);
+
+        Object.DestroyImmediate(root);
+    }
+
+    [Test]
     public void CalculateNextPhase_ScalesCycleSpeedWithMovementSpeed()
     {
         var slowPhase = RollerSkierAnimator.CalculateNextPhase(0f, 0f, 0.5f, 0.65f, 0.018f);
