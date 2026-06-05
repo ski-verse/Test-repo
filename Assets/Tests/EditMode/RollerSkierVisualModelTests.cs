@@ -29,6 +29,19 @@ public class RollerSkierVisualModelTests
     }
 
     [Test]
+    public void ProperRollerSkierVisual_UsesHumanBackHipAndGripDetails()
+    {
+        Assert.GreaterOrEqual(ProperRollerSkierRuntimeUpdater.VisibleShoulderCapRadius, 0.118f);
+        Assert.GreaterOrEqual(ProperRollerSkierRuntimeUpdater.VisibleScapulaWidth, 0.17f);
+        Assert.GreaterOrEqual(ProperRollerSkierRuntimeUpdater.VisibleGluteWidth, 0.16f);
+        Assert.GreaterOrEqual(ProperRollerSkierRuntimeUpdater.VisibleGluteDepth, 0.12f);
+        Assert.GreaterOrEqual(ProperRollerSkierRuntimeUpdater.VisibleShortsBandHeight, 0.03f);
+        Assert.GreaterOrEqual(ProperRollerSkierRuntimeUpdater.VisibleGripWrapRadius, ProperRollerSkierRuntimeUpdater.VisiblePoleGripRadius * 1.05f);
+        Assert.GreaterOrEqual(ProperRollerSkierRuntimeUpdater.VisiblePoleShaftRadius, 0.028f);
+        Assert.GreaterOrEqual(ProperRollerSkierRuntimeUpdater.VisiblePoleLateralOffset, 0.14f);
+    }
+
+    [Test]
     public void ProperRollerSkierVisual_UsesTightSuitAndReadableEquipmentDetails()
     {
         Assert.GreaterOrEqual(ProperRollerSkierRuntimeUpdater.VisibleGloveRadius, 0.062f);
