@@ -49,7 +49,7 @@ public class MountainRangeSceneUpdater : MonoBehaviour
                 parent,
                 "Left Near Mountain Chain",
                 CoursePath.PointAtDistance(z, -EnvironmentPlacement.NearMountainOffset),
-                new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2f, 165f, 360f),
+                new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2f, 82.5f, 360f),
                 nearColor,
                 11f + z * 0.017f,
                 8);
@@ -58,7 +58,7 @@ public class MountainRangeSceneUpdater : MonoBehaviour
                 parent,
                 "Right Near Mountain Chain",
                 CoursePath.PointAtDistance(z + 120f, EnvironmentPlacement.NearMountainOffset),
-                new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2f, 182f, 390f),
+                new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2f, 91f, 390f),
                 nearColor,
                 29f + z * 0.019f,
                 9);
@@ -67,7 +67,7 @@ public class MountainRangeSceneUpdater : MonoBehaviour
                 parent,
                 "Left Far Mountain Chain",
                 CoursePath.PointAtDistance(z + 240f, -EnvironmentPlacement.FarMountainOffset),
-                new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2f, 230f, 460f),
+                new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2f, 115f, 460f),
                 farColor,
                 47f + z * 0.013f,
                 9);
@@ -76,7 +76,7 @@ public class MountainRangeSceneUpdater : MonoBehaviour
                 parent,
                 "Right Far Mountain Chain",
                 CoursePath.PointAtDistance(z + 360f, EnvironmentPlacement.FarMountainOffset),
-                new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2f, 245f, 490f),
+                new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2f, 122.5f, 490f),
                 farColor,
                 73f + z * 0.015f,
                 8);
