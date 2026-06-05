@@ -22,10 +22,11 @@ A small Unity prototype for a SkiErg-inspired movement game.
 - Stable SkiErg-inspired double-poling animation with fixed body-part pivots, safe torso lean, closer arms, reduced outward swing, parallel pole motion, and speed-scaled cycle timing
 - A lightweight workout session flow that starts on Play, tracks elapsed time, distance, average speed, and max speed, stops the player at 5.0 km, then shows a finish screen with Restart and Return to start buttons
 - A smoother speed-responsive camera with a 15% higher view, preserved look-ahead behavior, stronger speed-based field of view, longer road readability, and no camera shake
+- A lightweight player input abstraction where keyboard input is the current source and future PM5 input can be added without changing movement logic
 - `W` increases forward speed
 - `S` decreases forward speed
 - A top-left TextMeshPro HUD showing speed in km/h, distance in km, and elapsed time
-- EditMode tests for speed, distance, HUD formatting, camera FOV, focused player camera framing, camera look-ahead, camera shake, dramatic course path behavior, environment clearance, visible mountain placement, rounded mountain range mesh shape, skier screen presence, realistic skier silhouette, improved skier proportions, Vasalopp-style athletic torso shape, athletic lower body stance, proper roller skier model replacement, modern slim classic roller ski proportions, classic roller ski wheel and binding placement, refined pole proportions, stable double-poling animation hierarchy, narrowed arm technique, workout session flow, session completion buttons, stronger speed feeling runtime updates, road-edge flow cues, and roller skier animation behavior
+- EditMode tests for speed, distance, HUD formatting, camera FOV, focused player camera framing, camera look-ahead, camera shake, dramatic course path behavior, environment clearance, visible mountain placement, rounded mountain range mesh shape, skier screen presence, realistic skier silhouette, improved skier proportions, Vasalopp-style athletic torso shape, athletic lower body stance, proper roller skier model replacement, modern slim classic roller ski proportions, classic roller ski wheel and binding placement, refined pole proportions, stable double-poling animation hierarchy, narrowed arm technique, workout session flow, session completion buttons, stronger speed feeling runtime updates, road-edge flow cues, player input abstraction, and roller skier animation behavior
 
 ## Open in Unity
 
@@ -35,7 +36,7 @@ A small Unity prototype for a SkiErg-inspired movement game.
 4. Open any empty scene or create a new one.
 5. Press Play.
 
-The prototype scene is created automatically at runtime by `Assets/Scripts/SkiErgGameBootstrap.cs`, with `Assets/Scripts/ProperRollerSkierRuntimeUpdater.cs` replacing the older placeholder visual with the more recognizable roller skier, `Assets/Scripts/MountainRangeSceneUpdater.cs` replacing the placeholder mountains with Nordic low-poly mountain chains, `Assets/Scripts/SkierPresenceRuntimeUpdater.cs` increasing the skier's visual presence, `Assets/Scripts/WorkoutSessionController.cs` adding the lightweight workout session flow and finish screen, and `Assets/Scripts/SpeedFeelingRuntimeUpdater.cs` improving camera composition with stronger speed-based FOV plus denser roadside and road-edge motion cues.
+The prototype scene is created automatically at runtime by `Assets/Scripts/SkiErgGameBootstrap.cs`, with `Assets/Scripts/ProperRollerSkierRuntimeUpdater.cs` replacing the older placeholder visual with the more recognizable roller skier, `Assets/Scripts/MountainRangeSceneUpdater.cs` replacing the placeholder mountains with Nordic low-poly mountain chains, `Assets/Scripts/SkierPresenceRuntimeUpdater.cs` increasing the skier's visual presence, `Assets/Scripts/WorkoutSessionController.cs` adding the lightweight workout session flow and finish screen, `Assets/Scripts/SpeedFeelingRuntimeUpdater.cs` improving camera composition with stronger speed-based FOV plus denser roadside and road-edge motion cues, and `Assets/Scripts/KeyboardPlayerInputSource.cs` providing today's keyboard controls through the input abstraction used by `Assets/Scripts/PlayerSpeedController.cs`.
 
 ## Controls
 
