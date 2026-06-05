@@ -178,7 +178,7 @@ public class ProperRollerSkierRuntimeUpdaterTests
         var chestPanel = torsoPivot.Find("Chest Panel");
         var waist = torsoPivot.Find("Narrow Waist");
 
-        Assert.Less(hips.localEulerAngles.x, 360f);
+        Assert.Less(Mathf.DeltaAngle(0f, hips.localEulerAngles.x), -5f);
         Assert.Greater(Mathf.DeltaAngle(0f, chestPanel.localEulerAngles.x), 5f);
         Assert.Less(waist.localScale.x, chestPanel.localScale.x);
         Assert.AreEqual(10f, RollerSkierAnimator.CalculateTorsoPitch(0.15f), 0.001f);
