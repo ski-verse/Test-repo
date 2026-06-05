@@ -51,21 +51,31 @@ public class RollerSkierAnimator : MonoBehaviour
     {
         var plantAmount = CalculatePlantAmount(phase);
         var returnLift = CalculateReturnLift(phase);
-        return Mathf.Lerp(-106f, 88f, plantAmount) - returnLift * 30f;
+        var compression = CalculateCompressionAmount(phase);
+        return Mathf.Lerp(-106f, 88f, plantAmount) - returnLift * 30f + compression * 5f;
     }
 
     public static float CalculatePolePitch(float phase)
     {
         var plantAmount = CalculatePlantAmount(phase);
         var returnLift = CalculateReturnLift(phase);
-        return Mathf.Lerp(74f, -104f, plantAmount) + returnLift * 28f;
+        var compression = CalculateCompressionAmount(phase);
+        return Mathf.Lerp(74f, -104f, plantAmount) + returnLift * 28f - compression * 6f;
     }
 
     public static float CalculateTorsoPitch(float phase)
     {
         var plantAmount = CalculatePlantAmount(phase);
         var returnLift = CalculateReturnLift(phase);
-        return Mathf.Lerp(15f, 64f, plantAmount) - returnLift * 4f;
+        var compression = CalculateCompressionAmount(phase);
+        return Mathf.Lerp(15f, 64f, plantAmount) - returnLift * 4f + compression * 4f;
+    }
+
+    public static Vector3 CalculateTorsoPivotPosition(float phase)
+    {
+        var compression = CalculateCompressionAmount(phase);
+        var returnLift = CalculateReturnLift(phase);
+        return new Vector3(0f, Mathf.Lerp(0f, -0.22f, compression) + returnLift * 0.035f, Mathf.Lerp(0f, 0.16f, compression));
     }
 
     public static Vector3 CalculateArmPivotPosition(float side, float phase)
@@ -73,9 +83,10 @@ public class RollerSkierAnimator : MonoBehaviour
         var sideSign = SideSign(side);
         var plantAmount = CalculatePlantAmount(phase);
         var returnLift = CalculateReturnLift(phase);
+        var compression = CalculateCompressionAmount(phase);
         var x = Mathf.Lerp(ArmRecoveryX, ArmPlantX, plantAmount) * sideSign;
-        var y = Mathf.Lerp(ArmRecoveryY, ArmPlantY, plantAmount) + returnLift * 0.08f;
-        var z = Mathf.Lerp(ArmRecoveryZ, ArmPlantZ, plantAmount) - returnLift * 0.08f;
+        var y = Mathf.Lerp(ArmRecoveryY, ArmPlantY, plantAmount) + returnLift * 0.08f - compression * 0.06f;
+        var z = Mathf.Lerp(ArmRecoveryZ, ArmPlantZ, plantAmount) - returnLift * 0.08f + compression * 0.05f;
         return new Vector3(x, y, z);
     }
 
@@ -84,9 +95,10 @@ public class RollerSkierAnimator : MonoBehaviour
         var sideSign = SideSign(side);
         var plantAmount = CalculatePlantAmount(phase);
         var returnLift = CalculateReturnLift(phase);
+        var compression = CalculateCompressionAmount(phase);
         var x = Mathf.Lerp(PoleRecoveryX, PolePlantX, plantAmount) * sideSign;
-        var y = Mathf.Lerp(PoleRecoveryY, PolePlantY, plantAmount) + returnLift * 0.06f;
-        var z = Mathf.Lerp(PoleRecoveryZ, PolePlantZ, plantAmount) - returnLift * 0.06f;
+        var y = Mathf.Lerp(PoleRecoveryY, PolePlantY, plantAmount) + returnLift * 0.06f - compression * 0.04f;
+        var z = Mathf.Lerp(PoleRecoveryZ, PolePlantZ, plantAmount) - returnLift * 0.06f + compression * 0.04f;
         return new Vector3(x, y, z);
     }
 
@@ -98,6 +110,7 @@ public class RollerSkierAnimator : MonoBehaviour
 
         if (torso != null)
         {
+            torso.localPosition = CalculateTorsoPivotPosition(posePhase);
             torso.localRotation = Quaternion.Euler(torsoPitch, 0f, 0f);
         }
 
@@ -147,10 +160,19 @@ public class RollerSkierAnimator : MonoBehaviour
 
         if (phase < PlantPeakPhase)
         {
-            return Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(PlantStartPhase, PlantPeakPhase, phase));
+            var driveIn = Mathf.InverseLerp(PlantStartPhase, PlantPeakPhase, phase);
+            return EaseInOutSine(driveIn);
         }
 
-        return Mathf.SmoothStep(1f, 0f, Mathf.InverseLerp(PlantPeakPhase, ReturnEndPhase, phase));
+        var release = Mathf.InverseLerp(PlantPeakPhase, ReturnEndPhase, phase);
+        return Mathf.SmoothStep(1f, 0f, release);
+    }
+
+    private static float CalculateCompressionAmount(float phase)
+    {
+        phase = Mathf.Repeat(phase, 1f);
+        var driveCompression = Mathf.Sin(Mathf.InverseLerp(PlantStartPhase, 0.58f, phase) * Mathf.PI);
+        return Mathf.Clamp01(driveCompression) * CalculatePlantAmount(phase);
     }
 
     private static float CalculateReturnLift(float phase)
@@ -162,7 +184,13 @@ public class RollerSkierAnimator : MonoBehaviour
             return 0f;
         }
 
-        return Mathf.Sin(Mathf.InverseLerp(PlantPeakPhase, 1f, phase) * Mathf.PI);
+        var returnPhase = Mathf.InverseLerp(PlantPeakPhase, 1f, phase);
+        return Mathf.SmoothStep(0f, 1f, Mathf.Sin(returnPhase * Mathf.PI));
+    }
+
+    private static float EaseInOutSine(float value)
+    {
+        return 0.5f - Mathf.Cos(Mathf.Clamp01(value) * Mathf.PI) * 0.5f;
     }
 
     private static float SideSign(float side)
