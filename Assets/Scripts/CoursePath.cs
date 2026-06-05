@@ -2,11 +2,11 @@ using UnityEngine;
 
 public static class CoursePath
 {
-    private const float PrimaryCurveAmplitude = 5.5f;
-    private const float SecondaryCurveAmplitude = 2.2f;
-    private const float PrimaryCurveFrequency = 0.0032f;
-    private const float SecondaryCurveFrequency = 0.0011f;
-    private const float DirectionSampleDistance = 6f;
+    private const float PrimaryCurveAmplitude = 13f;
+    private const float SecondaryCurveAmplitude = 4.5f;
+    private const float PrimaryCurveFrequency = 0.0038f;
+    private const float SecondaryCurveFrequency = 0.00145f;
+    private const float DirectionSampleDistance = 8f;
 
     public static float CenterXAtDistance(float zPosition)
     {
