@@ -7,7 +7,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
     private const float RoadLengthMeters = 5000f;
     private const float RoadWidthMeters = 8f;
     private const float GrassWidthMeters = 36f;
-    private const float RoadSegmentLength = 25f;
+    private const float RoadSegmentLength = 16f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void BuildPrototypeScene()
@@ -43,7 +43,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
         for (var z = RoadSegmentLength * 0.5f; z < RoadLengthMeters; z += RoadSegmentLength)
         {
-            CreatePathCube(road.transform, "Road Segment", 0f, z, RoadSegmentLength + 0.6f, RoadWidthMeters, 0.1f, color);
+            CreatePathCube(road.transform, "Road Segment", 0f, z, RoadSegmentLength + 0.8f, RoadWidthMeters, 0.1f, color);
         }
     }
 
@@ -53,10 +53,10 @@ public class SkiErgGameBootstrap : MonoBehaviour
         var color = new Color(0.18f, 0.55f, 0.18f);
         var lateralOffset = RoadWidthMeters * 0.5f + GrassWidthMeters * 0.5f;
 
-        for (var z = 30f; z < RoadLengthMeters; z += 60f)
+        for (var z = 24f; z < RoadLengthMeters; z += 48f)
         {
-            CreatePathCube(grass.transform, "Left Grass Segment", -lateralOffset, z, 61f, GrassWidthMeters, 0.08f, color, -0.08f);
-            CreatePathCube(grass.transform, "Right Grass Segment", lateralOffset, z, 61f, GrassWidthMeters, 0.08f, color, -0.08f);
+            CreatePathCube(grass.transform, "Left Grass Segment", -lateralOffset, z, 49f, GrassWidthMeters, 0.08f, color, -0.08f);
+            CreatePathCube(grass.transform, "Right Grass Segment", lateralOffset, z, 49f, GrassWidthMeters, 0.08f, color, -0.08f);
         }
     }
 
@@ -68,13 +68,13 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
         for (var z = RoadSegmentLength * 0.5f; z < RoadLengthMeters; z += RoadSegmentLength)
         {
-            CreatePathCube(markings.transform, "Left Edge Line", edgeLeft, z, RoadSegmentLength + 0.2f, 0.14f, 0.035f, Color.white, 0.025f);
-            CreatePathCube(markings.transform, "Right Edge Line", edgeRight, z, RoadSegmentLength + 0.2f, 0.14f, 0.035f, Color.white, 0.025f);
+            CreatePathCube(markings.transform, "Left Edge Line", edgeLeft, z, RoadSegmentLength + 0.4f, 0.16f, 0.04f, Color.white, 0.025f);
+            CreatePathCube(markings.transform, "Right Edge Line", edgeRight, z, RoadSegmentLength + 0.4f, 0.16f, 0.04f, Color.white, 0.025f);
         }
 
-        for (var z = 18f; z < RoadLengthMeters; z += 42f)
+        for (var z = 14f; z < RoadLengthMeters; z += 34f)
         {
-            CreatePathCube(markings.transform, "Center Dash", 0f, z, 13f, 0.24f, 0.035f, Color.white, 0.03f);
+            CreatePathCube(markings.transform, "Center Dash", 0f, z, 15f, 0.28f, 0.04f, Color.white, 0.03f);
         }
     }
 
@@ -110,10 +110,10 @@ public class SkiErgGameBootstrap : MonoBehaviour
         post.name = "Speed Post";
         post.transform.SetParent(parent, false);
         var position = CoursePath.PointAtDistance(zPosition, lateralOffset);
-        position.y = 0.42f;
+        position.y = 0.48f;
         post.transform.position = position;
         post.transform.rotation = CoursePath.RotationAtDistance(zPosition);
-        post.transform.localScale = new Vector3(0.18f, 0.85f, 0.18f);
+        post.transform.localScale = new Vector3(0.22f, 0.96f, 0.22f);
         post.GetComponent<Renderer>().material.color = Color.white;
     }
 
@@ -121,8 +121,8 @@ public class SkiErgGameBootstrap : MonoBehaviour
     {
         CreateGate("Start Gate", 0f, new Color(0.1f, 0.45f, 0.95f));
         CreateGate("Finish Gate", RoadLengthMeters, new Color(0.95f, 0.15f, 0.12f));
-        CreatePathCube(null, "Start Line", 0f, 1f, 0.35f, RoadWidthMeters, 0.04f, Color.white, 0.04f);
-        CreatePathCube(null, "Finish Line", 0f, RoadLengthMeters - 1f, 0.35f, RoadWidthMeters, 0.04f, Color.white, 0.04f);
+        CreatePathCube(null, "Start Line", 0f, 1f, 0.4f, RoadWidthMeters, 0.05f, Color.white, 0.04f);
+        CreatePathCube(null, "Finish Line", 0f, RoadLengthMeters - 1f, 0.4f, RoadWidthMeters, 0.05f, Color.white, 0.04f);
     }
 
     private static void CreateGate(string name, float zPosition, Color color)
@@ -147,13 +147,13 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
     private static void CreateRollingHills()
     {
-        var hills = new GameObject("Low Poly Rolling Hills");
-        var hillColor = new Color(0.13f, 0.42f, 0.16f);
+        var hills = new GameObject("Obvious Low Poly Rolling Hills");
+        var hillColor = new Color(0.12f, 0.44f, 0.16f);
 
-        for (var z = 180f; z < RoadLengthMeters; z += 300f)
+        for (var z = 130f; z < RoadLengthMeters; z += 230f)
         {
-            CreateLowPolyHill(hills.transform, CoursePath.PointAtDistance(z, -30f), new Vector3(18f, 2.6f, 70f), hillColor);
-            CreateLowPolyHill(hills.transform, CoursePath.PointAtDistance(z + 150f, 30f), new Vector3(22f, 3.2f, 85f), hillColor);
+            CreateLowPolyHill(hills.transform, CoursePath.PointAtDistance(z, -24f), new Vector3(28f, 7.5f, 105f), hillColor);
+            CreateLowPolyHill(hills.transform, CoursePath.PointAtDistance(z + 110f, 24f), new Vector3(34f, 9f, 125f), hillColor);
         }
     }
 
@@ -161,7 +161,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
     {
         var hill = new GameObject("Low Poly Hill");
         hill.transform.SetParent(parent, false);
-        position.y = -0.05f;
+        position.y = -0.1f;
         hill.transform.position = position;
         hill.transform.localScale = scale;
 
@@ -188,13 +188,13 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
     private static void CreateDistantMountains()
     {
-        var mountains = new GameObject("Mountain Backdrop");
-        var color = new Color(0.42f, 0.46f, 0.5f);
+        var mountains = new GameObject("Large Mountain Backdrop");
+        var color = new Color(0.38f, 0.42f, 0.48f);
 
-        for (var z = 500f; z <= RoadLengthMeters; z += 700f)
+        for (var z = 420f; z <= RoadLengthMeters; z += 560f)
         {
-            CreateLowPolyMountain(mountains.transform, CoursePath.PointAtDistance(z, -78f), new Vector3(32f, 24f, 45f), color);
-            CreateLowPolyMountain(mountains.transform, CoursePath.PointAtDistance(z + 260f, 80f), new Vector3(42f, 30f, 54f), color);
+            CreateLowPolyMountain(mountains.transform, CoursePath.PointAtDistance(z, -120f), new Vector3(92f, 78f, 118f), color);
+            CreateLowPolyMountain(mountains.transform, CoursePath.PointAtDistance(z + 210f, 124f), new Vector3(118f, 96f, 138f), color);
         }
     }
 
@@ -202,7 +202,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
     {
         var mountain = new GameObject("Low Poly Mountain");
         mountain.transform.SetParent(parent, false);
-        position.y = -0.1f;
+        position.y = -0.25f;
         mountain.transform.position = position;
         mountain.transform.localScale = scale;
 
@@ -296,9 +296,9 @@ public class SkiErgGameBootstrap : MonoBehaviour
     {
         var cameraObject = new GameObject("Follow Camera");
         var camera = cameraObject.AddComponent<Camera>();
-        camera.fieldOfView = 64f;
-        cameraObject.transform.position = target.position + target.TransformDirection(new Vector3(0f, 3f, -6.4f));
-        cameraObject.transform.LookAt(target.position + Vector3.up * 1.1f + target.forward * 7f);
+        camera.fieldOfView = 60f;
+        cameraObject.transform.position = target.position + target.TransformDirection(new Vector3(0f, 3.1f, -6.8f));
+        cameraObject.transform.LookAt(target.position + Vector3.up * 1.1f + target.forward * 8f);
 
         var followCamera = cameraObject.AddComponent<FollowCamera>();
         followCamera.target = target;
