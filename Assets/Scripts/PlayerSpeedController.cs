@@ -3,7 +3,7 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class PlayerSpeedController : MonoBehaviour
 {
-    public const float GradientResistanceDecelerationPerPercent = 0.42f;
+    public const float GradientResistanceDecelerationPerPercent = 0.32f;
 
     [Header("Speed")]
     public float acceleration = 3f;
