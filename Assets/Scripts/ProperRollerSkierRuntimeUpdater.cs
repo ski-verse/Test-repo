@@ -74,15 +74,17 @@ public class ProperRollerSkierRuntimeUpdater : MonoBehaviour
         animator.leftSki = CreateRollerSki(parent, "Left Parallel Roller Ski", -0.24f, skiColor, aluminiumColor, wheelColor, suitDark);
         animator.rightSki = CreateRollerSki(parent, "Right Parallel Roller Ski", 0.24f, skiColor, aluminiumColor, wheelColor, suitDark);
 
-        AddBodyPart(parent, "Narrow Athletic Hips", PrimitiveType.Capsule, new Vector3(0f, 0.99f, 0.055f), new Vector3(0.34f, 0.18f, 0.23f), suitDark, new Vector3(-10f, 0f, 90f));
-        AddBodyPart(parent, "Left Long Athletic Thigh", PrimitiveType.Capsule, new Vector3(-0.145f, 0.71f, 0.13f), new Vector3(0.102f, 0.445f, 0.102f), suitDark, new Vector3(-22f, 0f, 3f));
-        AddBodyPart(parent, "Right Long Athletic Thigh", PrimitiveType.Capsule, new Vector3(0.145f, 0.71f, 0.13f), new Vector3(0.102f, 0.445f, 0.102f), suitDark, new Vector3(-22f, 0f, -3f));
-        AddBodyPart(parent, "Left Long Lower Leg", PrimitiveType.Capsule, new Vector3(-0.17f, 0.36f, 0.055f), new Vector3(0.08f, 0.405f, 0.08f), suitDark, new Vector3(8f, 0f, -2f));
-        AddBodyPart(parent, "Right Long Lower Leg", PrimitiveType.Capsule, new Vector3(0.17f, 0.36f, 0.055f), new Vector3(0.08f, 0.405f, 0.08f), suitDark, new Vector3(8f, 0f, 2f));
+        AddBodyPart(parent, "Forward Hinged Athletic Hips", PrimitiveType.Capsule, new Vector3(0f, 0.955f, 0.105f), new Vector3(0.34f, 0.18f, 0.23f), suitDark, new Vector3(-15f, 0f, 90f));
+        AddBodyPart(parent, "Left Long Athletic Thigh", PrimitiveType.Capsule, new Vector3(-0.145f, 0.675f, 0.165f), new Vector3(0.102f, 0.445f, 0.102f), suitDark, new Vector3(-30f, 0f, 3f));
+        AddBodyPart(parent, "Right Long Athletic Thigh", PrimitiveType.Capsule, new Vector3(0.145f, 0.675f, 0.165f), new Vector3(0.102f, 0.445f, 0.102f), suitDark, new Vector3(-30f, 0f, -3f));
+        AddBodyPart(parent, "Left Knee Bend Joint", PrimitiveType.Sphere, new Vector3(-0.158f, 0.515f, 0.18f), new Vector3(0.09f, 0.08f, 0.09f), suitDark, Vector3.zero);
+        AddBodyPart(parent, "Right Knee Bend Joint", PrimitiveType.Sphere, new Vector3(0.158f, 0.515f, 0.18f), new Vector3(0.09f, 0.08f, 0.09f), suitDark, Vector3.zero);
+        AddBodyPart(parent, "Left Long Lower Leg", PrimitiveType.Capsule, new Vector3(-0.17f, 0.335f, 0.07f), new Vector3(0.08f, 0.405f, 0.08f), suitDark, new Vector3(16f, 0f, -2f));
+        AddBodyPart(parent, "Right Long Lower Leg", PrimitiveType.Capsule, new Vector3(0.17f, 0.335f, 0.07f), new Vector3(0.08f, 0.405f, 0.08f), suitDark, new Vector3(16f, 0f, 2f));
         AddBodyPart(parent, "Left Boot", PrimitiveType.Cube, new Vector3(-0.24f, 0.15f, 0.1f), new Vector3(0.125f, 0.115f, 0.33f), suitDark, Vector3.zero);
         AddBodyPart(parent, "Right Boot", PrimitiveType.Cube, new Vector3(0.24f, 0.15f, 0.1f), new Vector3(0.125f, 0.115f, 0.33f), suitDark, Vector3.zero);
 
-        var torsoPivot = CreateChild(parent, "Torso Pivot", new Vector3(0f, 1.14f, 0.04f));
+        var torsoPivot = CreateChild(parent, "Torso Pivot", new Vector3(0f, 1.105f, 0.085f));
         animator.torso = torsoPivot;
         AddBodyPart(torsoPivot, "Athletic Forward Leaning Torso", PrimitiveType.Capsule, new Vector3(0f, 0.3f, -0.055f), new Vector3(0.315f, 0.65f, 0.215f), suitBlue, Vector3.zero);
         AddBodyPart(torsoPivot, "V Shape Upper Torso", PrimitiveType.Capsule, new Vector3(0f, 0.44f, -0.09f), new Vector3(0.4f, 0.255f, 0.08f), suitBlue, new Vector3(8f, 0f, 90f));
