@@ -2,6 +2,14 @@ using UnityEngine;
 
 public static class CoursePath
 {
+    public const float CourseLengthMeters = 5000f;
+    public const float MajorClimbStartMeters = 2100f;
+    public const float MajorClimbLengthMeters = 700f;
+    public const float MajorClimbGradePercent = 6.5f;
+    public const float MajorClimbEndMeters = MajorClimbStartMeters + MajorClimbLengthMeters;
+
+    private const float MajorClimbDescentStartMeters = 3300f;
+    private const float MajorClimbDescentLengthMeters = 900f;
     private const float PrimaryCurveAmplitude = 42f;
     private const float SecondaryCurveAmplitude = 24f;
     private const float AccentCurveAmplitude = 8f;
@@ -16,6 +24,7 @@ public static class CoursePath
     private const float PrimaryHillPhase = -80f;
     private const float SecondaryHillPhase = 220f;
     private const float DirectionSampleDistance = 8f;
+    private const float GradientSampleDistance = 10f;
 
     public static float CenterXAtDistance(float zPosition)
     {
@@ -26,8 +35,22 @@ public static class CoursePath
 
     public static float HeightAtDistance(float zPosition)
     {
-        return Mathf.Sin((zPosition + PrimaryHillPhase) * PrimaryHillFrequency) * PrimaryHillAmplitude
-            + Mathf.Sin((zPosition + SecondaryHillPhase) * SecondaryHillFrequency) * SecondaryHillAmplitude;
+        var rawHeight = RollingHeightAtDistance(zPosition) + MajorClimbHeightAtDistance(zPosition);
+        return rawHeight - CalculateLoopHeightCorrection(zPosition);
+    }
+
+    public static float GradientPercentAtDistance(float zPosition)
+    {
+        var previousDistance = Mathf.Max(0f, zPosition - GradientSampleDistance);
+        var nextDistance = Mathf.Min(CourseLengthMeters, zPosition + GradientSampleDistance);
+        var sampleLength = nextDistance - previousDistance;
+
+        if (sampleLength <= 0.001f)
+        {
+            return 0f;
+        }
+
+        return (HeightAtDistance(nextDistance) - HeightAtDistance(previousDistance)) / sampleLength * 100f;
     }
 
     public static Vector3 CenterPointAtDistance(float zPosition)
@@ -56,5 +79,48 @@ public static class CoursePath
     public static Quaternion RotationAtDistance(float zPosition)
     {
         return Quaternion.LookRotation(DirectionAtDistance(zPosition), Vector3.up);
+    }
+
+    private static float RollingHeightAtDistance(float zPosition)
+    {
+        return Mathf.Sin((zPosition + PrimaryHillPhase) * PrimaryHillFrequency) * PrimaryHillAmplitude
+            + Mathf.Sin((zPosition + SecondaryHillPhase) * SecondaryHillFrequency) * SecondaryHillAmplitude;
+    }
+
+    private static float MajorClimbHeightAtDistance(float zPosition)
+    {
+        var climbGrade = MajorClimbGradePercent / 100f;
+        var climbGain = MajorClimbLengthMeters * climbGrade;
+
+        if (zPosition <= MajorClimbStartMeters)
+        {
+            return 0f;
+        }
+
+        if (zPosition < MajorClimbEndMeters)
+        {
+            return (zPosition - MajorClimbStartMeters) * climbGrade;
+        }
+
+        if (zPosition < MajorClimbDescentStartMeters)
+        {
+            return climbGain;
+        }
+
+        if (zPosition < MajorClimbDescentStartMeters + MajorClimbDescentLengthMeters)
+        {
+            var descentProgress = (zPosition - MajorClimbDescentStartMeters) / MajorClimbDescentLengthMeters;
+            return Mathf.Lerp(climbGain, 0f, descentProgress);
+        }
+
+        return 0f;
+    }
+
+    private static float CalculateLoopHeightCorrection(float zPosition)
+    {
+        var clampedDistance = Mathf.Clamp(zPosition, 0f, CourseLengthMeters);
+        var rawStartHeight = RollingHeightAtDistance(0f) + MajorClimbHeightAtDistance(0f);
+        var rawEndHeight = RollingHeightAtDistance(CourseLengthMeters) + MajorClimbHeightAtDistance(CourseLengthMeters);
+        return (rawEndHeight - rawStartHeight) * (clampedDistance / CourseLengthMeters);
     }
 }
