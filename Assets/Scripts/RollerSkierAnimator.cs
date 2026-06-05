@@ -3,6 +3,10 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class RollerSkierAnimator : MonoBehaviour
 {
+    private const float PlantStartPhase = 0.18f;
+    private const float PlantPeakPhase = 0.46f;
+    private const float ReturnEndPhase = 0.92f;
+
     public PlayerSpeedController player;
     public Transform torso;
     public Transform leftArm;
@@ -31,20 +35,23 @@ public class RollerSkierAnimator : MonoBehaviour
 
     public static float CalculateArmPitch(float phase)
     {
-        var drive = Mathf.Sin(phase * Mathf.PI);
-        return Mathf.Lerp(-58f, 34f, drive);
+        var plantAmount = CalculatePlantAmount(phase);
+        var returnLift = CalculateReturnLift(phase);
+        return Mathf.Lerp(-62f, 44f, plantAmount) - returnLift * 10f;
     }
 
     public static float CalculatePolePitch(float phase)
     {
-        var drive = Mathf.Sin(phase * Mathf.PI);
-        return Mathf.Lerp(24f, -34f, drive);
+        var plantAmount = CalculatePlantAmount(phase);
+        var returnLift = CalculateReturnLift(phase);
+        return Mathf.Lerp(34f, -46f, plantAmount) + returnLift * 8f;
     }
 
     public static float CalculateTorsoPitch(float phase)
     {
-        var drive = Mathf.Sin(phase * Mathf.PI);
-        return Mathf.Lerp(12f, 22f, drive);
+        var plantAmount = CalculatePlantAmount(phase);
+        var returnLift = CalculateReturnLift(phase);
+        return Mathf.Lerp(12f, 31f, plantAmount) - returnLift * 2f;
     }
 
     public void ApplyPose(float posePhase)
@@ -60,22 +67,22 @@ public class RollerSkierAnimator : MonoBehaviour
 
         if (leftArm != null)
         {
-            leftArm.localRotation = Quaternion.Euler(armPitch, -12f, -8f);
+            leftArm.localRotation = Quaternion.Euler(armPitch, -10f, -7f);
         }
 
         if (rightArm != null)
         {
-            rightArm.localRotation = Quaternion.Euler(armPitch, 12f, 8f);
+            rightArm.localRotation = Quaternion.Euler(armPitch, 10f, 7f);
         }
 
         if (leftPole != null)
         {
-            leftPole.localRotation = Quaternion.Euler(polePitch, -4f, 10f);
+            leftPole.localRotation = Quaternion.Euler(polePitch, 0f, 0f);
         }
 
         if (rightPole != null)
         {
-            rightPole.localRotation = Quaternion.Euler(polePitch, 4f, -10f);
+            rightPole.localRotation = Quaternion.Euler(polePitch, 0f, 0f);
         }
 
         if (leftSki != null)
@@ -87,5 +94,34 @@ public class RollerSkierAnimator : MonoBehaviour
         {
             rightSki.localRotation = Quaternion.identity;
         }
+    }
+
+    private static float CalculatePlantAmount(float phase)
+    {
+        phase = Mathf.Repeat(phase, 1f);
+
+        if (phase < PlantStartPhase)
+        {
+            return 0f;
+        }
+
+        if (phase < PlantPeakPhase)
+        {
+            return Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(PlantStartPhase, PlantPeakPhase, phase));
+        }
+
+        return Mathf.SmoothStep(1f, 0f, Mathf.InverseLerp(PlantPeakPhase, ReturnEndPhase, phase));
+    }
+
+    private static float CalculateReturnLift(float phase)
+    {
+        phase = Mathf.Repeat(phase, 1f);
+
+        if (phase < PlantPeakPhase)
+        {
+            return 0f;
+        }
+
+        return Mathf.Sin(Mathf.InverseLerp(PlantPeakPhase, 1f, phase) * Mathf.PI);
     }
 }
