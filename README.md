@@ -4,8 +4,10 @@ A small Unity prototype for a SkiErg-inspired movement game.
 
 ## What is included
 
-- A runtime-generated 5 km road with large, clearly visible sweeping training-course turns
+- A runtime-generated loopable 5 km road with large, clearly visible sweeping training-course turns
 - Visible uphill and downhill road sections generated from the course profile
+- A major 700 meter climb at about 6.5% grade, followed by a descent so the 5 km course loops back to its start height
+- Gradient-based speed reduction that slows actual forward movement on climbs while preserving the current W/S controls
 - White edge lines and dashed center road markings that follow the curves and slopes
 - At least 15 meters of open terrain on each side of the road before trees, hills, forests, or mountains begin
 - Roadside speed posts every 25 meters
@@ -25,8 +27,8 @@ A small Unity prototype for a SkiErg-inspired movement game.
 - A lightweight player input abstraction where keyboard input is the current source and future PM5 input can be added without changing movement logic
 - `W` increases forward speed
 - `S` decreases forward speed
-- A top-left TextMeshPro HUD showing speed in km/h, distance in km, and elapsed time
-- EditMode tests for speed, distance, HUD formatting, camera FOV, focused player camera framing, camera look-ahead, camera shake, dramatic course path behavior, environment clearance, visible mountain placement, rounded mountain range mesh shape, skier screen presence, realistic skier silhouette, improved skier proportions, Vasalopp-style athletic torso shape, athletic lower body stance, proper roller skier model replacement, modern slim classic roller ski proportions, classic roller ski wheel and binding placement, refined pole proportions, stable double-poling animation hierarchy, narrowed arm technique, workout session flow, session completion buttons, stronger speed feeling runtime updates, road-edge flow cues, player input abstraction, and roller skier animation behavior
+- A top-left TextMeshPro HUD showing speed in km/h, distance in km, elapsed time, and current gradient
+- EditMode tests for speed, distance, HUD formatting, gradient HUD creation, camera FOV, focused player camera framing, camera look-ahead, camera shake, dramatic course path behavior, major climb profile, gradient-based speed reduction, environment clearance, visible mountain placement, rounded mountain range mesh shape, skier screen presence, realistic skier silhouette, improved skier proportions, Vasalopp-style athletic torso shape, athletic lower body stance, proper roller skier model replacement, modern slim classic roller ski proportions, classic roller ski wheel and binding placement, refined pole proportions, stable double-poling animation hierarchy, narrowed arm technique, workout session flow, session completion buttons, stronger speed feeling runtime updates, road-edge flow cues, player input abstraction, and roller skier animation behavior
 
 ## Open in Unity
 
@@ -36,7 +38,7 @@ A small Unity prototype for a SkiErg-inspired movement game.
 4. Open any empty scene or create a new one.
 5. Press Play.
 
-The prototype scene is created automatically at runtime by `Assets/Scripts/SkiErgGameBootstrap.cs`, with `Assets/Scripts/ProperRollerSkierRuntimeUpdater.cs` replacing the older placeholder visual with the more recognizable roller skier, `Assets/Scripts/MountainRangeSceneUpdater.cs` replacing the placeholder mountains with Nordic low-poly mountain chains, `Assets/Scripts/SkierPresenceRuntimeUpdater.cs` increasing the skier's visual presence, `Assets/Scripts/WorkoutSessionController.cs` adding the lightweight workout session flow and finish screen, `Assets/Scripts/SpeedFeelingRuntimeUpdater.cs` improving camera composition with stronger speed-based FOV plus denser roadside and road-edge motion cues, and `Assets/Scripts/KeyboardPlayerInputSource.cs` providing today's keyboard controls through the input abstraction used by `Assets/Scripts/PlayerSpeedController.cs`.
+The prototype scene is created automatically at runtime by `Assets/Scripts/SkiErgGameBootstrap.cs`, with `Assets/Scripts/ProperRollerSkierRuntimeUpdater.cs` replacing the older placeholder visual with the more recognizable roller skier, `Assets/Scripts/MountainRangeSceneUpdater.cs` replacing the placeholder mountains with Nordic low-poly mountain chains, `Assets/Scripts/SkierPresenceRuntimeUpdater.cs` increasing the skier's visual presence, `Assets/Scripts/WorkoutSessionController.cs` adding the lightweight workout session flow and finish screen, `Assets/Scripts/SpeedFeelingRuntimeUpdater.cs` improving camera composition with stronger speed-based FOV plus denser roadside and road-edge motion cues, `Assets/Scripts/GradientHudRuntimeUpdater.cs` adding the current gradient HUD line, and `Assets/Scripts/KeyboardPlayerInputSource.cs` providing today's keyboard controls through the input abstraction used by `Assets/Scripts/PlayerSpeedController.cs`.
 
 ## Controls
 
