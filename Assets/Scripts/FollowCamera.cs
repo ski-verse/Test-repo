@@ -13,6 +13,9 @@ public class FollowCamera : MonoBehaviour
     public float maxFieldOfView = 82f;
     public float speedForMaxFieldOfViewKmh = 72f;
     public float fieldOfViewSmoothTime = 0.18f;
+    public float maxShakeAmplitude = 0.18f;
+    public float speedForMaxShakeKmh = 72f;
+    public float shakeFrequency = 18f;
 
     private Camera followCamera;
     private Vector3 positionVelocity;
@@ -30,7 +33,7 @@ public class FollowCamera : MonoBehaviour
             return;
         }
 
-        var desiredPosition = target.position + target.TransformDirection(offset);
+        var desiredPosition = target.position + target.TransformDirection(offset) + CalculateShakeOffset();
         transform.position = Vector3.SmoothDamp(transform.position, desiredPosition, ref positionVelocity, positionSmoothTime);
 
         var lookTarget = target.position + Vector3.up * 1.1f + target.forward * lookAheadDistance;
@@ -48,5 +51,25 @@ public class FollowCamera : MonoBehaviour
     {
         var speedRatio = Mathf.Clamp01(speedKmh / speedForMaxFieldOfViewKmh);
         return Mathf.Lerp(baseFieldOfView, maxFieldOfView, speedRatio);
+    }
+
+    public float CalculateShakeAmplitude(float speedKmh)
+    {
+        var speedRatio = Mathf.Clamp01(speedKmh / speedForMaxShakeKmh);
+        return Mathf.Lerp(0f, maxShakeAmplitude, speedRatio);
+    }
+
+    private Vector3 CalculateShakeOffset()
+    {
+        if (player == null)
+        {
+            return Vector3.zero;
+        }
+
+        var amplitude = CalculateShakeAmplitude(player.SpeedKmh);
+        var time = Time.time * shakeFrequency;
+        var horizontal = (Mathf.PerlinNoise(time, 0.35f) - 0.5f) * amplitude;
+        var vertical = (Mathf.PerlinNoise(0.65f, time) - 0.5f) * amplitude * 0.55f;
+        return target.right * horizontal + Vector3.up * vertical;
     }
 }
