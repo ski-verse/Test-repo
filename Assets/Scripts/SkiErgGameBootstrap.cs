@@ -18,7 +18,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
         CreateEnvironment();
         var player = CreateSkier();
-        CreateCamera(player.transform);
+        CreateCamera(player.transform, player.GetComponent<PlayerSpeedController>());
         CreateLight();
         CreateHud(player.GetComponent<PlayerSpeedController>());
     }
@@ -28,6 +28,9 @@ public class SkiErgGameBootstrap : MonoBehaviour
         CreateRoad();
         CreateGrassStrip("Left Grass", -RoadWidthMeters * 0.5f - GrassWidthMeters * 0.5f);
         CreateGrassStrip("Right Grass", RoadWidthMeters * 0.5f + GrassWidthMeters * 0.5f);
+        CreateRoadMarkings();
+        CreateStartFinishMarkers();
+        CreateTrees();
     }
 
     private static void CreateRoad()
@@ -50,6 +53,90 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
         var renderer = grass.GetComponent<Renderer>();
         renderer.material.color = new Color(0.18f, 0.55f, 0.18f);
+    }
+
+    private static void CreateRoadMarkings()
+    {
+        var markings = new GameObject("Road Markings");
+        CreateRoadLine(markings.transform, "Left Edge Line", -RoadWidthMeters * 0.5f + 0.35f, RoadLengthMeters * 0.5f, RoadLengthMeters, 0.14f);
+        CreateRoadLine(markings.transform, "Right Edge Line", RoadWidthMeters * 0.5f - 0.35f, RoadLengthMeters * 0.5f, RoadLengthMeters, 0.14f);
+
+        for (var z = 18f; z < RoadLengthMeters; z += 42f)
+        {
+            CreateRoadLine(markings.transform, "Center Dash", 0f, z, 13f, 0.24f);
+        }
+    }
+
+    private static void CreateRoadLine(Transform parent, string name, float xPosition, float zPosition, float length, float width)
+    {
+        var line = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        line.name = name;
+        line.transform.SetParent(parent, false);
+        line.transform.position = new Vector3(xPosition, 0.025f, zPosition);
+        line.transform.localScale = new Vector3(width, 0.035f, length);
+
+        var renderer = line.GetComponent<Renderer>();
+        renderer.material.color = Color.white;
+    }
+
+    private static void CreateStartFinishMarkers()
+    {
+        CreateGate("Start Gate", 0f, new Color(0.1f, 0.45f, 0.95f));
+        CreateGate("Finish Gate", RoadLengthMeters, new Color(0.95f, 0.15f, 0.12f));
+        CreateRoadLine(null, "Start Line", 0f, 1f, 0.35f, RoadWidthMeters);
+        CreateRoadLine(null, "Finish Line", 0f, RoadLengthMeters - 1f, 0.35f, RoadWidthMeters);
+    }
+
+    private static void CreateGate(string name, float zPosition, Color color)
+    {
+        var gate = new GameObject(name);
+        AddGatePart(gate.transform, "Left Post", new Vector3(-RoadWidthMeters * 0.5f - 0.35f, 1.5f, zPosition), new Vector3(0.28f, 3f, 0.28f), color);
+        AddGatePart(gate.transform, "Right Post", new Vector3(RoadWidthMeters * 0.5f + 0.35f, 1.5f, zPosition), new Vector3(0.28f, 3f, 0.28f), color);
+        AddGatePart(gate.transform, "Top Bar", new Vector3(0f, 3.05f, zPosition), new Vector3(RoadWidthMeters + 1.2f, 0.3f, 0.3f), color);
+    }
+
+    private static void AddGatePart(Transform parent, string name, Vector3 position, Vector3 scale, Color color)
+    {
+        var part = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        part.name = name;
+        part.transform.SetParent(parent, false);
+        part.transform.position = position;
+        part.transform.localScale = scale;
+
+        var renderer = part.GetComponent<Renderer>();
+        renderer.material.color = color;
+    }
+
+    private static void CreateTrees()
+    {
+        var trees = new GameObject("Roadside Trees");
+
+        for (var z = 35f; z < RoadLengthMeters; z += 85f)
+        {
+            CreateTree(trees.transform, new Vector3(-RoadWidthMeters * 0.5f - 7f, 0f, z), 1f + Mathf.PingPong(z * 0.013f, 0.45f));
+            CreateTree(trees.transform, new Vector3(RoadWidthMeters * 0.5f + 7f, 0f, z + 28f), 0.9f + Mathf.PingPong(z * 0.017f, 0.5f));
+        }
+    }
+
+    private static void CreateTree(Transform parent, Vector3 position, float scale)
+    {
+        var tree = new GameObject("Tree");
+        tree.transform.SetParent(parent, false);
+        tree.transform.position = position;
+
+        var trunk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        trunk.name = "Trunk";
+        trunk.transform.SetParent(tree.transform, false);
+        trunk.transform.localPosition = new Vector3(0f, 0.65f * scale, 0f);
+        trunk.transform.localScale = new Vector3(0.22f * scale, 0.65f * scale, 0.22f * scale);
+        trunk.GetComponent<Renderer>().material.color = new Color(0.36f, 0.22f, 0.11f);
+
+        var crown = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        crown.name = "Crown";
+        crown.transform.SetParent(tree.transform, false);
+        crown.transform.localPosition = new Vector3(0f, 1.65f * scale, 0f);
+        crown.transform.localScale = new Vector3(1.4f * scale, 1.65f * scale, 1.4f * scale);
+        crown.GetComponent<Renderer>().material.color = new Color(0.08f, 0.35f, 0.12f);
     }
 
     private static GameObject CreateSkier()
@@ -96,16 +183,17 @@ public class SkiErgGameBootstrap : MonoBehaviour
         renderer.material.color = new Color(0.08f, 0.08f, 0.08f);
     }
 
-    private static void CreateCamera(Transform target)
+    private static void CreateCamera(Transform target, PlayerSpeedController player)
     {
         var cameraObject = new GameObject("Follow Camera");
         var camera = cameraObject.AddComponent<Camera>();
-        camera.fieldOfView = 60f;
-        cameraObject.transform.position = target.position + new Vector3(0f, 4f, -8f);
-        cameraObject.transform.LookAt(target.position + Vector3.up * 1.2f);
+        camera.fieldOfView = 62f;
+        cameraObject.transform.position = target.position + new Vector3(0f, 3.2f, -7f);
+        cameraObject.transform.LookAt(target.position + Vector3.up * 1.15f + target.forward * 5f);
 
         var followCamera = cameraObject.AddComponent<FollowCamera>();
         followCamera.target = target;
+        followCamera.player = player;
 
         if (Camera.main != null)
         {
