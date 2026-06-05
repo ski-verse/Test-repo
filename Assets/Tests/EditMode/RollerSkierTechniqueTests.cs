@@ -76,6 +76,29 @@ public class RollerSkierTechniqueTests
     }
 
     [Test]
+    public void ResetBasePose_RecapturesLateAssignedHandPosition()
+    {
+        var root = new GameObject("Roller Skier Rig");
+        var animator = root.AddComponent<RollerSkierAnimator>();
+
+        animator.ApplyPose(0.15f);
+
+        animator.leftHand = new GameObject("Left Hand").transform;
+        animator.leftPole = new GameObject("Left Pole").transform;
+        animator.leftHand.SetParent(root.transform, false);
+        animator.leftPole.SetParent(root.transform, false);
+        animator.leftHand.localPosition = new Vector3(-0.2f, 0.72f, 0.28f);
+
+        animator.ResetBasePose();
+        animator.ApplyPose(0.1f);
+
+        Assert.AreEqual(new Vector3(-0.2f, 0.72f, 0.28f), animator.leftHand.localPosition);
+        Assert.AreEqual(animator.leftHand.position, animator.leftPole.position);
+
+        Object.DestroyImmediate(root);
+    }
+
+    [Test]
     public void SkierTechniqueRuntimeUpdater_AttachesExistingPolesToExistingHands()
     {
         var root = new GameObject("Low Poly Roller Skier");
