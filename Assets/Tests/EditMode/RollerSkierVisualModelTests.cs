@@ -42,6 +42,45 @@ public class RollerSkierVisualModelTests
     }
 
     [Test]
+    public void HumanSilhouettePass_ReducesBlueMannequinLookFromGameplayCamera()
+    {
+        Assert.LessOrEqual(SkierHumanSilhouetteRuntimeUpdater.ReducedBlueTorsoWidth, 0.22f);
+        Assert.LessOrEqual(SkierHumanSilhouetteRuntimeUpdater.ReducedBlueTorsoHeight, 0.5f);
+        Assert.GreaterOrEqual(SkierHumanSilhouetteRuntimeUpdater.VisibleBackPanelWidth, 0.54f);
+        Assert.GreaterOrEqual(SkierHumanSilhouetteRuntimeUpdater.VisibleShortsPanelWidth, 0.38f);
+        Assert.GreaterOrEqual(SkierHumanSilhouetteRuntimeUpdater.VisibleGluteAccentWidth, 0.18f);
+        Assert.GreaterOrEqual(SkierHumanSilhouetteRuntimeUpdater.VisibleGripContrastRadius, ProperRollerSkierRuntimeUpdater.VisibleGloveRadius * 1.15f);
+        Assert.GreaterOrEqual(SkierHumanSilhouetteRuntimeUpdater.VisiblePoleOutsideOffset, 0.18f);
+    }
+
+    [Test]
+    public void HumanSilhouettePass_AttachesReadableHumanDetailsToAnimatedRig()
+    {
+        var skier = new GameObject("Low Poly Roller Skier");
+        var animator = skier.AddComponent<RollerSkierAnimator>();
+        var visualRoot = new GameObject("Roller Skier Visual").transform;
+        visualRoot.SetParent(skier.transform, false);
+        visualRoot.localScale = Vector3.one;
+
+        Assert.IsTrue(ProperRollerSkierRuntimeUpdater.ApplyProperRollerSkierModel());
+        Assert.IsTrue(SkierHumanSilhouetteRuntimeUpdater.ApplyHumanSilhouettePass());
+
+        Assert.IsNotNull(visualRoot.Find(SkierHumanSilhouetteRuntimeUpdater.HumanSilhouetteAppliedMarkerName));
+        Assert.IsNotNull(FindChildRecursive(animator.torso, "Human Dark Back Panel"));
+        Assert.IsNotNull(FindChildRecursive(animator.torso, "Human Central Spine Seam"));
+        Assert.IsNotNull(FindChildRecursive(animator.torso, "Human Left Scapula Shadow"));
+        Assert.IsNotNull(visualRoot.Find("Human Black Shorts Block"));
+        Assert.IsNotNull(visualRoot.Find("Human Left Glute Accent"));
+        Assert.IsNotNull(visualRoot.Find("Human Shorts Leg Split"));
+        Assert.IsNotNull(FindChildRecursive(animator.leftHand, "Visible Glove Grip Wrap"));
+        Assert.IsNotNull(FindChildRecursive(animator.rightHand, "Visible Glove Grip Wrap"));
+        Assert.AreEqual(animator.leftHand, animator.leftPole.parent);
+        Assert.AreEqual(animator.rightHand, animator.rightPole.parent);
+
+        Object.DestroyImmediate(skier);
+    }
+
+    [Test]
     public void ProperRollerSkierVisual_UsesTightSuitAndReadableEquipmentDetails()
     {
         Assert.GreaterOrEqual(ProperRollerSkierRuntimeUpdater.VisibleGloveRadius, 0.062f);
@@ -97,5 +136,29 @@ public class RollerSkierVisualModelTests
         Assert.AreEqual(animator.rightHand, animator.rightPole.parent);
 
         Object.DestroyImmediate(skier);
+    }
+
+    private static Transform FindChildRecursive(Transform root, string childName)
+    {
+        if (root == null)
+        {
+            return null;
+        }
+
+        if (root.name == childName)
+        {
+            return root;
+        }
+
+        for (var i = 0; i < root.childCount; i++)
+        {
+            var match = FindChildRecursive(root.GetChild(i), childName);
+            if (match != null)
+            {
+                return match;
+            }
+        }
+
+        return null;
     }
 }
