@@ -18,12 +18,12 @@ A small Unity prototype for a SkiErg-inspired movement game.
 - Start and finish gates with road line markers
 - A proper low-poly roller skier with realistic proportions, parallel roller skis, wheels, poles, helmet, and double-poling stance
 - Larger on-screen skier presence with a scaled visual rig, an extra 25% runtime presence boost, and a higher simulator-style follow camera that keeps the road horizon visible
-- Highly visible SkiErg-inspired double-poling animation with preserved amplitude, smoother cycle timing, upper-body compression, forward weight transfer, stronger recovery, and poles connected to the drive phase
+- Stable SkiErg-inspired double-poling animation with fixed body-part pivots, safe torso lean, connected arms, parallel pole motion, and speed-scaled cycle timing
 - A smoother speed-responsive camera with noticeable speed-based field of view, longer high-speed look-ahead, higher composition, and light camera shake
 - `W` increases forward speed
 - `S` decreases forward speed
 - A top-left TextMeshPro HUD showing speed in km/h and distance in km
-- EditMode tests for speed, distance, HUD formatting, camera FOV, focused player camera framing, camera look-ahead, camera shake, dramatic course path behavior, environment clearance, visible mountain placement, rounded mountain range mesh shape, skier screen presence, double-poling animation phases and technique, and roller skier animation behavior
+- EditMode tests for speed, distance, HUD formatting, camera FOV, focused player camera framing, camera look-ahead, camera shake, dramatic course path behavior, environment clearance, visible mountain placement, rounded mountain range mesh shape, skier screen presence, stable double-poling animation hierarchy, and roller skier animation behavior
 
 ## Open in Unity
 
