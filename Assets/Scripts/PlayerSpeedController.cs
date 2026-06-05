@@ -38,6 +38,8 @@ public class PlayerSpeedController : MonoBehaviour
         }
     }
 
+    public PlayerMovementInput LastMovementInput { get; private set; } = PlayerMovementInput.None;
+
     public float CurrentSpeed
     {
         get => currentSpeed;
@@ -138,6 +140,7 @@ public class PlayerSpeedController : MonoBehaviour
 
     public void ApplyMovementInputAndGradientResistance(PlayerMovementInput movementInput, float deltaTime)
     {
+        LastMovementInput = movementInput;
         var safeDeltaTime = Mathf.Max(0f, deltaTime);
         var gradientPercent = CurrentGradientPercent;
 
@@ -160,6 +163,8 @@ public class PlayerSpeedController : MonoBehaviour
 
     public void ApplyMovementInput(PlayerMovementInput movementInput, float deltaTime)
     {
+        LastMovementInput = movementInput;
+
         if (movementInput.SpeedAxis > 0f)
         {
             IncreaseSpeed(deltaTime * movementInput.SpeedAxis);
