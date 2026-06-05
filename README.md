@@ -7,7 +7,8 @@ A small Unity prototype for a SkiErg-inspired movement game.
 - A runtime-generated loopable 5 km road with large, clearly visible sweeping training-course turns
 - Visible uphill and downhill road sections generated from the course profile
 - A major 700 meter climb with a clearly readable 5-8% climbing grade, followed by a descent so the 5 km course loops back to its start height
-- Gradient-based speed reduction that slows actual forward movement on climbs while preserving the current W/S controls
+- Gradient-based climb resistance that reduces uphill acceleration and top speed without locking player movement
+- A minimum uphill movement speed while acceleration input is active, so holding `W` always allows slow climbing
 - White edge lines and dashed center road markings that follow the curves and slopes
 - At least 15 meters of open terrain on each side of the road before trees, hills, forests, or mountains begin
 - Roadside speed posts every 25 meters
@@ -28,7 +29,7 @@ A small Unity prototype for a SkiErg-inspired movement game.
 - `W` increases forward speed
 - `S` decreases forward speed
 - A top-left TextMeshPro HUD showing speed in km/h, distance in km, elapsed time, and current gradient
-- EditMode tests for speed, distance, HUD formatting, gradient HUD creation, camera FOV, focused player camera framing, camera look-ahead, camera shake, dramatic course path behavior, major climb profile, gradient-based speed reduction, environment clearance, visible mountain placement, rounded mountain range mesh shape, skier screen presence, realistic skier silhouette, improved skier proportions, Vasalopp-style athletic torso shape, athletic lower body stance, proper roller skier model replacement, modern slim classic roller ski proportions, classic roller ski wheel and binding placement, refined pole proportions, stable double-poling animation hierarchy, narrowed arm technique, workout session flow, session completion buttons, stronger speed feeling runtime updates, road-edge flow cues, player input abstraction, and roller skier animation behavior
+- EditMode tests for speed, distance, HUD formatting, gradient HUD creation, camera FOV, focused player camera framing, camera look-ahead, camera shake, dramatic course path behavior, major climb profile, non-locking gradient-based climb resistance, environment clearance, visible mountain placement, rounded mountain range mesh shape, skier screen presence, realistic skier silhouette, improved skier proportions, Vasalopp-style athletic torso shape, athletic lower body stance, proper roller skier model replacement, modern slim classic roller ski proportions, classic roller ski wheel and binding placement, refined pole proportions, stable double-poling animation hierarchy, narrowed arm technique, workout session flow, session completion buttons, stronger speed feeling runtime updates, road-edge flow cues, player input abstraction, and roller skier animation behavior
 
 ## Open in Unity
 
