@@ -33,6 +33,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
         CreateTurnSigns();
         CreateStartFinishMarkers();
         CreateRollingHills();
+        CreateDistantForests();
         CreateDistantMountains();
         CreateTrees();
     }
@@ -239,15 +240,55 @@ public class SkiErgGameBootstrap : MonoBehaviour
         return mesh;
     }
 
+    private static void CreateDistantForests()
+    {
+        var forests = new GameObject("Nordic Distant Forest Bands");
+        var trunkColor = new Color(0.23f, 0.14f, 0.08f);
+        var crownColor = new Color(0.035f, 0.19f, 0.09f);
+
+        for (var z = 46f; z < RoadLengthMeters; z += 64f)
+        {
+            CreateConifer(forests.transform, CoursePath.PointAtDistance(z, -EnvironmentPlacement.NearForestOffset), 1.25f + Mathf.PingPong(z * 0.011f, 0.45f), trunkColor, crownColor);
+            CreateConifer(forests.transform, CoursePath.PointAtDistance(z + 17f, EnvironmentPlacement.NearForestOffset), 1.2f + Mathf.PingPong(z * 0.013f, 0.45f), trunkColor, crownColor);
+            CreateConifer(forests.transform, CoursePath.PointAtDistance(z + 31f, -EnvironmentPlacement.FarForestOffset), 1.45f + Mathf.PingPong(z * 0.009f, 0.5f), trunkColor, crownColor);
+            CreateConifer(forests.transform, CoursePath.PointAtDistance(z + 48f, EnvironmentPlacement.FarForestOffset), 1.4f + Mathf.PingPong(z * 0.015f, 0.5f), trunkColor, crownColor);
+        }
+    }
+
+    private static void CreateConifer(Transform parent, Vector3 position, float scale, Color trunkColor, Color crownColor)
+    {
+        var tree = new GameObject("Distant Conifer");
+        tree.transform.SetParent(parent, false);
+        tree.transform.position = position;
+
+        var trunk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        trunk.name = "Trunk";
+        trunk.transform.SetParent(tree.transform, false);
+        trunk.transform.localPosition = new Vector3(0f, 0.48f * scale, 0f);
+        trunk.transform.localScale = new Vector3(0.12f * scale, 0.48f * scale, 0.12f * scale);
+        trunk.GetComponent<Renderer>().material.color = trunkColor;
+
+        var crown = new GameObject("Low Poly Crown");
+        crown.transform.SetParent(tree.transform, false);
+        crown.transform.localPosition = new Vector3(0f, 1.3f * scale, 0f);
+        crown.transform.localScale = new Vector3(1.15f * scale, 1.55f * scale, 1.15f * scale);
+        var meshFilter = crown.AddComponent<MeshFilter>();
+        meshFilter.mesh = CreateMoundMesh();
+        crown.AddComponent<MeshRenderer>().material.color = crownColor;
+    }
+
     private static void CreateDistantMountains()
     {
-        var mountains = new GameObject("Distant Mountain Backdrop");
-        var color = new Color(0.38f, 0.42f, 0.48f);
+        var mountains = new GameObject("Nordic Mountain Ranges");
+        var nearColor = new Color(0.34f, 0.4f, 0.46f);
+        var farColor = new Color(0.48f, 0.53f, 0.58f);
 
         for (var z = EnvironmentPlacement.MountainFirstDistance; z <= RoadLengthMeters; z += EnvironmentPlacement.MountainSpacing)
         {
-            CreateLowPolyMountain(mountains.transform, CoursePath.PointAtDistance(z, -EnvironmentPlacement.NearMountainOffset), new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2f, 234f, 354f), color);
-            CreateLowPolyMountain(mountains.transform, CoursePath.PointAtDistance(z + 340f, EnvironmentPlacement.FarMountainOffset), new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2f, 288f, 414f), color);
+            CreateLowPolyMountain(mountains.transform, CoursePath.PointAtDistance(z, -EnvironmentPlacement.NearMountainOffset), new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2f, 170f, 310f), nearColor);
+            CreateLowPolyMountain(mountains.transform, CoursePath.PointAtDistance(z + 120f, EnvironmentPlacement.NearMountainOffset), new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2.1f, 185f, 320f), nearColor);
+            CreateLowPolyMountain(mountains.transform, CoursePath.PointAtDistance(z + 240f, -EnvironmentPlacement.FarMountainOffset), new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2f, 220f, 390f), farColor);
+            CreateLowPolyMountain(mountains.transform, CoursePath.PointAtDistance(z + 360f, EnvironmentPlacement.FarMountainOffset), new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2.05f, 235f, 405f), farColor);
         }
     }
 
@@ -255,7 +296,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
     {
         var mountain = new GameObject("Low Poly Mountain");
         mountain.transform.SetParent(parent, false);
-        position.y += -5f;
+        position.y += -8f;
         mountain.transform.position = position;
         mountain.transform.localScale = scale;
 
