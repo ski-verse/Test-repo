@@ -29,14 +29,14 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
     }
 
     [Test]
-    public void AdventureCharacterStance_UsesParallelRollerSkiLegsInsteadOfGoalieStance()
+    public void AdventureCharacterStance_UsesTightParallelRollerSkiLegsInsteadOfGoalieStance()
     {
-        Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.CharacterWidthScale, 0.86f);
-        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.CharacterWidthScale, 0.93f);
+        Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.CharacterWidthScale, 0.68f);
+        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.CharacterWidthScale, 0.78f);
         Assert.GreaterOrEqual(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseLegInwardMuscle, -0.02f);
         Assert.LessOrEqual(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseLegInwardMuscle, 0.02f);
-        Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.LegChainLateralCompression, 0.35f);
-        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.LegChainLateralCompression, 0.6f);
+        Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.LegChainLateralCompression, 0.15f);
+        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.LegChainLateralCompression, 0.3f);
     }
 
     [Test]
