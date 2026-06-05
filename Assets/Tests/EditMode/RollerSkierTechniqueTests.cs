@@ -26,6 +26,17 @@ public class RollerSkierTechniqueTests
     }
 
     [Test]
+    public void ProperRollerSkierVisual_UsesVisibleHighContrastPoles()
+    {
+        Assert.GreaterOrEqual(ProperRollerSkierRuntimeUpdater.VisiblePoleShaftRadius, 0.017f);
+        Assert.GreaterOrEqual(ProperRollerSkierRuntimeUpdater.VisiblePoleGripRadius, 0.045f);
+        Assert.GreaterOrEqual(ProperRollerSkierRuntimeUpdater.VisiblePoleShaftLength, 1.38f);
+        Assert.LessOrEqual(ProperRollerSkierRuntimeUpdater.VisiblePoleShaftLength, 1.45f);
+        Assert.Greater(CalculateLuminance(ProperRollerSkierRuntimeUpdater.VisiblePoleShaftColor), 0.78f);
+        Assert.Greater(CalculateLuminance(ProperRollerSkierRuntimeUpdater.VisiblePoleShaftColor) - CalculateLuminance(ProperRollerSkierRuntimeUpdater.PoleGripColor), 0.65f);
+    }
+
+    [Test]
     public void ApplyPose_KeepsPolesAttachedToHands()
     {
         var root = new GameObject("Roller Skier Rig");
@@ -185,5 +196,10 @@ public class RollerSkierTechniqueTests
     private static float NormalizeAngle(float angle)
     {
         return angle > 180f ? angle - 360f : angle;
+    }
+
+    private static float CalculateLuminance(Color color)
+    {
+        return color.r * 0.2126f + color.g * 0.7152f + color.b * 0.0722f;
     }
 }
