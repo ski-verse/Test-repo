@@ -14,7 +14,7 @@ A small Unity prototype for a SkiErg-inspired movement game.
 - Set-back simple low-poly trees placed outside the open road margin
 - Rolling low-poly hills moved further away from the road
 - Distant low-poly forest bands between the road corridor and mountain ranges
-- Low-poly Nordic mountain chains with irregular ridgelines that frame the road and horizon while staying outside the road corridor
+- Natural continuous low-poly Scandinavian mountain chains with irregular ridgelines, shoulder slopes, and horizon-framing silhouettes while staying outside the road corridor
 - Start and finish gates with road line markers
 - A proper low-poly roller skier with realistic proportions, parallel roller skis, wheels, poles, helmet, and double-poling stance
 - Larger on-screen skier presence with a scaled visual rig, an extra 25% runtime presence boost, and a higher simulator-style follow camera that keeps the road horizon visible
@@ -23,7 +23,7 @@ A small Unity prototype for a SkiErg-inspired movement game.
 - `W` increases forward speed
 - `S` decreases forward speed
 - A top-left TextMeshPro HUD showing speed in km/h and distance in km
-- EditMode tests for speed, distance, HUD formatting, camera FOV, focused player camera framing, camera look-ahead, camera shake, dramatic course path behavior, environment clearance, visible mountain placement, mountain range mesh shape, skier screen presence, and roller skier animation behavior
+- EditMode tests for speed, distance, HUD formatting, camera FOV, focused player camera framing, camera look-ahead, camera shake, dramatic course path behavior, environment clearance, visible mountain placement, natural mountain range mesh shape, skier screen presence, and roller skier animation behavior
 
 ## Open in Unity
 
