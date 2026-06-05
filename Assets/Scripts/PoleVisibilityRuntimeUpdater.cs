@@ -63,7 +63,7 @@ public class PoleVisibilityRuntimeUpdater : MonoBehaviour
         }
 
         var visualRoot = animator.transform.Find(VisualRootName);
-        if (visualRoot == null || visualRoot.Find(ProperRollerSkierRuntimeUpdater.Model20AppliedMarkerName) == null)
+        if (visualRoot == null || !HasSupportedSkierModelMarker(visualRoot))
         {
             return false;
         }
@@ -94,6 +94,12 @@ public class PoleVisibilityRuntimeUpdater : MonoBehaviour
         animator.ResetBasePose();
         Debug.Log("[Ski-Verse] Pole visibility pass applied: high-contrast shafts, straps, grip locks, plant discs, and force cues.");
         return true;
+    }
+
+    private static bool HasSupportedSkierModelMarker(Transform visualRoot)
+    {
+        return visualRoot.Find(ProperRollerSkierRuntimeUpdater.Model20AppliedMarkerName) != null
+            || visualRoot.Find(AdventureCharacterRollerSkierRuntimeUpdater.AdventureCharacterAppliedMarkerName) != null;
     }
 
     private static void ApplySide(Transform hand, Transform pole, float side, Color poleColor, Color strapColor, Color forceColor)
