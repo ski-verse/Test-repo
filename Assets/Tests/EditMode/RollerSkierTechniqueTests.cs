@@ -74,4 +74,36 @@ public class RollerSkierTechniqueTests
 
         Object.DestroyImmediate(root);
     }
+
+    [Test]
+    public void SkierTechniqueRuntimeUpdater_AttachesExistingPolesToExistingHands()
+    {
+        var root = new GameObject("Low Poly Roller Skier");
+        var animator = root.AddComponent<RollerSkierAnimator>();
+        var leftArm = new GameObject("Left Double-Poling Arm").transform;
+        var rightArm = new GameObject("Right Double-Poling Arm").transform;
+        var leftHand = new GameObject("Hand").transform;
+        var rightHand = new GameObject("Hand").transform;
+        var leftPole = new GameObject("Left Carbon Pole").transform;
+        var rightPole = new GameObject("Right Carbon Pole").transform;
+
+        leftArm.SetParent(root.transform, false);
+        rightArm.SetParent(root.transform, false);
+        leftHand.SetParent(leftArm, false);
+        rightHand.SetParent(rightArm, false);
+        leftPole.SetParent(root.transform, false);
+        rightPole.SetParent(root.transform, false);
+
+        var configured = SkierTechniqueRuntimeUpdater.ConfigureAnimator(animator);
+
+        Assert.IsTrue(configured);
+        Assert.AreEqual(leftHand, animator.leftHand);
+        Assert.AreEqual(rightHand, animator.rightHand);
+        Assert.AreEqual(leftHand, leftPole.parent);
+        Assert.AreEqual(rightHand, rightPole.parent);
+        Assert.AreEqual(Vector3.zero, leftPole.localPosition);
+        Assert.AreEqual(Vector3.zero, rightPole.localPosition);
+
+        Object.DestroyImmediate(root);
+    }
 }
