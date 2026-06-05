@@ -7,7 +7,7 @@ public class MountainRangeSceneUpdater : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void InstallRuntimeUpdater()
     {
-        if (Object.FindObjectOfType<MountainRangeSceneUpdater>() != null)
+        if (Object.FindFirstObjectByType<MountainRangeSceneUpdater>() != null)
         {
             return;
         }
