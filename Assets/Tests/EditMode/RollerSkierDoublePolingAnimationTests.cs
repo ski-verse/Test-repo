@@ -4,28 +4,41 @@ using UnityEngine;
 public class RollerSkierDoublePolingAnimationTests
 {
     [Test]
-    public void DoublePolingCycle_HasPlantAndReturnPhases()
+    public void DoublePolingCycle_HasObviousPlantAndStrongRecoveryPhases()
     {
         var recoveryArmPitch = RollerSkierAnimator.CalculateArmPitch(0.05f);
         var plantArmPitch = RollerSkierAnimator.CalculateArmPitch(0.42f);
         var returnArmPitch = RollerSkierAnimator.CalculateArmPitch(0.85f);
 
-        Assert.Less(recoveryArmPitch, -45f);
-        Assert.Greater(plantArmPitch, 30f);
-        Assert.Less(returnArmPitch, -35f);
-        Assert.Greater(plantArmPitch - returnArmPitch, 65f);
+        Assert.Less(recoveryArmPitch, -70f);
+        Assert.Greater(plantArmPitch, 55f);
+        Assert.Less(returnArmPitch, -75f);
+        Assert.Greater(plantArmPitch - returnArmPitch, 130f);
     }
 
     [Test]
-    public void DoublePolingCycle_LeansBodyForwardDuringPolePlant()
+    public void DoublePolingCycle_LeansBodyFurtherForwardDuringPolePlant()
     {
         var recoveryTorsoPitch = RollerSkierAnimator.CalculateTorsoPitch(0.05f);
         var plantTorsoPitch = RollerSkierAnimator.CalculateTorsoPitch(0.42f);
         var returnTorsoPitch = RollerSkierAnimator.CalculateTorsoPitch(0.85f);
 
-        Assert.Less(recoveryTorsoPitch, 15f);
-        Assert.Greater(plantTorsoPitch, 27f);
+        Assert.Less(recoveryTorsoPitch, 17f);
+        Assert.Greater(plantTorsoPitch, 40f);
         Assert.Less(returnTorsoPitch, 18f);
+    }
+
+    [Test]
+    public void DoublePolingCycle_MakesPolePlantAndRecoveryVisible()
+    {
+        var recoveryPolePitch = RollerSkierAnimator.CalculatePolePitch(0.05f);
+        var plantPolePitch = RollerSkierAnimator.CalculatePolePitch(0.42f);
+        var returnPolePitch = RollerSkierAnimator.CalculatePolePitch(0.85f);
+
+        Assert.Greater(recoveryPolePitch, 45f);
+        Assert.Less(plantPolePitch, -65f);
+        Assert.Greater(returnPolePitch, 45f);
+        Assert.Greater(recoveryPolePitch - plantPolePitch, 110f);
     }
 
     [Test]
@@ -50,7 +63,7 @@ public class RollerSkierDoublePolingAnimationTests
         Assert.AreEqual(animator.leftArm.localEulerAngles.x, animator.rightArm.localEulerAngles.x, 0.001f);
         Assert.AreEqual(animator.leftPole.localEulerAngles.x, animator.rightPole.localEulerAngles.x, 0.001f);
         Assert.AreEqual(-animator.leftPole.localEulerAngles.y, animator.rightPole.localEulerAngles.y, 0.001f);
-        Assert.Greater(animator.torso.localEulerAngles.x, 27f);
+        Assert.Greater(animator.torso.localEulerAngles.x, 40f);
 
         Object.DestroyImmediate(root);
     }
