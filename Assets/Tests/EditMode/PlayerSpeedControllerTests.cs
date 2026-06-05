@@ -215,7 +215,7 @@ public class PlayerSpeedControllerTests
     }
 
     [Test]
-    public void RollerSkierAnimator_DoublePolingUsesMatchedArmPitchAndParallelSkis()
+    public void RollerSkierAnimator_DoublePolingUsesMatchedArmPitchAndParallelSkiToeRise()
     {
         var root = new GameObject("Roller Skier Rig");
         var animator = root.AddComponent<RollerSkierAnimator>();
@@ -237,8 +237,9 @@ public class PlayerSpeedControllerTests
 
         Assert.AreEqual(animator.leftArm.localEulerAngles.x, animator.rightArm.localEulerAngles.x, 0.001f);
         Assert.AreEqual(animator.leftPole.localEulerAngles.x, animator.rightPole.localEulerAngles.x, 0.001f);
-        Assert.AreEqual(Quaternion.identity.eulerAngles, animator.leftSki.localEulerAngles);
-        Assert.AreEqual(Quaternion.identity.eulerAngles, animator.rightSki.localEulerAngles);
+        Assert.AreEqual(animator.leftSki.localEulerAngles.x, animator.rightSki.localEulerAngles.x, 0.001f);
+        Assert.AreEqual(animator.leftSki.localEulerAngles.y, animator.rightSki.localEulerAngles.y, 0.001f);
+        Assert.AreEqual(animator.leftSki.localEulerAngles.z, animator.rightSki.localEulerAngles.z, 0.001f);
 
         Object.DestroyImmediate(root);
     }
