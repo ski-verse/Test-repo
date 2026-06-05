@@ -14,12 +14,13 @@ A small Unity prototype for a SkiErg-inspired movement game.
 - Obvious low-poly rolling hills close to the road
 - A huge 3x mountain backdrop built from lightweight low-poly meshes
 - Start and finish gates with road line markers
-- A better-proportioned primitive placeholder skier with torso, head, arms, legs, skis, and poles
+- A proper low-poly roller skier with realistic proportions, parallel roller skis, wheels, poles, helmet, and double-poling stance
+- Synchronized double-poling arm and pole animation that works with the current movement controller
 - A smoother speed-responsive camera with noticeable speed-based field of view, longer high-speed look-ahead, and light camera shake
 - `W` increases forward speed
 - `S` decreases forward speed
 - A top-left TextMeshPro HUD showing speed in km/h and distance in km
-- EditMode tests for speed, distance, HUD formatting, camera FOV, camera look-ahead, camera shake, and dramatic course path behavior
+- EditMode tests for speed, distance, HUD formatting, camera FOV, camera look-ahead, camera shake, dramatic course path behavior, and roller skier animation behavior
 
 ## Open in Unity
 
