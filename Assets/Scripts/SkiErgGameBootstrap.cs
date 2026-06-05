@@ -50,14 +50,14 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
     private static void CreateGrass()
     {
-        var grass = new GameObject("Curved Grass Shoulders");
+        var grass = new GameObject("Open Grass Shoulders");
         var color = new Color(0.18f, 0.55f, 0.18f);
         var lateralOffset = RoadWidthMeters * 0.5f + GrassWidthMeters * 0.5f;
 
         for (var z = 24f; z < RoadLengthMeters; z += 48f)
         {
-            CreatePathCube(grass.transform, "Left Grass Segment", -lateralOffset, z, 49f, GrassWidthMeters, 0.08f, color, -0.08f);
-            CreatePathCube(grass.transform, "Right Grass Segment", lateralOffset, z, 49f, GrassWidthMeters, 0.08f, color, -0.08f);
+            CreatePathCube(grass.transform, "Left Open Grass Segment", -lateralOffset, z, 49f, GrassWidthMeters, 0.08f, color, -0.08f);
+            CreatePathCube(grass.transform, "Right Open Grass Segment", lateralOffset, z, 49f, GrassWidthMeters, 0.08f, color, -0.08f);
         }
     }
 
@@ -125,7 +125,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
         for (var z = 90f; z < RoadLengthMeters; z += 260f)
         {
             var turnDirection = CalculateTurnDirection(z);
-            var sideOffset = turnDirection > 0f ? RoadWidthMeters * 0.5f + 2.1f : -RoadWidthMeters * 0.5f - 2.1f;
+            var sideOffset = turnDirection > 0f ? EnvironmentPlacement.TurnSignOffset : -EnvironmentPlacement.TurnSignOffset;
             CreateTurnSign(signs.transform, z, sideOffset, turnDirection);
         }
     }
@@ -200,13 +200,13 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
     private static void CreateRollingHills()
     {
-        var hills = new GameObject("Obvious Low Poly Rolling Hills");
+        var hills = new GameObject("Distant Low Poly Rolling Hills");
         var hillColor = new Color(0.12f, 0.44f, 0.16f);
 
-        for (var z = 100f; z < RoadLengthMeters; z += 190f)
+        for (var z = 130f; z < RoadLengthMeters; z += 240f)
         {
-            CreateLowPolyHill(hills.transform, CoursePath.PointAtDistance(z, -26f), new Vector3(34f, 10f, 120f), hillColor);
-            CreateLowPolyHill(hills.transform, CoursePath.PointAtDistance(z + 90f, 26f), new Vector3(40f, 12f, 140f), hillColor);
+            CreateLowPolyHill(hills.transform, CoursePath.PointAtDistance(z, -EnvironmentPlacement.NearHillOffset), new Vector3(EnvironmentPlacement.NearHillHalfWidth * 2f, 10f, 120f), hillColor);
+            CreateLowPolyHill(hills.transform, CoursePath.PointAtDistance(z + 110f, EnvironmentPlacement.FarHillOffset), new Vector3(EnvironmentPlacement.FarHillHalfWidth * 2f, 12f, 140f), hillColor);
         }
     }
 
@@ -241,13 +241,13 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
     private static void CreateDistantMountains()
     {
-        var mountains = new GameObject("Huge Mountain Backdrop");
+        var mountains = new GameObject("Distant Mountain Backdrop");
         var color = new Color(0.38f, 0.42f, 0.48f);
 
-        for (var z = 360f; z <= RoadLengthMeters; z += 560f)
+        for (var z = EnvironmentPlacement.MountainFirstDistance; z <= RoadLengthMeters; z += EnvironmentPlacement.MountainSpacing)
         {
-            CreateLowPolyMountain(mountains.transform, CoursePath.PointAtDistance(z, -260f), new Vector3(276f, 234f, 354f), color);
-            CreateLowPolyMountain(mountains.transform, CoursePath.PointAtDistance(z + 210f, 270f), new Vector3(354f, 288f, 414f), color);
+            CreateLowPolyMountain(mountains.transform, CoursePath.PointAtDistance(z, -EnvironmentPlacement.NearMountainOffset), new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2f, 234f, 354f), color);
+            CreateLowPolyMountain(mountains.transform, CoursePath.PointAtDistance(z + 340f, EnvironmentPlacement.FarMountainOffset), new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2f, 288f, 414f), color);
         }
     }
 
@@ -266,16 +266,16 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
     private static void CreateTrees()
     {
-        var trees = new GameObject("Dense Roadside Trees");
+        var trees = new GameObject("Set Back Roadside Trees");
 
-        for (var z = 18f; z < RoadLengthMeters; z += 24f)
+        for (var z = 18f; z < RoadLengthMeters; z += 28f)
         {
-            CreateTree(trees.transform, CoursePath.PointAtDistance(z, -7f), 0.85f + Mathf.PingPong(z * 0.013f, 0.5f));
-            CreateTree(trees.transform, CoursePath.PointAtDistance(z + 9f, 7f), 0.85f + Mathf.PingPong(z * 0.017f, 0.55f));
-            CreateTree(trees.transform, CoursePath.PointAtDistance(z + 15f, -13f), 1f + Mathf.PingPong(z * 0.011f, 0.6f));
-            CreateTree(trees.transform, CoursePath.PointAtDistance(z + 21f, 13f), 0.95f + Mathf.PingPong(z * 0.019f, 0.6f));
-            CreateTree(trees.transform, CoursePath.PointAtDistance(z + 28f, -20f), 1.2f + Mathf.PingPong(z * 0.009f, 0.55f));
-            CreateTree(trees.transform, CoursePath.PointAtDistance(z + 35f, 20f), 1.15f + Mathf.PingPong(z * 0.015f, 0.65f));
+            CreateTree(trees.transform, CoursePath.PointAtDistance(z, -EnvironmentPlacement.NearTreeOffset), 0.85f + Mathf.PingPong(z * 0.013f, 0.5f));
+            CreateTree(trees.transform, CoursePath.PointAtDistance(z + 11f, EnvironmentPlacement.NearTreeOffset), 0.85f + Mathf.PingPong(z * 0.017f, 0.55f));
+            CreateTree(trees.transform, CoursePath.PointAtDistance(z + 18f, -EnvironmentPlacement.MidTreeOffset), 1f + Mathf.PingPong(z * 0.011f, 0.6f));
+            CreateTree(trees.transform, CoursePath.PointAtDistance(z + 25f, EnvironmentPlacement.MidTreeOffset), 0.95f + Mathf.PingPong(z * 0.019f, 0.6f));
+            CreateTree(trees.transform, CoursePath.PointAtDistance(z + 34f, -EnvironmentPlacement.FarTreeOffset), 1.2f + Mathf.PingPong(z * 0.009f, 0.55f));
+            CreateTree(trees.transform, CoursePath.PointAtDistance(z + 43f, EnvironmentPlacement.FarTreeOffset), 1.15f + Mathf.PingPong(z * 0.015f, 0.65f));
         }
     }
 
