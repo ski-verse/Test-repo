@@ -45,6 +45,7 @@ public class SkierTechniqueRuntimeUpdater : MonoBehaviour
         animator.rightShin = animator.rightShin != null ? animator.rightShin : FindDescendant(root, "Right Long Lower Leg", "Right Shin");
         animator.leftFoot = animator.leftFoot != null ? animator.leftFoot : FindDescendant(root, "Left Boot", "Left Foot");
         animator.rightFoot = animator.rightFoot != null ? animator.rightFoot : FindDescendant(root, "Right Boot", "Right Foot");
+        animator.head = animator.head != null ? animator.head : FindDescendant(root, "Head Stabilizer", "Head");
 
         animator.leftArm = animator.leftArm != null ? animator.leftArm : FindDescendant(root, "Left Connected Double-Poling Arm", "Left Double-Poling Arm");
         animator.rightArm = animator.rightArm != null ? animator.rightArm : FindDescendant(root, "Right Connected Double-Poling Arm", "Right Double-Poling Arm");
