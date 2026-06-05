@@ -4,37 +4,41 @@ using UnityEngine;
 public class RollerSkierTechniqueTests
 {
     [Test]
-    public void CalculateBodyCompression_PeaksDuringDrivePhase()
+    public void CalculateBodyCompression_PeaksDuringPowerPhase()
     {
-        var setupCompression = RollerSkierAnimator.CalculateBodyCompression(0.1f);
-        var driveCompression = RollerSkierAnimator.CalculateBodyCompression(0.42f);
-        var recoveryCompression = RollerSkierAnimator.CalculateBodyCompression(0.8f);
+        var plantCompression = RollerSkierAnimator.CalculateBodyCompression(RollerSkierAnimator.PhasePolePlant);
+        var loadCompression = RollerSkierAnimator.CalculateBodyCompression(RollerSkierAnimator.PhaseLoad);
+        var powerCompression = RollerSkierAnimator.CalculateBodyCompression(RollerSkierAnimator.PhasePower);
+        var recoveryCompression = RollerSkierAnimator.CalculateBodyCompression(RollerSkierAnimator.PhaseRecovery);
 
-        Assert.Greater(driveCompression, setupCompression);
-        Assert.Greater(driveCompression, recoveryCompression);
+        Assert.Greater(loadCompression, plantCompression);
+        Assert.Greater(powerCompression, loadCompression);
+        Assert.Greater(powerCompression, recoveryCompression);
     }
 
     [Test]
-    public void CalculateToeRise_PeaksNearPolePlantAndReturnsInRecovery()
+    public void CalculateToeRise_PeaksDuringPowerAndReturnsInRecovery()
     {
-        var setupToeRise = RollerSkierAnimator.CalculateToeRise(0.1f);
-        var plantToeRise = RollerSkierAnimator.CalculateToeRise(0.42f);
-        var recoveryToeRise = RollerSkierAnimator.CalculateToeRise(0.82f);
+        var setupToeRise = RollerSkierAnimator.CalculateToeRise(RollerSkierAnimator.PhasePolePlant);
+        var powerToeRise = RollerSkierAnimator.CalculateToeRise(RollerSkierAnimator.PhasePower);
+        var recoveryToeRise = RollerSkierAnimator.CalculateToeRise(RollerSkierAnimator.PhaseRecovery);
 
-        Assert.Greater(plantToeRise, setupToeRise);
-        Assert.Greater(plantToeRise, recoveryToeRise);
+        Assert.Greater(powerToeRise, setupToeRise);
+        Assert.Greater(powerToeRise, recoveryToeRise);
+        Assert.Less(recoveryToeRise, 0.05f);
     }
 
     [Test]
     public void CalculateSkiClassicsBiomechanics_UsesCoreDriveMoreThanArmSwing()
     {
-        var drivePhase = 0.42f;
-        var recoveryPhase = 0.82f;
+        var powerPhase = RollerSkierAnimator.PhasePower;
+        var recoveryPhase = RollerSkierAnimator.PhaseRecovery;
 
-        Assert.Greater(RollerSkierAnimator.CalculateBodyWeightTransfer(drivePhase), RollerSkierAnimator.CalculateBodyWeightTransfer(recoveryPhase));
-        Assert.Greater(RollerSkierAnimator.CalculateTorsoForwardDrive(drivePhase), RollerSkierAnimator.CalculateHandForwardDrive(drivePhase) * 1.6f);
-        Assert.Greater(RollerSkierAnimator.CalculateHipHingeForwardDrive(drivePhase), RollerSkierAnimator.CalculateHandForwardDrive(drivePhase));
-        Assert.Less(RollerSkierAnimator.CalculateHandOutwardDrift(drivePhase), 0.02f);
+        Assert.Greater(RollerSkierAnimator.CalculateBodyWeightTransfer(powerPhase), RollerSkierAnimator.CalculateBodyWeightTransfer(recoveryPhase));
+        Assert.Greater(RollerSkierAnimator.CalculateTorsoForwardDrive(powerPhase), 0.2f);
+        Assert.Greater(RollerSkierAnimator.CalculateHipHingeForwardDrive(powerPhase), 0.14f);
+        Assert.Less(Mathf.Abs(RollerSkierAnimator.CalculateHandForwardDrive(powerPhase)), 0.04f);
+        Assert.Less(RollerSkierAnimator.CalculateHandOutwardDrift(powerPhase), 0.02f);
     }
 
     [Test]
@@ -50,12 +54,12 @@ public class RollerSkierTechniqueTests
         animator.torso.localPosition = new Vector3(0f, 1.105f, 0.085f);
         animator.head.localPosition = new Vector3(0f, 0.79f, -0.19f);
 
-        animator.ApplyPose(0.42f);
+        animator.ApplyPose(RollerSkierAnimator.PhasePower);
 
         var torsoPitch = NormalizeAngle(animator.torso.localEulerAngles.x);
         var headCounterPitch = NormalizeAngle(animator.head.localEulerAngles.x);
-        Assert.Greater(torsoPitch, 30f);
-        Assert.Less(headCounterPitch, -10f);
+        Assert.Greater(torsoPitch, 40f);
+        Assert.Less(headCounterPitch, -15f);
         Assert.Less(Mathf.Abs(animator.head.localPosition.y - 0.79f), 0.03f);
 
         Object.DestroyImmediate(root);
@@ -64,12 +68,17 @@ public class RollerSkierTechniqueTests
     [Test]
     public void CalculatePolePlant_StaysInFrontWithEfficientHandPath()
     {
-        var drivePhase = 0.42f;
-        var recoveryPhase = 0.82f;
+        var plantPhase = RollerSkierAnimator.PhasePolePlant;
+        var powerPhase = RollerSkierAnimator.PhasePower;
+        var releasePhase = RollerSkierAnimator.PhaseRelease;
+        var recoveryPhase = RollerSkierAnimator.PhaseRecovery;
+        var preparationPhase = RollerSkierAnimator.PhasePreparation;
 
-        Assert.Greater(RollerSkierAnimator.CalculatePolePlantForwardOffset(drivePhase), 0.07f);
-        Assert.Greater(RollerSkierAnimator.CalculatePolePressure(drivePhase), RollerSkierAnimator.CalculatePolePressure(recoveryPhase));
-        Assert.Less(RollerSkierAnimator.CalculateHandRecoveryLift(drivePhase), RollerSkierAnimator.CalculateHandRecoveryLift(recoveryPhase));
+        Assert.Greater(RollerSkierAnimator.CalculatePolePlantForwardOffset(plantPhase), 0.1f);
+        Assert.Greater(RollerSkierAnimator.CalculatePolePlantForwardOffset(preparationPhase), 0.1f);
+        Assert.Greater(RollerSkierAnimator.CalculatePolePressure(powerPhase), RollerSkierAnimator.CalculatePolePressure(recoveryPhase));
+        Assert.Less(RollerSkierAnimator.CalculateHandForwardDrive(releasePhase), RollerSkierAnimator.CalculateHandForwardDrive(plantPhase));
+        Assert.Less(RollerSkierAnimator.CalculateHandRecoveryLift(powerPhase), RollerSkierAnimator.CalculateHandRecoveryLift(recoveryPhase));
     }
 
     [Test]
@@ -102,7 +111,7 @@ public class RollerSkierTechniqueTests
         animator.leftHand.localPosition = new Vector3(-0.18f, 0.7f, 0.2f);
         animator.rightHand.localPosition = new Vector3(0.18f, 0.7f, 0.2f);
 
-        animator.ApplyPose(0.42f);
+        animator.ApplyPose(RollerSkierAnimator.PhasePower);
 
         Assert.AreEqual(animator.leftHand.position, animator.leftPole.position);
         Assert.AreEqual(animator.rightHand.position, animator.rightPole.position);
@@ -126,7 +135,7 @@ public class RollerSkierTechniqueTests
         animator.rightSki.SetParent(root.transform, false);
 
         var neutralTorsoPosition = animator.torso.localPosition;
-        animator.ApplyPose(0.42f);
+        animator.ApplyPose(RollerSkierAnimator.PhasePower);
 
         Assert.Less(animator.torso.localPosition.y, neutralTorsoPosition.y);
         Assert.Greater(animator.torso.localPosition.z, neutralTorsoPosition.z);
@@ -148,7 +157,7 @@ public class RollerSkierTechniqueTests
         animator.torso.localPosition = new Vector3(0f, 1.105f, 0.085f);
         animator.hips.localPosition = new Vector3(0f, 0.955f, 0.105f);
 
-        animator.ApplyPose(0.42f);
+        animator.ApplyPose(RollerSkierAnimator.PhasePower);
 
         Assert.Greater(animator.torso.localPosition.y, animator.hips.localPosition.y);
         Assert.Greater(animator.torso.localPosition.y - animator.hips.localPosition.y, 0.12f);
@@ -175,7 +184,7 @@ public class RollerSkierTechniqueTests
         animator.leftSki.localPosition = new Vector3(-0.24f, 0f, 0.13f);
         animator.rightSki.localPosition = new Vector3(0.24f, 0f, 0.13f);
 
-        animator.ApplyPose(0.42f);
+        animator.ApplyPose(RollerSkierAnimator.PhasePower);
 
         var leftFootPitch = Mathf.Abs(NormalizeAngle(animator.leftFoot.localEulerAngles.x));
         var leftSkiPitch = Mathf.Abs(NormalizeAngle(animator.leftSki.localEulerAngles.x));
@@ -193,7 +202,7 @@ public class RollerSkierTechniqueTests
         var root = new GameObject("Roller Skier Rig");
         var animator = root.AddComponent<RollerSkierAnimator>();
 
-        animator.ApplyPose(0.15f);
+        animator.ApplyPose(RollerSkierAnimator.PhaseLoad);
 
         animator.leftHand = new GameObject("Left Hand").transform;
         animator.leftPole = new GameObject("Left Pole").transform;
@@ -202,9 +211,9 @@ public class RollerSkierTechniqueTests
         animator.leftHand.localPosition = new Vector3(-0.2f, 0.72f, 0.28f);
 
         animator.ResetBasePose();
-        animator.ApplyPose(0.1f);
+        animator.ApplyPose(RollerSkierAnimator.PhasePolePlant);
 
-        Assert.AreEqual(new Vector3(-0.2f, 0.72f, 0.28f), animator.leftHand.localPosition);
+        Assert.Greater(animator.leftHand.localPosition.z, 0.4f);
         Assert.AreEqual(animator.leftHand.position, animator.leftPole.position);
 
         Object.DestroyImmediate(root);
