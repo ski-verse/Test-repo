@@ -22,7 +22,7 @@ public class WorkoutSessionController : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void InstallWorkoutSessionFlow()
     {
-        if (Object.FindObjectOfType<WorkoutSessionController>() != null)
+        if (Object.FindFirstObjectByType<WorkoutSessionController>() != null)
         {
             return;
         }
@@ -57,7 +57,7 @@ public class WorkoutSessionController : MonoBehaviour
     {
         if (player == null)
         {
-            player = Object.FindObjectOfType<PlayerSpeedController>();
+            player = Object.FindFirstObjectByType<PlayerSpeedController>();
         }
 
         if (player == null || IsFinished)
@@ -138,12 +138,6 @@ public class WorkoutSessionController : MonoBehaviour
             return;
         }
 
-        if (activeScene.IsValid() && !string.IsNullOrEmpty(activeScene.name))
-        {
-            SceneManager.LoadScene(activeScene.name);
-            return;
-        }
-
         ResetPlayerToStart();
         StartSession();
     }
@@ -194,7 +188,7 @@ public class WorkoutSessionController : MonoBehaviour
     {
         if (player == null)
         {
-            player = Object.FindObjectOfType<PlayerSpeedController>();
+            player = Object.FindFirstObjectByType<PlayerSpeedController>();
         }
 
         if (player == null)
