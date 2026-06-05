@@ -36,15 +36,34 @@ public class CourseClimbTests
     }
 
     [Test]
-    public void PlayerSpeedController_CalculatesGradientResistanceOnlyForClimbs()
+    public void PlayerSpeedController_ReducesAccelerationAndTopSpeedOnClimbs()
     {
-        Assert.AreEqual(0f, PlayerSpeedController.CalculateGradientResistanceDeceleration(0f), 0.001f);
-        Assert.AreEqual(0f, PlayerSpeedController.CalculateGradientResistanceDeceleration(-4f), 0.001f);
-        Assert.Greater(PlayerSpeedController.CalculateGradientResistanceDeceleration(6.5f), 0f);
+        Assert.AreEqual(1f, PlayerSpeedController.CalculateUphillAccelerationMultiplier(0f), 0.001f);
+        Assert.AreEqual(1f, PlayerSpeedController.CalculateUphillAccelerationMultiplier(-4f), 0.001f);
+        Assert.Less(PlayerSpeedController.CalculateUphillAccelerationMultiplier(6.5f), 1f);
+        Assert.Less(PlayerSpeedController.CalculateUphillMaxSpeed(18f, 6.5f), 18f);
+        Assert.Greater(PlayerSpeedController.CalculateUphillMaxSpeed(18f, 6.5f), PlayerSpeedController.MinimumUphillMovementSpeed);
     }
 
     [Test]
-    public void PlayerSpeedController_AcceleratesDuringClimbButGradientAddsResistance()
+    public void PlayerSpeedController_HoldingAccelerateCanRestartMovementUphill()
+    {
+        var climbDistance = CoursePath.MajorClimbStartMeters + CoursePath.MajorClimbLengthMeters * 0.5f;
+        var player = new GameObject("Player");
+        var controller = player.AddComponent<PlayerSpeedController>();
+        controller.CurrentSpeed = 0f;
+        controller.AlignToCourse(climbDistance);
+
+        controller.ApplyMovementInputAndGradientResistance(PlayerMovementInput.Accelerate, 0.1f);
+
+        Assert.GreaterOrEqual(controller.CurrentGradientPercent, 5f);
+        Assert.GreaterOrEqual(controller.CurrentSpeed, PlayerSpeedController.MinimumUphillMovementSpeed);
+
+        Object.DestroyImmediate(player);
+    }
+
+    [Test]
+    public void PlayerSpeedController_AcceleratesDuringClimbWithReducedAcceleration()
     {
         var climbDistance = CoursePath.MajorClimbStartMeters + CoursePath.MajorClimbLengthMeters * 0.5f;
         var player = new GameObject("Player");
@@ -58,6 +77,23 @@ public class CourseClimbTests
         Assert.GreaterOrEqual(controller.CurrentGradientPercent, 5f);
         Assert.Greater(controller.CurrentSpeed, 6f);
         Assert.Less(controller.CurrentSpeed, 9f);
+
+        Object.DestroyImmediate(player);
+    }
+
+    [Test]
+    public void PlayerSpeedController_ClimbCapsTopSpeedInsteadOfForcingZero()
+    {
+        var climbDistance = CoursePath.MajorClimbStartMeters + CoursePath.MajorClimbLengthMeters * 0.5f;
+        var player = new GameObject("Player");
+        var controller = player.AddComponent<PlayerSpeedController>();
+        controller.CurrentSpeed = controller.maxSpeed;
+        controller.AlignToCourse(climbDistance);
+
+        controller.ApplyMovementInputAndGradientResistance(PlayerMovementInput.Accelerate, 1f);
+
+        Assert.Greater(controller.CurrentSpeed, PlayerSpeedController.MinimumUphillMovementSpeed);
+        Assert.LessOrEqual(controller.CurrentSpeed, PlayerSpeedController.CalculateUphillMaxSpeed(controller.maxSpeed, controller.CurrentGradientPercent) + 0.001f);
 
         Object.DestroyImmediate(player);
     }
@@ -80,7 +116,7 @@ public class CourseClimbTests
     }
 
     [Test]
-    public void PlayerSpeedController_GradientResistanceReducesUnpoweredClimbSpeed()
+    public void PlayerSpeedController_UnpoweredClimbSpeedDecaysNaturally()
     {
         var climbDistance = CoursePath.MajorClimbStartMeters + CoursePath.MajorClimbLengthMeters * 0.5f;
         var player = new GameObject("Player");
@@ -92,6 +128,7 @@ public class CourseClimbTests
 
         Assert.GreaterOrEqual(controller.CurrentGradientPercent, 5f);
         Assert.Less(controller.CurrentSpeed, 10f);
+        Assert.Greater(controller.CurrentSpeed, 0f);
         Assert.AreEqual(controller.CurrentSpeed * 3.6f, controller.SpeedKmh, 0.001f);
 
         Object.DestroyImmediate(player);
