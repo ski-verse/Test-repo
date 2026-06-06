@@ -12,8 +12,8 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
         Assert.AreEqual("Adventure Stable Equipment Constraint Rig", AdventureCharacterRollerSkierRuntimeUpdater.BoneAttachedEquipmentRootName);
         Assert.IsTrue(AdventureCharacterRollerSkierRuntimeUpdater.DisableProceduralAnimationForAdventure);
         Assert.IsTrue(AdventureCharacterRollerSkierRuntimeUpdater.SkipGenericPoleVisibilityForAdventure);
-        Assert.IsFalse(AdventureCharacterRollerSkierRuntimeUpdater.AttachAdventurePolesDirectlyToHands);
-        Assert.IsFalse(AdventureCharacterRollerSkierRuntimeUpdater.AttachAdventureEquipmentToHumanoid);
+        Assert.IsTrue(AdventureCharacterRollerSkierRuntimeUpdater.AttachAdventurePolesDirectlyToHands);
+        Assert.IsTrue(AdventureCharacterRollerSkierRuntimeUpdater.AttachAdventureEquipmentToHumanoid);
         Assert.IsTrue(AdventureCharacterRollerSkierRuntimeUpdater.UseAdventureCharacterPrefabInGameplay);
         Assert.AreEqual(0f, AdventureCharacterRollerSkierRuntimeUpdater.CharacterYawDegrees);
         Assert.GreaterOrEqual(AdventureCharacterRollerSkierRuntimeUpdater.NeutralUpperArmDownDegrees, 75f);
@@ -49,11 +49,11 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
             Assert.IsNotNull(FindChildRecursive(visualRoot, "foot_l"));
             Assert.IsNotNull(FindChildRecursive(visualRoot, "foot_r"));
             Assert.IsNull(visualRoot.Find("Old Procedural Body Part"));
-            Assert.IsNull(visualRoot.Find(AdventureCharacterRollerSkierRuntimeUpdater.BoneAttachedEquipmentRootName));
-            Assert.IsNull(FindChildRecursive(visualRoot, AdventureCharacterRollerSkierRuntimeUpdater.LeftAdventurePoleName));
-            Assert.IsNull(FindChildRecursive(visualRoot, AdventureCharacterRollerSkierRuntimeUpdater.RightAdventurePoleName));
-            Assert.IsNull(FindChildRecursive(visualRoot, "Left Adventure Roller Ski"));
-            Assert.IsNull(FindChildRecursive(visualRoot, "Right Adventure Roller Ski"));
+            Assert.IsNotNull(visualRoot.Find(AdventureCharacterRollerSkierRuntimeUpdater.BoneAttachedEquipmentRootName));
+            Assert.IsNotNull(FindChildRecursive(visualRoot, AdventureCharacterRollerSkierRuntimeUpdater.LeftAdventurePoleName));
+            Assert.IsNotNull(FindChildRecursive(visualRoot, AdventureCharacterRollerSkierRuntimeUpdater.RightAdventurePoleName));
+            Assert.IsNotNull(FindChildRecursive(visualRoot, "Left Adventure Roller Ski"));
+            Assert.IsNotNull(FindChildRecursive(visualRoot, "Right Adventure Roller Ski"));
             Assert.IsNull(animator.leftPole);
             Assert.IsNull(animator.rightPole);
             Assert.IsNull(animator.leftSki);
@@ -93,8 +93,8 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
         Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.NarrowFootTrackHalfWidth, 0.13f);
         Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.NarrowUpperLegTrackHalfWidth, AdventureCharacterRollerSkierRuntimeUpdater.NarrowFootTrackHalfWidth);
         Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.NarrowUpperLegTrackHalfWidth, 0.18f);
-        Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.NeutralLegInwardMuscle, 0.08f);
-        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.NeutralLegInwardMuscle, 0.18f);
+        Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.NeutralLegInwardMuscle, 0.1f);
+        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.NeutralLegInwardMuscle, 0.22f);
     }
 
     [Test]
@@ -105,11 +105,11 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
     }
 
     [Test]
-    public void AdventureCharacterPoles_AreNotAttachedWhileProceduralBodyMotionIsDisabled()
+    public void AdventureCharacterPoles_AreHandAttachedWhileProceduralBodyMotionIsDisabled()
     {
         Assert.AreEqual("Left Adventure Ski Pole", AdventureCharacterRollerSkierRuntimeUpdater.LeftAdventurePoleName);
         Assert.AreEqual("Right Adventure Ski Pole", AdventureCharacterRollerSkierRuntimeUpdater.RightAdventurePoleName);
-        Assert.IsFalse(AdventureCharacterRollerSkierRuntimeUpdater.AttachAdventurePolesDirectlyToHands);
+        Assert.IsTrue(AdventureCharacterRollerSkierRuntimeUpdater.AttachAdventurePolesDirectlyToHands);
         Assert.IsTrue(AdventureCharacterRollerSkierRuntimeUpdater.DisableProceduralAnimationForAdventure);
     }
 
@@ -165,6 +165,37 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
             Assert.AreEqual(AdventureCharacterRollerSkierRuntimeUpdater.NarrowFootTrackHalfWidth, rootSpaceSkiPosition.x, 0.001f);
             Assert.AreEqual(foot.localPosition.y, rootSpaceSkiPosition.y, 0.001f);
             Assert.AreEqual(foot.localPosition.z, rootSpaceSkiPosition.z, 0.001f);
+        }
+        finally
+        {
+            Object.DestroyImmediate(root.gameObject);
+        }
+    }
+
+    [Test]
+    public void AdventureEquipmentBoneFollower_KeepsRollerSkisDirectlyUnderFeetWithoutSideLocking()
+    {
+        var root = new GameObject("Player Visual Root").transform;
+        var foot = new GameObject("Foot Bone").transform;
+        var ski = new GameObject("Foot Attached Roller Ski").transform;
+
+        try
+        {
+            foot.SetParent(root, false);
+            ski.SetParent(root, false);
+            foot.localPosition = new Vector3(0.16f, 0.35f, 0.1f);
+
+            var follower = ski.gameObject.AddComponent<AdventureEquipmentBoneFollower>();
+            follower.target = foot;
+            follower.orientationRoot = root;
+            follower.rootSpaceOffset = new Vector3(0f, -0.09f, 0.12f);
+            follower.lockRootSpaceX = false;
+            follower.ApplyNow();
+
+            var rootSpaceSkiPosition = root.InverseTransformPoint(ski.position);
+            Assert.AreEqual(foot.localPosition.x, rootSpaceSkiPosition.x, 0.001f);
+            Assert.AreEqual(foot.localPosition.y - 0.09f, rootSpaceSkiPosition.y, 0.001f);
+            Assert.AreEqual(foot.localPosition.z + 0.12f, rootSpaceSkiPosition.z, 0.001f);
         }
         finally
         {
