@@ -38,7 +38,11 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
 
             Assert.IsTrue(applied);
             Assert.IsFalse(animator.enabled);
-            Assert.IsNotNull(visualRoot.Find(AdventureCharacterRollerSkierRuntimeUpdater.HumanoidRootName));
+            var character = visualRoot.Find(AdventureCharacterRollerSkierRuntimeUpdater.HumanoidRootName);
+            Assert.IsNotNull(character);
+            Assert.AreEqual(AdventureCharacterRollerSkierRuntimeUpdater.CharacterWidthScale, character.localScale.x, 0.001f);
+            Assert.AreEqual(1f, character.localScale.y, 0.001f);
+            Assert.AreEqual(1f, character.localScale.z, 0.001f);
             Assert.IsNotNull(visualRoot.Find(AdventureCharacterRollerSkierRuntimeUpdater.AdventureCharacterAppliedMarkerName));
             Assert.IsNotNull(FindChildRecursive(visualRoot, "upperarm_l"));
             Assert.IsNotNull(FindChildRecursive(visualRoot, "upperarm_r"));

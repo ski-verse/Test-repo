@@ -124,7 +124,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         character.transform.SetParent(visualRoot, false);
         character.transform.localPosition = Vector3.zero;
         character.transform.localRotation = Quaternion.Euler(0f, CharacterYawDegrees, 0f);
-        character.transform.localScale = Vector3.one;
+        character.transform.localScale = new Vector3(CharacterWidthScale, 1f, 1f);
         ApplyNeutralStandingPose(character);
         DisableImportedCharacterAnimation(character);
         if (AttachAdventureEquipmentToHumanoid)
