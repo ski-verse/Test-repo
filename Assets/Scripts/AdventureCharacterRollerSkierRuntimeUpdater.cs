@@ -23,7 +23,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     public const float LowerLegChainLateralCompression = 0.24f;
     public const float NarrowUpperLegTrackHalfWidth = 0.14f;
     public const float NarrowFootTrackHalfWidth = 0.105f;
-    public const float NeutralStandingLowerBodyHalfWidth = 0.115f;
+    public const float NeutralLegInwardMuscle = 0.12f;
     public const float FootBindingLateralOffset = 0f;
     public const float NeutralUpperArmDownDegrees = 82f;
     public const float NeutralForearmRelaxDegrees = 8f;
@@ -168,8 +168,6 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         {
             ApplyNeutralFallbackBonePose(character.transform);
         }
-
-        ApplyNeutralStandingLowerBodyStance(character.transform);
     }
 
     private static bool TryApplyNeutralHumanPose(GameObject character)
@@ -206,8 +204,8 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
 
             SetMuscle(muscles, "Left Upper Leg Front-Back", 0f);
             SetMuscle(muscles, "Right Upper Leg Front-Back", 0f);
-            SetMuscle(muscles, "Left Upper Leg In-Out", 0f);
-            SetMuscle(muscles, "Right Upper Leg In-Out", 0f);
+            SetMuscle(muscles, "Left Upper Leg In-Out", NeutralLegInwardMuscle);
+            SetMuscle(muscles, "Right Upper Leg In-Out", -NeutralLegInwardMuscle);
             SetMuscle(muscles, "Left Lower Leg Stretch", 0f);
             SetMuscle(muscles, "Right Lower Leg Stretch", 0f);
             SetMuscle(muscles, "Left Foot Up-Down", 0f);
@@ -215,7 +213,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
 
             pose.muscles = muscles;
             poseHandler.SetHumanPose(ref pose);
-            Debug.Log("[Ski-Verse] Adventure Character neutral standing pose applied with arms down and no equipment.");
+            Debug.Log("[Ski-Verse] Adventure Character neutral standing pose applied with arms down, intact legs, and a mild narrow stance.");
             return true;
         }
         catch (System.Exception exception)
@@ -231,18 +229,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         ApplyLocalRotationDelta(root, "upperarm_r", new Vector3(0f, 0f, NeutralUpperArmDownDegrees));
         ApplyLocalRotationDelta(root, "lowerarm_l", new Vector3(0f, 0f, -NeutralForearmRelaxDegrees));
         ApplyLocalRotationDelta(root, "lowerarm_r", new Vector3(0f, 0f, NeutralForearmRelaxDegrees));
-        Debug.Log("[Ski-Verse] Adventure Character fallback neutral standing pose applied with arms down.");
-    }
-
-    private static void ApplyNeutralStandingLowerBodyStance(Transform root)
-    {
-        ApplyRootSpaceX(root, "thigh_l", -NeutralStandingLowerBodyHalfWidth);
-        ApplyRootSpaceX(root, "thigh_r", NeutralStandingLowerBodyHalfWidth);
-        ApplyRootSpaceX(root, "calf_l", -NeutralStandingLowerBodyHalfWidth);
-        ApplyRootSpaceX(root, "calf_r", NeutralStandingLowerBodyHalfWidth);
-        ApplyRootSpaceX(root, "foot_l", -NeutralStandingLowerBodyHalfWidth);
-        ApplyRootSpaceX(root, "foot_r", NeutralStandingLowerBodyHalfWidth);
-        Debug.Log("[Ski-Verse] Adventure Character narrow lower-body stance applied: feet and legs are hip-width and parallel.");
+        Debug.Log("[Ski-Verse] Adventure Character fallback neutral standing pose applied with arms down and intact leg hierarchy.");
     }
 
     private static void DisableImportedCharacterAnimation(GameObject character)
@@ -421,19 +408,6 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         }
 
         bone.localRotation *= Quaternion.Euler(localEulerDelta);
-    }
-
-    private static void ApplyRootSpaceX(Transform root, string boneName, float rootSpaceX)
-    {
-        var bone = FindDeepChild(root, boneName);
-        if (bone == null || root == null)
-        {
-            return;
-        }
-
-        var rootSpacePosition = root.InverseTransformPoint(bone.position);
-        rootSpacePosition.x = rootSpaceX;
-        bone.position = root.TransformPoint(rootSpacePosition);
     }
 
     private static bool AttachEquipmentToHumanoidBones(Transform visualRoot, GameObject character, RollerSkierAnimator animator)
