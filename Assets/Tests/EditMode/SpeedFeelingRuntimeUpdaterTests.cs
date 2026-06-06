@@ -61,7 +61,8 @@ public class SpeedFeelingRuntimeUpdaterTests
             SpeedFeelingRuntimeUpdater.MotionCueSpacingMeters);
         var innerCueEdge = SpeedFeelingRuntimeUpdater.MotionCueLateralOffset - SpeedFeelingRuntimeUpdater.MotionCueHalfWidth;
 
-        Assert.Greater(cueCount, 1200);
+        Assert.AreEqual(CoursePath.CourseLengthMeters, SpeedFeelingRuntimeUpdater.MotionCueCourseLengthMeters, 0.001f);
+        Assert.Greater(cueCount, 700);
         Assert.Greater(innerCueEdge, EnvironmentPlacement.RoadHalfWidth + 1f);
     }
 
@@ -75,8 +76,8 @@ public class SpeedFeelingRuntimeUpdaterTests
             SpeedFeelingRuntimeUpdater.EdgeFlowCueSpacingMeters);
         var innerEdgeFlowCueEdge = SpeedFeelingRuntimeUpdater.EdgeFlowCueLateralOffset - SpeedFeelingRuntimeUpdater.EdgeFlowCueHalfWidth;
 
-        Assert.Greater(edgeFlowCueCount, 1000);
-        Assert.Greater(totalCueCount, 2200);
+        Assert.Greater(edgeFlowCueCount, 600);
+        Assert.Greater(totalCueCount, 1300);
         Assert.Greater(innerEdgeFlowCueEdge, EnvironmentPlacement.RoadHalfWidth);
     }
 

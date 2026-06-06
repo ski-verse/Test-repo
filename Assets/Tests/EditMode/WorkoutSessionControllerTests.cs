@@ -21,6 +21,15 @@ public class WorkoutSessionControllerTests
     }
 
     [Test]
+    public void CalculateLapNumber_AdvancesEveryThreeKilometers()
+    {
+        Assert.AreEqual(1, WorkoutSessionController.CalculateLapNumber(0f, 3f));
+        Assert.AreEqual(1, WorkoutSessionController.CalculateLapNumber(2.999f, 3f));
+        Assert.AreEqual(2, WorkoutSessionController.CalculateLapNumber(3f, 3f));
+        Assert.AreEqual(3, WorkoutSessionController.CalculateLapNumber(6.2f, 3f));
+    }
+
+    [Test]
     public void BuildFinishSummary_IncludesWorkoutMetrics()
     {
         var summary = WorkoutSessionController.BuildFinishSummary(1000f, 5f, 18f, 42.5f);
@@ -45,6 +54,7 @@ public class WorkoutSessionControllerTests
         Assert.IsFalse(session.IsFinished);
         Assert.AreEqual(0f, session.ElapsedTimeSeconds, 0.001f);
         Assert.AreEqual(0f, session.MaxSpeedKmh, 0.001f);
+        Assert.AreEqual(1, session.CurrentLapNumber);
         Assert.AreEqual("Time: 00:00", session.elapsedTimeText.text);
         Assert.IsFalse(session.finishSummaryPanel.activeSelf);
 
@@ -74,7 +84,27 @@ public class WorkoutSessionControllerTests
     }
 
     [Test]
-    public void AdvanceSession_ShowsFinishSummaryAtFiveKilometersAndStopsPlayer()
+    public void AdvanceSession_ContinuesAfterThreeKilometersAndTracksLap()
+    {
+        var session = new GameObject("Workout Session").AddComponent<WorkoutSessionController>();
+        session.elapsedTimeText = new GameObject("Elapsed Time").AddComponent<TextMeshProUGUI>();
+        session.lapText = new GameObject("Lap Text").AddComponent<TextMeshProUGUI>();
+
+        session.StartSession();
+        session.AdvanceSession(1000f, 3.01f, 36f);
+
+        Assert.IsFalse(session.IsFinished);
+        Assert.AreEqual(2, session.CurrentLapNumber);
+        Assert.AreEqual("Lap: 2", session.lapText.text);
+        Assert.AreEqual(36f, session.MaxSpeedKmh, 0.001f);
+
+        Object.DestroyImmediate(session.elapsedTimeText.gameObject);
+        Object.DestroyImmediate(session.lapText.gameObject);
+        Object.DestroyImmediate(session.gameObject);
+    }
+
+    [Test]
+    public void AdvanceSession_ShowsFinishSummaryWhenExplicitFinishDistanceIsEnabled()
     {
         var playerObject = new GameObject("Player");
         var player = playerObject.AddComponent<PlayerSpeedController>();
@@ -86,6 +116,8 @@ public class WorkoutSessionControllerTests
         session.finishSummaryText = new GameObject("Summary Text").AddComponent<TextMeshProUGUI>();
         session.finishSummaryPanel = new GameObject("Finish Summary Panel");
         session.finishSummaryPanel.SetActive(false);
+        session.finishAtDistance = true;
+        session.finishDistanceKm = 5f;
 
         session.StartSession();
         session.AdvanceSession(1000f, 5f, 42.5f);

@@ -9,6 +9,9 @@ public class PlayerSpeedController : MonoBehaviour
     public const float MinimumUphillMaxSpeedMultiplier = 0.4f;
     public const float UphillCoastDecelerationPerPercent = 0.08f;
     public const float MinimumUphillMovementSpeed = 1.4f;
+    public const float RollingResistanceDeceleration = 0.18f;
+    public const float AirResistanceDecelerationPerSpeedSquared = 0.012f;
+    public const float MinimumPropulsionWatts = 1f;
 
     [Header("Speed")]
     public float acceleration = 3f;
@@ -24,7 +27,9 @@ public class PlayerSpeedController : MonoBehaviour
     [SerializeField]
     private float currentSpeed = 4f;
     [SerializeField]
-    private float startDistanceZ;
+    private float totalDistanceMeters;
+    [SerializeField]
+    private float startDistanceMeters;
 
     private IPlayerInputSource inputSource;
 
@@ -46,13 +51,21 @@ public class PlayerSpeedController : MonoBehaviour
         set => currentSpeed = Mathf.Clamp(value, minSpeed, maxSpeed);
     }
 
-    public float CurrentGradientPercent => CoursePath.GradientPercentAtDistance(transform.position.z);
+    public float TotalDistanceMeters => totalDistanceMeters;
+
+    public float CurrentLapProgressMeters => CoursePath.NormalizeDistance(totalDistanceMeters);
+
+    public float CurrentLapProgress01 => CoursePath.Progress01AtDistance(totalDistanceMeters);
+
+    public int CurrentLapNumber => CalculateLapNumber(totalDistanceMeters);
+
+    public float CurrentGradientPercent => CoursePath.GradientPercentAtDistance(totalDistanceMeters);
 
     public float EffectiveCurrentSpeed => CurrentSpeed;
 
     public float SpeedKmh => EffectiveCurrentSpeed * 3.6f;
 
-    public float DistanceKm => Mathf.Max(0f, transform.position.z - startDistanceZ) / 1000f;
+    public float DistanceKm => Mathf.Max(0f, totalDistanceMeters - startDistanceMeters) / 1000f;
 
     private void Awake()
     {
@@ -63,8 +76,9 @@ public class PlayerSpeedController : MonoBehaviour
     {
         EnsureInputSource();
         CurrentSpeed = currentSpeed;
-        startDistanceZ = transform.position.z;
-        AlignToCourse(transform.position.z);
+        totalDistanceMeters = Mathf.Max(0f, totalDistanceMeters);
+        startDistanceMeters = Mathf.Max(0f, startDistanceMeters);
+        AlignToCourse(totalDistanceMeters);
     }
 
     private void Update()
@@ -102,6 +116,17 @@ public class PlayerSpeedController : MonoBehaviour
         }
 
         return gradientPercent * UphillCoastDecelerationPerPercent;
+    }
+
+    public static float CalculateCoastDeceleration(float speedMetersPerSecond)
+    {
+        var speed = Mathf.Max(0f, speedMetersPerSecond);
+        if (speed <= 0f)
+        {
+            return 0f;
+        }
+
+        return RollingResistanceDeceleration + speed * speed * AirResistanceDecelerationPerSpeedSquared;
     }
 
     public void EnsureInputSource()
@@ -144,21 +169,29 @@ public class PlayerSpeedController : MonoBehaviour
         var safeDeltaTime = Mathf.Max(0f, deltaTime);
         var gradientPercent = CurrentGradientPercent;
 
+        var hasPropulsionInput = HasPropulsionInput(movementInput);
+
         if (movementInput.SpeedAxis > 0f)
         {
             IncreaseSpeed(safeDeltaTime * movementInput.SpeedAxis * CalculateUphillAccelerationMultiplier(gradientPercent));
-            ApplyMinimumUphillMovementSpeed(gradientPercent);
         }
         else if (movementInput.SpeedAxis < 0f)
         {
             DecreaseSpeed(safeDeltaTime * -movementInput.SpeedAxis);
         }
-        else
+
+        if (!hasPropulsionInput)
         {
+            ApplyCoastDecay(safeDeltaTime);
             ApplyUphillCoastDecay(gradientPercent, safeDeltaTime);
         }
 
         ApplyUphillMaxSpeedLimit(gradientPercent);
+
+        if (movementInput.SpeedAxis > 0f)
+        {
+            ApplyMinimumUphillMovementSpeed(gradientPercent);
+        }
     }
 
     public void ApplyMovementInput(PlayerMovementInput movementInput, float deltaTime)
@@ -192,13 +225,24 @@ public class PlayerSpeedController : MonoBehaviour
 
     public void AlignToCourse(float zPosition)
     {
+        totalDistanceMeters = Mathf.Max(0f, zPosition);
         transform.position = CoursePath.PointAtDistance(zPosition, 0f);
         transform.rotation = CoursePath.RotationAtDistance(zPosition);
     }
 
     public void SetStartDistanceZ(float zPosition)
     {
-        startDistanceZ = zPosition;
+        startDistanceMeters = Mathf.Max(0f, zPosition);
+    }
+
+    public static int CalculateLapNumber(float distanceMeters)
+    {
+        if (CoursePath.CourseLengthMeters <= 0f)
+        {
+            return 1;
+        }
+
+        return Mathf.FloorToInt(Mathf.Max(0f, distanceMeters) / CoursePath.CourseLengthMeters) + 1;
     }
 
     private void ApplyMinimumUphillMovementSpeed(float gradientPercent)
@@ -216,6 +260,16 @@ public class PlayerSpeedController : MonoBehaviour
         CurrentSpeed -= CalculateUphillCoastDeceleration(gradientPercent) * deltaTime;
     }
 
+    private void ApplyCoastDecay(float deltaTime)
+    {
+        CurrentSpeed -= CalculateCoastDeceleration(CurrentSpeed) * deltaTime;
+    }
+
+    private static bool HasPropulsionInput(PlayerMovementInput movementInput)
+    {
+        return movementInput.SpeedAxis > 0f || movementInput.PropulsionWatts >= MinimumPropulsionWatts;
+    }
+
     private void ApplyUphillMaxSpeedLimit(float gradientPercent)
     {
         CurrentSpeed = Mathf.Min(CurrentSpeed, CalculateUphillMaxSpeed(maxSpeed, gradientPercent));
@@ -223,7 +277,6 @@ public class PlayerSpeedController : MonoBehaviour
 
     private void MoveAlongCourse(float deltaTime)
     {
-        var nextZ = transform.position.z + EffectiveCurrentSpeed * deltaTime;
-        AlignToCourse(nextZ);
+        AlignToCourse(totalDistanceMeters + EffectiveCurrentSpeed * deltaTime);
     }
 }

@@ -6,7 +6,7 @@ public class SpeedFeelingRuntimeUpdater : MonoBehaviour
     public const float CameraHeightMultiplier = 1.15f;
     public const float EnhancedMaxFieldOfView = 104f;
     public const float EnhancedSpeedForMaxFieldOfViewKmh = 60f;
-    public const float MotionCueCourseLengthMeters = 5000f;
+    public const float MotionCueCourseLengthMeters = CoursePath.CourseLengthMeters;
     public const float MotionCueStartDistanceMeters = 14f;
     public const float MotionCueSpacingMeters = 8f;
     public const float MotionCueLateralOffset = 5.45f;

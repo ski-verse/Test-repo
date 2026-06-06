@@ -48,6 +48,65 @@ public class PlayerSpeedControllerTests
     }
 
     [Test]
+    public void CalculateCoastDeceleration_GrowsWithSpeed()
+    {
+        var slowDecay = PlayerSpeedController.CalculateCoastDeceleration(2f);
+        var fastDecay = PlayerSpeedController.CalculateCoastDeceleration(10f);
+
+        Assert.Greater(slowDecay, 0f);
+        Assert.Greater(fastDecay, slowDecay);
+    }
+
+    [Test]
+    public void ApplyMovementInputAndGradientResistance_DecaysSpeedOnFlatWhenNoPropulsionIsApplied()
+    {
+        var controller = new GameObject("Player").AddComponent<PlayerSpeedController>();
+        controller.AlignToCourse(900f);
+        controller.CurrentSpeed = 10f;
+
+        controller.ApplyMovementInputAndGradientResistance(PlayerMovementInput.None, 1f);
+
+        Assert.LessOrEqual(controller.CurrentGradientPercent, 0f);
+        Assert.Less(controller.CurrentSpeed, 10f);
+        Assert.Greater(controller.CurrentSpeed, 0f);
+
+        Object.DestroyImmediate(controller.gameObject);
+    }
+
+    [Test]
+    public void ApplyMovementInputAndGradientResistance_EventuallyStopsWithoutNewPropulsion()
+    {
+        var controller = new GameObject("Player").AddComponent<PlayerSpeedController>();
+        controller.AlignToCourse(900f);
+        controller.CurrentSpeed = 4f;
+
+        for (var i = 0; i < 80; i++)
+        {
+            controller.ApplyMovementInputAndGradientResistance(PlayerMovementInput.None, 0.5f);
+        }
+
+        Assert.AreEqual(0f, controller.CurrentSpeed, 0.001f);
+
+        Object.DestroyImmediate(controller.gameObject);
+    }
+
+    [Test]
+    public void ApplyMovementInputAndGradientResistance_HoldingPropulsionStillIncreasesSpeed()
+    {
+        var controller = new GameObject("Player").AddComponent<PlayerSpeedController>();
+        controller.AlignToCourse(900f);
+        controller.acceleration = 3f;
+        controller.CurrentSpeed = 4f;
+
+        controller.ApplyMovementInputAndGradientResistance(PlayerMovementInput.Accelerate, 1f);
+
+        Assert.LessOrEqual(controller.CurrentGradientPercent, 0f);
+        Assert.Greater(controller.CurrentSpeed, 4f);
+
+        Object.DestroyImmediate(controller.gameObject);
+    }
+
+    [Test]
     public void CalculateNextPosition_MovesForwardBySpeedAndDeltaTime()
     {
         var controller = new GameObject("Player").AddComponent<PlayerSpeedController>();
@@ -63,7 +122,7 @@ public class PlayerSpeedControllerTests
     public void SpeedKmh_ConvertsMetersPerSecondToKilometersPerHourOnNonClimbTerrain()
     {
         var controller = new GameObject("Player").AddComponent<PlayerSpeedController>();
-        controller.AlignToCourse(500f);
+        controller.AlignToCourse(900f);
         controller.CurrentSpeed = 10f;
 
         Assert.LessOrEqual(controller.CurrentGradientPercent, 0f);
@@ -75,8 +134,8 @@ public class PlayerSpeedControllerTests
     public void DistanceKm_UsesForwardProgressFromStartPosition()
     {
         var player = new GameObject("Player");
-        player.transform.position = new Vector3(0f, 0f, 2500f);
         var controller = player.AddComponent<PlayerSpeedController>();
+        controller.AlignToCourse(2500f);
         controller.SetStartDistanceZ(500f);
 
         Assert.AreEqual(2f, controller.DistanceKm, 0.001f);
@@ -84,11 +143,25 @@ public class PlayerSpeedControllerTests
     }
 
     [Test]
+    public void PlayerSpeedController_TracksLapAndWrapsCourseProgress()
+    {
+        var player = new GameObject("Player");
+        var controller = player.AddComponent<PlayerSpeedController>();
+
+        controller.AlignToCourse(CoursePath.CourseLengthMeters + 125f);
+
+        Assert.AreEqual(2, controller.CurrentLapNumber);
+        Assert.AreEqual(125f, controller.CurrentLapProgressMeters, 0.001f);
+        Assert.AreEqual(CoursePath.CenterPointAtDistance(125f), player.transform.position);
+        Object.DestroyImmediate(player);
+    }
+
+    [Test]
     public void Refresh_FormatsSpeedAndDistanceTextWithTextMeshPro()
     {
         var player = new GameObject("Player");
-        player.transform.position = new Vector3(0f, 0f, 1234f);
         var controller = player.AddComponent<PlayerSpeedController>();
+        controller.AlignToCourse(1234f);
         controller.CurrentSpeed = 8f;
         controller.SetStartDistanceZ(0f);
 
@@ -96,15 +169,18 @@ public class PlayerSpeedControllerTests
         hud.player = controller;
         hud.speedText = new GameObject("Speed Text").AddComponent<TextMeshProUGUI>();
         hud.distanceText = new GameObject("Distance Text").AddComponent<TextMeshProUGUI>();
+        hud.lapText = new GameObject("Lap Text").AddComponent<TextMeshProUGUI>();
 
         hud.Refresh();
 
         StringAssert.StartsWith("Speed: ", hud.speedText.text);
         StringAssert.EndsWith(" km/h", hud.speedText.text);
         Assert.AreEqual("Distance: 1.23 km", hud.distanceText.text);
+        Assert.AreEqual("Lap: 1", hud.lapText.text);
 
         Object.DestroyImmediate(hud.speedText.gameObject);
         Object.DestroyImmediate(hud.distanceText.gameObject);
+        Object.DestroyImmediate(hud.lapText.gameObject);
         Object.DestroyImmediate(hud.gameObject);
         Object.DestroyImmediate(player);
     }
@@ -165,15 +241,23 @@ public class PlayerSpeedControllerTests
     {
         var start = CoursePath.CenterPointAtDistance(0f);
         var firstTurn = CoursePath.CenterPointAtDistance(220f);
-        var climb = CoursePath.HeightAtDistance(320f) - CoursePath.HeightAtDistance(0f);
-        var descent = CoursePath.HeightAtDistance(900f) - CoursePath.HeightAtDistance(320f);
+        var climb = CoursePath.HeightAtDistance(CoursePath.MajorClimbEndMeters) - CoursePath.HeightAtDistance(CoursePath.MajorClimbStartMeters);
+        var descent = CoursePath.HeightAtDistance(2850f) - CoursePath.HeightAtDistance(CoursePath.MajorClimbEndMeters);
         var direction = CoursePath.DirectionAtDistance(160f);
 
         Assert.Greater(Mathf.Abs(firstTurn.x - start.x), 45f);
-        Assert.Greater(climb, 16f);
+        Assert.Greater(climb, 30f);
         Assert.Less(descent, -20f);
         Assert.AreEqual(1f, direction.magnitude, 0.001f);
         Assert.Greater(Mathf.Abs(direction.y), 0.01f);
+    }
+
+    [Test]
+    public void CoursePath_WrapsAtThreeKilometers()
+    {
+        Assert.AreEqual(3000f, CoursePath.CourseLengthMeters, 0.001f);
+        Assert.AreEqual(125f, CoursePath.NormalizeDistance(CoursePath.CourseLengthMeters + 125f), 0.001f);
+        Assert.AreEqual(CoursePath.CenterPointAtDistance(0f), CoursePath.CenterPointAtDistance(CoursePath.CourseLengthMeters));
     }
 
     [Test]

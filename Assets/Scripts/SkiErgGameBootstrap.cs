@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 public class SkiErgGameBootstrap : MonoBehaviour
 {
-    private const float RoadLengthMeters = 5000f;
+    private const float RoadLengthMeters = CoursePath.CourseLengthMeters;
     private const float RoadWidthMeters = 8f;
     private const float GrassWidthMeters = 36f;
     private const float RoadSegmentLength = 12f;
@@ -41,7 +41,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
     private static void CreateRoad()
     {
-        var road = new GameObject("Sweeping 5 km Training Road");
+        var road = new GameObject("Sweeping 3 km Loop Road");
         var color = new Color(0.16f, 0.18f, 0.2f);
 
         for (var z = RoadSegmentLength * 0.5f; z < RoadLengthMeters; z += RoadSegmentLength)
@@ -174,10 +174,8 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
     private static void CreateStartFinishMarkers()
     {
-        CreateGate("Start Gate", 0f, new Color(0.1f, 0.45f, 0.95f));
-        CreateGate("Finish Gate", RoadLengthMeters, new Color(0.95f, 0.15f, 0.12f));
-        CreatePathCube(null, "Start Line", 0f, 1f, 0.4f, RoadWidthMeters, 0.05f, Color.white, 0.04f);
-        CreatePathCube(null, "Finish Line", 0f, RoadLengthMeters - 1f, 0.4f, RoadWidthMeters, 0.05f, Color.white, 0.04f);
+        CreateGate("Start Finish Gate", 0f, new Color(0.1f, 0.45f, 0.95f));
+        CreatePathCube(null, "Start Finish Line", 0f, 1f, 0.4f, RoadWidthMeters, 0.05f, Color.white, 0.04f);
     }
 
     private static void CreateGate(string name, float zPosition, Color color)
@@ -350,7 +348,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
         var controller = skier.AddComponent<PlayerSpeedController>();
         controller.CurrentSpeed = 4f;
-        controller.SetStartDistanceZ(skier.transform.position.z);
+        controller.SetStartDistanceZ(0f);
 
         var animator = skier.AddComponent<RollerSkierAnimator>();
         animator.player = controller;
@@ -481,12 +479,16 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
         var speedText = CreateHudText(canvasObject.transform, "Speed Text", new Vector2(28f, -28f));
         var distanceText = CreateHudText(canvasObject.transform, "Distance Text", new Vector2(28f, -78f));
+        var lapText = CreateHudText(canvasObject.transform, "Lap Text", new Vector2(28f, -228f));
 
         var display = canvasObject.AddComponent<SpeedDistanceDisplay>();
         display.player = player;
         display.speedText = speedText;
         display.distanceText = distanceText;
+        display.lapText = lapText;
         display.Refresh();
+
+        CourseMinimapDisplay.CreateRuntimeMinimap(canvasObject.transform, player);
     }
 
     private static TextMeshProUGUI CreateHudText(Transform parent, string name, Vector2 anchoredPosition)

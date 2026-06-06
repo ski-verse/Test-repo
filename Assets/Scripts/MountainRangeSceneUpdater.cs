@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class MountainRangeSceneUpdater : MonoBehaviour
 {
-    private const float RoadLengthMeters = 5000f;
+    private const float RoadLengthMeters = CoursePath.CourseLengthMeters;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void InstallRuntimeUpdater()

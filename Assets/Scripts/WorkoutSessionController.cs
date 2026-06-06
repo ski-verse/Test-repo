@@ -7,18 +7,23 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public class WorkoutSessionController : MonoBehaviour
 {
-    public const float DefaultFinishDistanceKm = 5f;
+    public const float DefaultLoopDistanceKm = 3f;
+    public const float DefaultFinishDistanceKm = 0f;
 
     public PlayerSpeedController player;
     public TMP_Text elapsedTimeText;
+    public TMP_Text lapText;
     public GameObject finishSummaryPanel;
     public TMP_Text finishSummaryText;
     public Button restartButton;
     public Button returnToStartButton;
+    public float loopDistanceKm = DefaultLoopDistanceKm;
     public float finishDistanceKm = DefaultFinishDistanceKm;
+    public bool finishAtDistance;
 
     public float ElapsedTimeSeconds { get; private set; }
     public float MaxSpeedKmh { get; private set; }
+    public int CurrentLapNumber { get; private set; } = 1;
     public bool IsFinished { get; private set; }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -69,6 +74,7 @@ public class WorkoutSessionController : MonoBehaviour
     {
         ElapsedTimeSeconds = 0f;
         MaxSpeedKmh = 0f;
+        CurrentLapNumber = 1;
         IsFinished = false;
 
         if (finishSummaryPanel != null)
@@ -82,6 +88,7 @@ public class WorkoutSessionController : MonoBehaviour
         }
 
         RefreshElapsedTimeText();
+        RefreshLapText();
     }
 
     public void AdvanceSession(float deltaTime, float distanceKm, float speedKmh)
@@ -93,9 +100,11 @@ public class WorkoutSessionController : MonoBehaviour
 
         ElapsedTimeSeconds += Mathf.Max(0f, deltaTime);
         MaxSpeedKmh = Mathf.Max(MaxSpeedKmh, speedKmh);
+        CurrentLapNumber = CalculateLapNumber(distanceKm, loopDistanceKm);
         RefreshElapsedTimeText();
+        RefreshLapText();
 
-        if (distanceKm >= finishDistanceKm)
+        if (finishAtDistance && finishDistanceKm > 0f && distanceKm >= finishDistanceKm)
         {
             FinishSession(distanceKm);
         }
@@ -170,6 +179,16 @@ public class WorkoutSessionController : MonoBehaviour
         return $"{minutes:00}:{seconds:00}";
     }
 
+    public static int CalculateLapNumber(float distanceKm, float loopDistanceKm)
+    {
+        if (loopDistanceKm <= 0f)
+        {
+            return 1;
+        }
+
+        return Mathf.FloorToInt(Mathf.Max(0f, distanceKm) / loopDistanceKm) + 1;
+    }
+
     public static string BuildFinishSummary(float elapsedTimeSeconds, float distanceKm, float averageSpeedKmh, float maxSpeedKmh)
     {
         return "Finish\n" +
@@ -184,6 +203,14 @@ public class WorkoutSessionController : MonoBehaviour
         if (elapsedTimeText != null)
         {
             elapsedTimeText.text = $"Time: {FormatElapsedTime(ElapsedTimeSeconds)}";
+        }
+    }
+
+    private void RefreshLapText()
+    {
+        if (lapText != null)
+        {
+            lapText.text = $"Lap: {CurrentLapNumber}";
         }
     }
 
@@ -202,7 +229,7 @@ public class WorkoutSessionController : MonoBehaviour
         player.enabled = true;
         player.CurrentSpeed = 4f;
         player.AlignToCourse(0f);
-        player.SetStartDistanceZ(player.transform.position.z);
+        player.SetStartDistanceZ(0f);
     }
 
     private void CreateRuntimeUiIfNeeded()

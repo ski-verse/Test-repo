@@ -34,7 +34,7 @@ public class PlayerInputAbstractionTests
         var controller = new GameObject("Player").AddComponent<PlayerSpeedController>();
         var testInput = new TestInputSource { MovementInput = new PlayerMovementInput(1f) };
         controller.InputSource = testInput;
-        controller.AlignToCourse(500f);
+        controller.AlignToCourse(900f);
         controller.acceleration = 6f;
         controller.CurrentSpeed = 2f;
 
