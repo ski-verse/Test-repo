@@ -19,21 +19,12 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     public const bool UseAdventureCharacterPrefabInGameplay = true;
     public const float CharacterYawDegrees = 0f;
     public const float CharacterWidthScale = 0.72f;
-    public const float LegChainLateralCompression = 0.22f;
-    public const float LowerLegChainLateralCompression = 0.24f;
-    public const float NarrowUpperLegTrackHalfWidth = 0.14f;
-    public const float NarrowFootTrackHalfWidth = 0.105f;
-    public const float NeutralLegInwardMuscle = 0.16f;
+    public const float NeutralLegInwardMuscle = 0f;
     public const float FootBindingLateralOffset = 0f;
     public const float NeutralUpperArmDownDegrees = 82f;
     public const float NeutralForearmRelaxDegrees = 8f;
     public const float NeutralArmDownMuscle = -0.95f;
     public const float NeutralForearmStretchMuscle = -0.08f;
-    public const float BasePoseUpperArmDropMuscle = 0.46f;
-    public const float BasePoseForearmBendMuscle = 0.2f;
-    public const float BasePoseHipHingeMuscle = 0.12f;
-    public const float BasePoseKneeBendMuscle = 0.01f;
-    public const float BasePoseLegInwardMuscle = 0f;
     public const float BasePosePoleBackwardAngleDegrees = -14f;
     public const float BasePosePoleBackwardZOffset = -0.16f;
 
@@ -218,7 +209,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
 
             pose.muscles = muscles;
             poseHandler.SetHumanPose(ref pose);
-            Debug.Log("[Ski-Verse] Adventure Character neutral standing pose applied with arms down, intact legs, and a mild narrow stance.");
+            Debug.Log("[Ski-Verse] Adventure Character neutral standing pose applied with natural legs; equipment adapts to the feet.");
             return true;
         }
         catch (System.Exception exception)
@@ -277,73 +268,6 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         animator.rightSki = null;
     }
 
-    private static void ApplyHumanoidBasePose(GameObject character)
-    {
-        if (character == null)
-        {
-            return;
-        }
-
-        if (!TryApplyHumanPose(character))
-        {
-            ApplyFallbackBonePose(character.transform);
-        }
-
-        ApplyParallelLegChainSpacing(character.transform);
-    }
-
-    private static bool TryApplyHumanPose(GameObject character)
-    {
-        var humanoidAnimator = character.GetComponentInChildren<Animator>();
-        if (humanoidAnimator == null || humanoidAnimator.avatar == null || !humanoidAnimator.avatar.isHuman)
-        {
-            return false;
-        }
-
-        try
-        {
-            var poseHandler = new HumanPoseHandler(humanoidAnimator.avatar, humanoidAnimator.transform);
-            var pose = new HumanPose();
-            poseHandler.GetHumanPose(ref pose);
-            var muscles = pose.muscles;
-
-            SetMuscle(muscles, "Spine Front-Back", -BasePoseHipHingeMuscle);
-            SetMuscle(muscles, "Chest Front-Back", -BasePoseHipHingeMuscle * 0.7f);
-            SetMuscle(muscles, "UpperChest Front-Back", -BasePoseHipHingeMuscle * 0.45f);
-            SetMuscle(muscles, "Neck Nod Down-Up", 0.02f);
-            SetMuscle(muscles, "Head Nod Down-Up", 0.02f);
-
-            SetMuscle(muscles, "Left Arm Down-Up", -BasePoseUpperArmDropMuscle);
-            SetMuscle(muscles, "Right Arm Down-Up", -BasePoseUpperArmDropMuscle);
-            SetMuscle(muscles, "Left Arm Front-Back", 0.08f);
-            SetMuscle(muscles, "Right Arm Front-Back", 0.08f);
-            SetMuscle(muscles, "Left Forearm Stretch", -BasePoseForearmBendMuscle);
-            SetMuscle(muscles, "Right Forearm Stretch", -BasePoseForearmBendMuscle);
-            SetMuscle(muscles, "Left Hand Down-Up", -0.04f);
-            SetMuscle(muscles, "Right Hand Down-Up", -0.04f);
-
-            SetMuscle(muscles, "Left Upper Leg Front-Back", 0f);
-            SetMuscle(muscles, "Right Upper Leg Front-Back", 0f);
-            SetMuscle(muscles, "Left Upper Leg In-Out", BasePoseLegInwardMuscle);
-            SetMuscle(muscles, "Right Upper Leg In-Out", -BasePoseLegInwardMuscle);
-            SetMuscle(muscles, "Left Lower Leg Stretch", -BasePoseKneeBendMuscle);
-            SetMuscle(muscles, "Right Lower Leg Stretch", -BasePoseKneeBendMuscle);
-            SetMuscle(muscles, "Left Foot Up-Down", -0.01f);
-            SetMuscle(muscles, "Right Foot Up-Down", -0.01f);
-
-            pose.muscles = muscles;
-            poseHandler.SetHumanPose(ref pose);
-            humanoidAnimator.enabled = false;
-            Debug.Log("[Ski-Verse] Adventure Character humanoid base pose applied with tight full-leg roller ski stance.");
-            return true;
-        }
-        catch (System.Exception exception)
-        {
-            Debug.LogWarning("[Ski-Verse] Humanoid base pose failed; using named-bone fallback. " + exception.Message);
-            return false;
-        }
-    }
-
     private static void SetMuscle(float[] muscles, string muscleName, float value)
     {
         if (muscles == null)
@@ -360,48 +284,6 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
                 return;
             }
         }
-    }
-
-    private static void ApplyFallbackBonePose(Transform root)
-    {
-        ApplyLocalRotationDelta(root, "pelvis", new Vector3(-3f, 0f, 0f));
-        ApplyLocalRotationDelta(root, "spine_01", new Vector3(-3f, 0f, 0f));
-        ApplyLocalRotationDelta(root, "spine_02", new Vector3(-2f, 0f, 0f));
-        ApplyLocalRotationDelta(root, "spine_03", new Vector3(-2f, 0f, 0f));
-        ApplyLocalRotationDelta(root, "head", new Vector3(2f, 0f, 0f));
-
-        ApplyLocalRotationDelta(root, "upperarm_l", new Vector3(0f, 0f, -44f));
-        ApplyLocalRotationDelta(root, "upperarm_r", new Vector3(0f, 0f, 44f));
-        ApplyLocalRotationDelta(root, "lowerarm_l", new Vector3(0f, 0f, -12f));
-        ApplyLocalRotationDelta(root, "lowerarm_r", new Vector3(0f, 0f, 12f));
-
-        ApplyLocalRotationDelta(root, "thigh_l", Vector3.zero);
-        ApplyLocalRotationDelta(root, "thigh_r", Vector3.zero);
-        ApplyLocalRotationDelta(root, "calf_l", new Vector3(-0.5f, 0f, 0f));
-        ApplyLocalRotationDelta(root, "calf_r", new Vector3(-0.5f, 0f, 0f));
-        Debug.Log("[Ski-Verse] Adventure Character fallback base pose applied with tight full-leg roller ski stance.");
-    }
-
-    private static void ApplyParallelLegChainSpacing(Transform root)
-    {
-        CompressBoneLateralPosition(root, "thigh_l", LegChainLateralCompression);
-        CompressBoneLateralPosition(root, "thigh_r", LegChainLateralCompression);
-        CompressBoneLateralPosition(root, "calf_l", LowerLegChainLateralCompression);
-        CompressBoneLateralPosition(root, "calf_r", LowerLegChainLateralCompression);
-        CompressBoneLateralPosition(root, "foot_l", LowerLegChainLateralCompression);
-        CompressBoneLateralPosition(root, "foot_r", LowerLegChainLateralCompression);
-    }
-
-    private static void CompressBoneLateralPosition(Transform root, string boneName, float compression)
-    {
-        var bone = FindDeepChild(root, boneName);
-        if (bone == null)
-        {
-            return;
-        }
-
-        var localPosition = bone.localPosition;
-        bone.localPosition = new Vector3(localPosition.x * compression, localPosition.y, localPosition.z);
     }
 
     private static void ApplyLocalRotationDelta(Transform root, string boneName, Vector3 localEulerDelta)
@@ -541,19 +423,12 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
 
     private static Transform CreateConstrainedAttachment(Transform parent, Transform orientationRoot, Transform target, string name, Vector3 rootSpaceOffset, Vector3 rootSpaceEuler)
     {
-        return CreateConstrainedAttachment(parent, orientationRoot, target, name, rootSpaceOffset, rootSpaceEuler, float.NaN);
-    }
-
-    private static Transform CreateConstrainedAttachment(Transform parent, Transform orientationRoot, Transform target, string name, Vector3 rootSpaceOffset, Vector3 rootSpaceEuler, float lockedRootSpaceX)
-    {
         var attachment = CreateChild(parent, name, Vector3.zero);
         var follower = attachment.gameObject.AddComponent<AdventureEquipmentBoneFollower>();
         follower.target = target;
         follower.orientationRoot = orientationRoot;
         follower.rootSpaceOffset = rootSpaceOffset;
         follower.rootSpaceEuler = rootSpaceEuler;
-        follower.lockRootSpaceX = !float.IsNaN(lockedRootSpaceX);
-        follower.lockedRootSpaceX = lockedRootSpaceX;
         follower.ApplyNow();
         return attachment;
     }
@@ -616,8 +491,6 @@ public sealed class AdventureEquipmentBoneFollower : MonoBehaviour
     public Transform orientationRoot;
     public Vector3 rootSpaceOffset;
     public Vector3 rootSpaceEuler;
-    public bool lockRootSpaceX;
-    public float lockedRootSpaceX;
 
     private void LateUpdate()
     {
@@ -633,12 +506,6 @@ public sealed class AdventureEquipmentBoneFollower : MonoBehaviour
 
         var rootRotation = orientationRoot != null ? orientationRoot.rotation : Quaternion.identity;
         var nextPosition = target.position + rootRotation * rootSpaceOffset;
-        if (lockRootSpaceX && orientationRoot != null)
-        {
-            var rootSpacePosition = orientationRoot.InverseTransformPoint(nextPosition);
-            rootSpacePosition.x = lockedRootSpaceX;
-            nextPosition = orientationRoot.TransformPoint(rootSpacePosition);
-        }
 
         transform.position = nextPosition;
         transform.rotation = rootRotation * Quaternion.Euler(rootSpaceEuler);

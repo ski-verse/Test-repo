@@ -66,35 +66,11 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
     }
 
     [Test]
-    public void AdventureCharacterBasePose_UsesMildStableRollerSkierStance()
-    {
-        Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseUpperArmDropMuscle, 0.4f);
-        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseUpperArmDropMuscle, 0.55f);
-        Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseForearmBendMuscle, 0.15f);
-        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseHipHingeMuscle, 0.15f);
-        Assert.GreaterOrEqual(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseKneeBendMuscle, 0f);
-        Assert.LessOrEqual(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseKneeBendMuscle, 0.02f);
-        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.BasePosePoleBackwardAngleDegrees, 0f);
-        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.BasePosePoleBackwardZOffset, 0f);
-    }
-
-    [Test]
-    public void AdventureCharacterStance_UsesTightParallelRollerSkiLegsInsteadOfGoalieStance()
+    public void AdventureCharacterStance_UsesNaturalLegsAndEquipmentFollowsFeet()
     {
         Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.CharacterWidthScale, 0.68f);
         Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.CharacterWidthScale, 0.78f);
-        Assert.GreaterOrEqual(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseLegInwardMuscle, -0.02f);
-        Assert.LessOrEqual(AdventureCharacterRollerSkierRuntimeUpdater.BasePoseLegInwardMuscle, 0.02f);
-        Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.LegChainLateralCompression, 0.15f);
-        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.LegChainLateralCompression, 0.3f);
-        Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.LowerLegChainLateralCompression, 0.15f);
-        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.LowerLegChainLateralCompression, 0.35f);
-        Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.NarrowFootTrackHalfWidth, 0.08f);
-        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.NarrowFootTrackHalfWidth, 0.13f);
-        Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.NarrowUpperLegTrackHalfWidth, AdventureCharacterRollerSkierRuntimeUpdater.NarrowFootTrackHalfWidth);
-        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.NarrowUpperLegTrackHalfWidth, 0.18f);
-        Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.NeutralLegInwardMuscle, 0.1f);
-        Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.NeutralLegInwardMuscle, 0.22f);
+        Assert.AreEqual(0f, AdventureCharacterRollerSkierRuntimeUpdater.NeutralLegInwardMuscle);
     }
 
     [Test]
@@ -142,37 +118,6 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
     }
 
     [Test]
-    public void AdventureEquipmentBoneFollower_CanLockFootEquipmentToNarrowSkiTrack()
-    {
-        var root = new GameObject("Player Visual Root").transform;
-        var foot = new GameObject("Wide Imported Foot Bone").transform;
-        var ski = new GameObject("Narrow Roller Ski").transform;
-
-        try
-        {
-            foot.SetParent(root, false);
-            ski.SetParent(root, false);
-            foot.localPosition = new Vector3(0.45f, 0.2f, 0.1f);
-
-            var follower = ski.gameObject.AddComponent<AdventureEquipmentBoneFollower>();
-            follower.target = foot;
-            follower.orientationRoot = root;
-            follower.lockRootSpaceX = true;
-            follower.lockedRootSpaceX = AdventureCharacterRollerSkierRuntimeUpdater.NarrowFootTrackHalfWidth;
-            follower.ApplyNow();
-
-            var rootSpaceSkiPosition = root.InverseTransformPoint(ski.position);
-            Assert.AreEqual(AdventureCharacterRollerSkierRuntimeUpdater.NarrowFootTrackHalfWidth, rootSpaceSkiPosition.x, 0.001f);
-            Assert.AreEqual(foot.localPosition.y, rootSpaceSkiPosition.y, 0.001f);
-            Assert.AreEqual(foot.localPosition.z, rootSpaceSkiPosition.z, 0.001f);
-        }
-        finally
-        {
-            Object.DestroyImmediate(root.gameObject);
-        }
-    }
-
-    [Test]
     public void AdventureEquipmentBoneFollower_KeepsRollerSkisDirectlyUnderFeetWithoutSideLocking()
     {
         var root = new GameObject("Player Visual Root").transform;
@@ -189,7 +134,6 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
             follower.target = foot;
             follower.orientationRoot = root;
             follower.rootSpaceOffset = new Vector3(0f, -0.09f, 0.12f);
-            follower.lockRootSpaceX = false;
             follower.ApplyNow();
 
             var rootSpaceSkiPosition = root.InverseTransformPoint(ski.position);
