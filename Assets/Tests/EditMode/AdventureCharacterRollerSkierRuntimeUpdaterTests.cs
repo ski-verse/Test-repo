@@ -42,6 +42,13 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
             Assert.IsNotNull(visualRoot.Find(AdventureCharacterRollerSkierRuntimeUpdater.AdventureCharacterAppliedMarkerName));
             Assert.IsNotNull(FindChildRecursive(visualRoot, "upperarm_l"));
             Assert.IsNotNull(FindChildRecursive(visualRoot, "upperarm_r"));
+            var character = visualRoot.Find(AdventureCharacterRollerSkierRuntimeUpdater.HumanoidRootName);
+            Assert.AreEqual(-AdventureCharacterRollerSkierRuntimeUpdater.NeutralStandingLowerBodyHalfWidth, RootSpaceX(character, "thigh_l"), 0.01f);
+            Assert.AreEqual(AdventureCharacterRollerSkierRuntimeUpdater.NeutralStandingLowerBodyHalfWidth, RootSpaceX(character, "thigh_r"), 0.01f);
+            Assert.AreEqual(-AdventureCharacterRollerSkierRuntimeUpdater.NeutralStandingLowerBodyHalfWidth, RootSpaceX(character, "calf_l"), 0.01f);
+            Assert.AreEqual(AdventureCharacterRollerSkierRuntimeUpdater.NeutralStandingLowerBodyHalfWidth, RootSpaceX(character, "calf_r"), 0.01f);
+            Assert.AreEqual(-AdventureCharacterRollerSkierRuntimeUpdater.NeutralStandingLowerBodyHalfWidth, RootSpaceX(character, "foot_l"), 0.01f);
+            Assert.AreEqual(AdventureCharacterRollerSkierRuntimeUpdater.NeutralStandingLowerBodyHalfWidth, RootSpaceX(character, "foot_r"), 0.01f);
             Assert.IsNull(visualRoot.Find("Old Procedural Body Part"));
             Assert.IsNull(visualRoot.Find(AdventureCharacterRollerSkierRuntimeUpdater.BoneAttachedEquipmentRootName));
             Assert.IsNull(FindChildRecursive(visualRoot, AdventureCharacterRollerSkierRuntimeUpdater.LeftAdventurePoleName));
@@ -87,6 +94,8 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
         Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.NarrowFootTrackHalfWidth, 0.13f);
         Assert.Greater(AdventureCharacterRollerSkierRuntimeUpdater.NarrowUpperLegTrackHalfWidth, AdventureCharacterRollerSkierRuntimeUpdater.NarrowFootTrackHalfWidth);
         Assert.Less(AdventureCharacterRollerSkierRuntimeUpdater.NarrowUpperLegTrackHalfWidth, 0.18f);
+        Assert.GreaterOrEqual(AdventureCharacterRollerSkierRuntimeUpdater.NeutralStandingLowerBodyHalfWidth, 0.1f);
+        Assert.LessOrEqual(AdventureCharacterRollerSkierRuntimeUpdater.NeutralStandingLowerBodyHalfWidth, 0.13f);
     }
 
     [Test]
@@ -186,5 +195,12 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
         }
 
         return null;
+    }
+
+    private static float RootSpaceX(Transform root, string childName)
+    {
+        var child = FindChildRecursive(root, childName);
+        Assert.IsNotNull(child, childName);
+        return root.InverseTransformPoint(child.position).x;
     }
 }
