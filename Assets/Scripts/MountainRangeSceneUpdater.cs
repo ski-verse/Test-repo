@@ -48,7 +48,7 @@ public class MountainRangeSceneUpdater : MonoBehaviour
             CreateMountainChain(
                 parent,
                 "Left Near Mountain Chain",
-                CoursePath.PointAtDistance(z, -EnvironmentPlacement.NearMountainOffset),
+                EnvironmentPlacement.SafePointAtDistance(z, -EnvironmentPlacement.NearMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.NearMountainHalfWidth * 2f, 360f)),
                 new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2f, 82.5f, 360f),
                 nearColor,
                 11f + z * 0.017f,
@@ -57,7 +57,7 @@ public class MountainRangeSceneUpdater : MonoBehaviour
             CreateMountainChain(
                 parent,
                 "Right Near Mountain Chain",
-                CoursePath.PointAtDistance(z + 120f, EnvironmentPlacement.NearMountainOffset),
+                EnvironmentPlacement.SafePointAtDistance(z + 120f, EnvironmentPlacement.NearMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.NearMountainHalfWidth * 2f, 390f)),
                 new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2f, 91f, 390f),
                 nearColor,
                 29f + z * 0.019f,
@@ -66,7 +66,7 @@ public class MountainRangeSceneUpdater : MonoBehaviour
             CreateMountainChain(
                 parent,
                 "Left Far Mountain Chain",
-                CoursePath.PointAtDistance(z + 240f, -EnvironmentPlacement.FarMountainOffset),
+                EnvironmentPlacement.SafePointAtDistance(z + 240f, -EnvironmentPlacement.FarMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.FarMountainHalfWidth * 2f, 460f)),
                 new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2f, 115f, 460f),
                 farColor,
                 47f + z * 0.013f,
@@ -75,7 +75,7 @@ public class MountainRangeSceneUpdater : MonoBehaviour
             CreateMountainChain(
                 parent,
                 "Right Far Mountain Chain",
-                CoursePath.PointAtDistance(z + 360f, EnvironmentPlacement.FarMountainOffset),
+                EnvironmentPlacement.SafePointAtDistance(z + 360f, EnvironmentPlacement.FarMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.FarMountainHalfWidth * 2f, 490f)),
                 new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2f, 122.5f, 490f),
                 farColor,
                 73f + z * 0.015f,
@@ -94,5 +94,10 @@ public class MountainRangeSceneUpdater : MonoBehaviour
         var meshFilter = chain.AddComponent<MeshFilter>();
         meshFilter.mesh = MountainRangeMeshBuilder.CreateRangeMesh(peakCount, seed);
         chain.AddComponent<MeshRenderer>().material.color = color;
+    }
+
+    private static float CalculateFootprintRadius(float width, float length)
+    {
+        return Mathf.Sqrt(width * width + length * length) * 0.5f;
     }
 }

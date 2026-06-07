@@ -275,6 +275,39 @@ public class PlayerSpeedControllerTests
     }
 
     [Test]
+    public void EnvironmentPlacement_LoopClearanceRejectsRoadAndMovesUnsafePointsOut()
+    {
+        var roadCenter = CoursePath.CenterPointAtDistance(600f);
+        var unsafeNearRoad = CoursePath.PointAtDistance(600f, EnvironmentPlacement.RoadHalfWidth + 1f);
+        var safePoint = EnvironmentPlacement.SafePointAtDistance(600f, EnvironmentPlacement.RoadHalfWidth + 1f, 0.5f);
+
+        Assert.IsFalse(EnvironmentPlacement.HasLoopRoadClearance(roadCenter, 0f));
+        Assert.IsFalse(EnvironmentPlacement.HasLoopRoadClearance(unsafeNearRoad, 0.5f));
+        Assert.IsTrue(EnvironmentPlacement.HasLoopRoadClearance(safePoint, 0.5f));
+        Assert.GreaterOrEqual(
+            EnvironmentPlacement.MinDistanceToLoopRoadCenter(safePoint) - 0.5f,
+            EnvironmentPlacement.RoadHalfWidth + EnvironmentPlacement.OpenTerrainMargin);
+    }
+
+    [Test]
+    public void EnvironmentPlacement_GeneratedLoopSceneryFootprintsStayOutsideRoadClearance()
+    {
+        for (var distance = 0f; distance < CoursePath.CourseLengthMeters; distance += 250f)
+        {
+            AssertSafeGeneratedPoint(distance, EnvironmentPlacement.NearTreeOffset, EnvironmentPlacement.MaxTreeRadius);
+            AssertSafeGeneratedPoint(distance, -EnvironmentPlacement.NearTreeOffset, EnvironmentPlacement.MaxTreeRadius);
+            AssertSafeGeneratedPoint(distance, EnvironmentPlacement.NearForestOffset, EnvironmentPlacement.MaxForestTreeRadius);
+            AssertSafeGeneratedPoint(distance, -EnvironmentPlacement.NearForestOffset, EnvironmentPlacement.MaxForestTreeRadius);
+            AssertSafeGeneratedPoint(distance, EnvironmentPlacement.TurnSignOffset, 0.6f);
+            AssertSafeGeneratedPoint(distance, -EnvironmentPlacement.TurnSignOffset, 0.6f);
+            AssertSafeGeneratedPoint(distance, EnvironmentPlacement.NearHillOffset, CalculateFootprintRadius(EnvironmentPlacement.NearHillHalfWidth * 2f, 120f));
+            AssertSafeGeneratedPoint(distance, -EnvironmentPlacement.NearHillOffset, CalculateFootprintRadius(EnvironmentPlacement.NearHillHalfWidth * 2f, 120f));
+            AssertSafeGeneratedPoint(distance, EnvironmentPlacement.NearMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.NearMountainHalfWidth * 2f, 360f));
+            AssertSafeGeneratedPoint(distance, -EnvironmentPlacement.NearMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.NearMountainHalfWidth * 2f, 360f));
+        }
+    }
+
+    [Test]
     public void EnvironmentPlacement_FramesRoadWithVisibleMountainsAndForests()
     {
         var nearMountainInnerEdge = EnvironmentPlacement.NearMountainOffset - EnvironmentPlacement.NearMountainHalfWidth;
@@ -326,5 +359,18 @@ public class PlayerSpeedControllerTests
         Assert.AreEqual(animator.leftSki.localEulerAngles.z, animator.rightSki.localEulerAngles.z, 0.001f);
 
         Object.DestroyImmediate(root);
+    }
+
+    private static void AssertSafeGeneratedPoint(float distance, float lateralOffset, float footprintRadius)
+    {
+        var safePoint = EnvironmentPlacement.SafePointAtDistance(distance, lateralOffset, footprintRadius);
+        Assert.IsTrue(
+            EnvironmentPlacement.HasLoopRoadClearance(safePoint, footprintRadius),
+            $"distance={distance}, lateralOffset={lateralOffset}, footprintRadius={footprintRadius}");
+    }
+
+    private static float CalculateFootprintRadius(float width, float length)
+    {
+        return Mathf.Sqrt(width * width + length * length) * 0.5f;
     }
 }

@@ -64,6 +64,7 @@ public class SpeedFeelingRuntimeUpdaterTests
         Assert.AreEqual(CoursePath.CourseLengthMeters, SpeedFeelingRuntimeUpdater.MotionCueCourseLengthMeters, 0.001f);
         Assert.Greater(cueCount, 700);
         Assert.Greater(innerCueEdge, EnvironmentPlacement.RoadHalfWidth + 1f);
+        Assert.GreaterOrEqual(innerCueEdge, EnvironmentPlacement.RoadHalfWidth + EnvironmentPlacement.OpenTerrainMargin);
     }
 
     [Test]
@@ -79,6 +80,7 @@ public class SpeedFeelingRuntimeUpdaterTests
         Assert.Greater(edgeFlowCueCount, 600);
         Assert.Greater(totalCueCount, 1300);
         Assert.Greater(innerEdgeFlowCueEdge, EnvironmentPlacement.RoadHalfWidth);
+        Assert.GreaterOrEqual(innerEdgeFlowCueEdge, EnvironmentPlacement.RoadHalfWidth + EnvironmentPlacement.OpenTerrainMargin);
     }
 
     [Test]

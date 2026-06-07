@@ -1,7 +1,10 @@
+using UnityEngine;
+
 public static class EnvironmentPlacement
 {
     public const float RoadHalfWidth = 4f;
-    public const float OpenTerrainMargin = 15f;
+    public const float OpenTerrainMargin = 10f;
+    public const int LoopClearanceSampleCount = 384;
 
     public const float NearTreeOffset = 23.5f;
     public const float MidTreeOffset = 32f;
@@ -29,5 +32,46 @@ public static class EnvironmentPlacement
     public static bool HasOpenRoadMargin(float centerOffset, float halfWidth)
     {
         return centerOffset - halfWidth >= RoadHalfWidth + OpenTerrainMargin;
+    }
+
+    public static Vector3 SafePointAtDistance(float distanceMeters, float lateralOffset, float footprintRadius)
+    {
+        var side = lateralOffset < 0f ? -1f : 1f;
+        var safeOffset = Mathf.Max(Mathf.Abs(lateralOffset), RoadHalfWidth + OpenTerrainMargin + Mathf.Max(0f, footprintRadius));
+        var point = CoursePath.PointAtDistance(distanceMeters, side * safeOffset);
+
+        for (var attempt = 0; attempt < 80; attempt++)
+        {
+            if (HasLoopRoadClearance(point, footprintRadius))
+            {
+                return point;
+            }
+
+            safeOffset += 8f;
+            point = CoursePath.PointAtDistance(distanceMeters, side * safeOffset);
+        }
+
+        return point;
+    }
+
+    public static bool HasLoopRoadClearance(Vector3 worldPosition, float footprintRadius)
+    {
+        return MinDistanceToLoopRoadCenter(worldPosition) - Mathf.Max(0f, footprintRadius) >= RoadHalfWidth + OpenTerrainMargin;
+    }
+
+    public static float MinDistanceToLoopRoadCenter(Vector3 worldPosition)
+    {
+        var minimumDistance = float.MaxValue;
+
+        for (var i = 0; i < LoopClearanceSampleCount; i++)
+        {
+            var distance = CoursePath.CourseLengthMeters * (i / (float)LoopClearanceSampleCount);
+            var center = CoursePath.CenterPointAtDistance(distance);
+            var dx = worldPosition.x - center.x;
+            var dz = worldPosition.z - center.z;
+            minimumDistance = Mathf.Min(minimumDistance, Mathf.Sqrt(dx * dx + dz * dz));
+        }
+
+        return minimumDistance;
     }
 }

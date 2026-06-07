@@ -9,10 +9,10 @@ public class SpeedFeelingRuntimeUpdater : MonoBehaviour
     public const float MotionCueCourseLengthMeters = CoursePath.CourseLengthMeters;
     public const float MotionCueStartDistanceMeters = 14f;
     public const float MotionCueSpacingMeters = 8f;
-    public const float MotionCueLateralOffset = 5.45f;
+    public const float MotionCueLateralOffset = EnvironmentPlacement.RoadHalfWidth + EnvironmentPlacement.OpenTerrainMargin + 1.45f;
     public const float MotionCueHalfWidth = 0.07f;
     public const float EdgeFlowCueSpacingMeters = 9.5f;
-    public const float EdgeFlowCueLateralOffset = 4.55f;
+    public const float EdgeFlowCueLateralOffset = EnvironmentPlacement.RoadHalfWidth + EnvironmentPlacement.OpenTerrainMargin + 0.75f;
     public const float EdgeFlowCueHalfWidth = 0.055f;
 
     private bool cameraConfigured;
@@ -129,7 +129,7 @@ public class SpeedFeelingRuntimeUpdater : MonoBehaviour
         cue.name = "Roadside Motion Cue";
         cue.transform.SetParent(parent, false);
 
-        var position = CoursePath.PointAtDistance(zPosition, lateralOffset);
+        var position = EnvironmentPlacement.SafePointAtDistance(zPosition, lateralOffset, Mathf.Max(MotionCueHalfWidth, 0.5f));
         position.y += 0.25f;
         cue.transform.position = position;
         cue.transform.rotation = CoursePath.RotationAtDistance(zPosition);
@@ -145,7 +145,7 @@ public class SpeedFeelingRuntimeUpdater : MonoBehaviour
         cue.name = "Road Edge Flow Cue";
         cue.transform.SetParent(parent, false);
 
-        var position = CoursePath.PointAtDistance(zPosition, lateralOffset);
+        var position = EnvironmentPlacement.SafePointAtDistance(zPosition, lateralOffset, Mathf.Max(EdgeFlowCueHalfWidth, 0.75f));
         position.y += 0.035f;
         cue.transform.position = position;
         cue.transform.rotation = CoursePath.RotationAtDistance(zPosition);
