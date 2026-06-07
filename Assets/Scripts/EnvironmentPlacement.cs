@@ -5,6 +5,10 @@ public static class EnvironmentPlacement
     public const float RoadHalfWidth = 4f;
     public const float OpenTerrainMargin = 10f;
     public const int LoopClearanceSampleCount = 384;
+    public const float ShoulderInnerClearance = 0.03f;
+    public const float ShoulderOuterOffset = RoadHalfWidth + OpenTerrainMargin;
+    public const float ShoulderInnerYOffset = 0.04f;
+    public const float ShoulderOuterYOffset = -0.18f;
 
     public const float NearTreeOffset = 23.5f;
     public const float MidTreeOffset = 32f;
@@ -32,6 +36,17 @@ public static class EnvironmentPlacement
     public static bool HasOpenRoadMargin(float centerOffset, float halfWidth)
     {
         return centerOffset - halfWidth >= RoadHalfWidth + OpenTerrainMargin;
+    }
+
+    public static bool IsRoadShoulderInsideClearCorridor(float lateralOffset)
+    {
+        var absoluteOffset = Mathf.Abs(lateralOffset);
+        return absoluteOffset > RoadHalfWidth && absoluteOffset <= ShoulderOuterOffset;
+    }
+
+    public static bool IsRoadShoulderHeightAligned(float innerYOffset, float outerYOffset)
+    {
+        return innerYOffset >= -0.04f && innerYOffset <= 0.05f && outerYOffset <= innerYOffset;
     }
 
     public static Vector3 SafePointAtDistance(float distanceMeters, float lateralOffset, float footprintRadius)

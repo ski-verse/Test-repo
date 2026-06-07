@@ -28,6 +28,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
     private static void CreateEnvironment()
     {
         CreateRoad();
+        CreateRoadShoulders();
         CreateGrass();
         CreateRoadMarkings();
         CreateRoadsidePosts();
@@ -48,6 +49,26 @@ public class SkiErgGameBootstrap : MonoBehaviour
         {
             CreatePathCube(road.transform, "Road Segment", 0f, z, RoadSegmentLength + 0.8f, RoadWidthMeters, 0.1f, color);
         }
+    }
+
+    private static void CreateRoadShoulders()
+    {
+        var shoulders = new GameObject("Roadside Embankment Shoulders");
+        var left = CreateRoadShoulder(shoulders.transform, "Left Road Shoulder", -1f);
+        var right = CreateRoadShoulder(shoulders.transform, "Right Road Shoulder", 1f);
+        var color = new Color(0.16f, 0.38f, 0.15f);
+        left.GetComponent<MeshRenderer>().material.color = color;
+        right.GetComponent<MeshRenderer>().material.color = color;
+    }
+
+    private static GameObject CreateRoadShoulder(Transform parent, string name, float side)
+    {
+        var shoulder = new GameObject(name);
+        shoulder.transform.SetParent(parent, false);
+        var meshFilter = shoulder.AddComponent<MeshFilter>();
+        meshFilter.mesh = RoadShoulderMeshBuilder.CreateShoulderMesh(side);
+        shoulder.AddComponent<MeshRenderer>();
+        return shoulder;
     }
 
     private static void CreateGrass()
