@@ -3,23 +3,23 @@ using UnityEngine;
 public static class EnvironmentPlacement
 {
     public const float RoadHalfWidth = 4f;
-    public const float OpenTerrainMargin = 10f;
+    public const float OpenTerrainMargin = 3.25f;
     public const int LoopClearanceSampleCount = 384;
     public const float ShoulderInnerClearance = 0.03f;
     public const float ShoulderOuterOffset = RoadHalfWidth + OpenTerrainMargin;
     public const float ShoulderInnerYOffset = 0.04f;
     public const float ShoulderOuterYOffset = -0.18f;
 
-    public const float NearTreeOffset = 23.5f;
-    public const float MidTreeOffset = 32f;
-    public const float FarTreeOffset = 44f;
-    public const float MaxTreeRadius = 1.9f;
+    public const float NearTreeOffset = 8.4f;
+    public const float MidTreeOffset = 14f;
+    public const float FarTreeOffset = 24f;
+    public const float MaxTreeRadius = 1.35f;
 
-    public const float NearForestOffset = 56f;
-    public const float FarForestOffset = 78f;
-    public const float MidForestOffset = 112f;
-    public const float HighForestOffset = 145f;
-    public const float MaxForestTreeRadius = 2.4f;
+    public const float NearForestOffset = 9.4f;
+    public const float FarForestOffset = 34f;
+    public const float MidForestOffset = 52f;
+    public const float HighForestOffset = 72f;
+    public const float MaxForestTreeRadius = 1.9f;
 
     public const float TurnSignOffset = 20.5f;
 

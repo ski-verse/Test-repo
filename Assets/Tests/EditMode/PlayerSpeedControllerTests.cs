@@ -277,6 +277,19 @@ public class PlayerSpeedControllerTests
     }
 
     [Test]
+    public void EnvironmentPlacement_PlacesFirstTreeLineLikeNordicForestRoad()
+    {
+        var nearTreeDistanceFromRoadEdge = EnvironmentPlacement.NearTreeOffset - EnvironmentPlacement.MaxTreeRadius - EnvironmentPlacement.RoadHalfWidth;
+        var nearForestDistanceFromRoadEdge = EnvironmentPlacement.NearForestOffset - EnvironmentPlacement.MaxForestTreeRadius - EnvironmentPlacement.RoadHalfWidth;
+
+        Assert.GreaterOrEqual(nearTreeDistanceFromRoadEdge, 3f);
+        Assert.LessOrEqual(nearTreeDistanceFromRoadEdge, 5f);
+        Assert.GreaterOrEqual(nearForestDistanceFromRoadEdge, 3f);
+        Assert.LessOrEqual(nearForestDistanceFromRoadEdge, 5f);
+        Assert.Less(EnvironmentPlacement.OpenTerrainMargin, 5f);
+    }
+
+    [Test]
     public void EnvironmentPlacement_LoopClearanceRejectsRoadAndMovesUnsafePointsOut()
     {
         var roadCenter = CoursePath.CenterPointAtDistance(600f);
@@ -330,7 +343,7 @@ public class PlayerSpeedControllerTests
         Assert.GreaterOrEqual(farMountainInnerEdge, 270f);
         Assert.Greater(EnvironmentPlacement.NearHillOffset, EnvironmentPlacement.FarForestOffset);
         Assert.Greater(EnvironmentPlacement.FarHillOffset, EnvironmentPlacement.NearHillOffset);
-        Assert.Greater(EnvironmentPlacement.HighForestOffset, EnvironmentPlacement.FarHillOffset);
+        Assert.Greater(EnvironmentPlacement.HighForestOffset, EnvironmentPlacement.FarForestOffset);
         Assert.Less(EnvironmentPlacement.HighForestOffset + EnvironmentPlacement.MaxForestTreeRadius, nearMountainInnerEdge);
         Assert.Greater(EnvironmentPlacement.NearMountainOffset, EnvironmentPlacement.HighForestOffset);
     }

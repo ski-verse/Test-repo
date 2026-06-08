@@ -35,7 +35,7 @@ public static class MountainRangeMeshBuilder
             vertices[vertexIndex + 4] = new Vector3(x, 0f, 0.62f);
         }
 
-        var triangles = new int[segmentCount * 24 + 18];
+        var triangles = new int[segmentCount * 30 + 18];
         var triangleIndex = 0;
 
         for (var segment = 0; segment < segmentCount; segment++)
@@ -47,6 +47,7 @@ public static class MountainRangeMeshBuilder
             AddQuad(triangles, ref triangleIndex, current + 1, current + 2, next + 2, next + 1);
             AddQuad(triangles, ref triangleIndex, current + 2, current + 3, next + 3, next + 2);
             AddQuad(triangles, ref triangleIndex, current + 3, current + 4, next + 4, next + 3);
+            AddQuad(triangles, ref triangleIndex, current + 4, current, next, next + 4);
         }
 
         AddProfileCap(triangles, ref triangleIndex, 0, false);

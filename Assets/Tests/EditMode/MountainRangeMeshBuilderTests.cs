@@ -33,6 +33,16 @@ public class MountainRangeMeshBuilderTests
     }
 
     [Test]
+    public void CreateRangeMesh_ClosesMountainBaseToPreventSeeThroughGeometry()
+    {
+        var mesh = MountainRangeMeshBuilder.CreateRangeMesh(8, 12.5f);
+
+        Assert.Greater(CountFlatBaseTriangles(mesh), 8);
+
+        Object.DestroyImmediate(mesh);
+    }
+
+    [Test]
     public void CalculatePeakHeight_StaysRoundedAndModerate()
     {
         var previousHeight = MountainRangeMeshBuilder.CalculatePeakHeight(0, 12.5f);
@@ -123,6 +133,25 @@ public class MountainRangeMeshBuilderTests
         }
 
         return false;
+    }
+
+    private static int CountFlatBaseTriangles(Mesh mesh)
+    {
+        var count = 0;
+        var vertices = mesh.vertices;
+        var triangles = mesh.triangles;
+
+        for (var index = 0; index < triangles.Length; index += 3)
+        {
+            if (Mathf.Approximately(vertices[triangles[index]].y, 0f)
+                && Mathf.Approximately(vertices[triangles[index + 1]].y, 0f)
+                && Mathf.Approximately(vertices[triangles[index + 2]].y, 0f))
+            {
+                count++;
+            }
+        }
+
+        return count;
     }
 
     private static void AssertEveryTriangleHasReverseFace(Mesh mesh)
