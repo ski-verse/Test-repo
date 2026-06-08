@@ -3,10 +3,15 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class EnvironmentGroundRenderingCleanup : MonoBehaviour
 {
+    private const int CleanupFrameCount = 90;
+    private const float FlatGroundMaxHeight = 0.45f;
+    private const float LargeSurfaceMinWidth = 1.8f;
+    private const float LargeSurfaceMinLength = 2.8f;
     public static readonly Color RoadShoulderGrassColor = new Color(0.18f, 0.48f, 0.17f, 1f);
     public static readonly Color OpenTerrainGrassColor = new Color(0.2f, 0.56f, 0.2f, 1f);
+    public static readonly Color RoadsideStripGrassColor = new Color(0.17f, 0.52f, 0.18f, 1f);
 
-    private bool cleanupApplied;
+    private int cleanupFramesApplied;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void InstallRuntimeCleanup()
@@ -35,7 +40,8 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
         return HasSelfOrAncestorName(gameObject, "Roadside Embankment Shoulders")
             || HasSelfOrAncestorName(gameObject, "Road Shoulder")
             || HasSelfOrAncestorName(gameObject, "Open Grass Shoulders")
-            || HasSelfOrAncestorName(gameObject, "Open Grass Segment");
+            || HasSelfOrAncestorName(gameObject, "Open Grass Segment")
+            || HasSelfOrAncestorName(gameObject, "Road Edge Flow Cue");
     }
 
     public static bool IsExtraneousGroundOrTerrain(GameObject gameObject)
@@ -55,6 +61,33 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
             || HasSelfOrAncestorName(gameObject, "Brown Roadside")
             || HasSelfOrAncestorName(gameObject, "Ground Strip")
             || HasSelfOrAncestorName(gameObject, "Roadside Ground Strip");
+    }
+
+    public static bool IsFlatRoadsideGroundCandidate(Renderer renderer)
+    {
+        if (renderer == null)
+        {
+            return false;
+        }
+
+        var gameObject = renderer.gameObject;
+
+        if (IsProtectedRoadObject(gameObject) || IsGeneratedGrassSurface(gameObject) || IsTreeOrSceneryObject(gameObject))
+        {
+            return false;
+        }
+
+        var bounds = renderer.bounds;
+        var wideEnough = Mathf.Max(bounds.size.x, bounds.size.z) >= LargeSurfaceMinLength
+            && Mathf.Min(bounds.size.x, bounds.size.z) >= LargeSurfaceMinWidth;
+        var flatEnough = bounds.size.y <= FlatGroundMaxHeight;
+
+        if (!wideEnough || !flatEnough)
+        {
+            return false;
+        }
+
+        return IsBrownGreyOrTransparent(renderer);
     }
 
     public static void ApplyOpaqueGrassMaterial(Renderer renderer, Color color)
@@ -94,6 +127,7 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
             if (IsGeneratedGrassSurface(target))
             {
                 var color = HasSelfOrAncestorName(target, "Open Grass") ? OpenTerrainGrassColor : RoadShoulderGrassColor;
+                color = HasSelfOrAncestorName(target, "Road Edge Flow Cue") ? RoadsideStripGrassColor : color;
                 ApplyOpaqueGrassMaterial(renderer, color);
                 continue;
             }
@@ -101,20 +135,62 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
             if (IsExtraneousGroundOrTerrain(target))
             {
                 target.SetActive(false);
+                continue;
+            }
+
+            if (IsFlatRoadsideGroundCandidate(renderer))
+            {
+                ApplyOpaqueGrassMaterial(renderer, RoadsideStripGrassColor);
             }
         }
     }
 
     private void ApplyCleanupIfNeeded()
     {
-        if (cleanupApplied)
+        if (cleanupFramesApplied >= CleanupFrameCount)
         {
             Destroy(gameObject);
             return;
         }
 
         CleanupSceneGround();
-        cleanupApplied = true;
+        cleanupFramesApplied++;
+    }
+
+    private static bool IsProtectedRoadObject(GameObject gameObject)
+    {
+        return HasSelfOrAncestorName(gameObject, "Sweeping 3 km Loop Road")
+            || HasSelfOrAncestorName(gameObject, "Road Markings")
+            || HasSelfOrAncestorName(gameObject, "Start Finish")
+            || HasSelfOrAncestorName(gameObject, "Speed Post")
+            || HasSelfOrAncestorName(gameObject, "Turn Warning")
+            || HasSelfOrAncestorName(gameObject, "Turn Sign");
+    }
+
+    private static bool IsTreeOrSceneryObject(GameObject gameObject)
+    {
+        return HasSelfOrAncestorName(gameObject, "Tree")
+            || HasSelfOrAncestorName(gameObject, "Pine")
+            || HasSelfOrAncestorName(gameObject, "Conifer")
+            || HasSelfOrAncestorName(gameObject, "Forest")
+            || HasSelfOrAncestorName(gameObject, "Rock")
+            || HasSelfOrAncestorName(gameObject, "Mountain");
+    }
+
+    private static bool IsBrownGreyOrTransparent(Renderer renderer)
+    {
+        var material = renderer.material;
+
+        if (material == null)
+        {
+            return false;
+        }
+
+        var color = material.HasProperty("_BaseColor") ? material.GetColor("_BaseColor") : material.color;
+        var mostlyBrown = color.r > color.g * 1.08f && color.g >= color.b * 0.85f;
+        var greyRoadLike = Mathf.Abs(color.r - color.g) < 0.09f && Mathf.Abs(color.g - color.b) < 0.09f && color.r > 0.18f && color.r < 0.72f;
+        var transparent = color.a < 0.95f || material.renderQueue >= (int)UnityEngine.Rendering.RenderQueue.Transparent;
+        return mostlyBrown || greyRoadLike || transparent;
     }
 
     private static bool HasSelfOrAncestorName(GameObject gameObject, string text)

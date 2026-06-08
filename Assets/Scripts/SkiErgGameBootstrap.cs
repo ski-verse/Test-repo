@@ -284,20 +284,20 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
         for (var z = 38f; z < RoadLengthMeters; z += 48f)
         {
-            CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z, -EnvironmentPlacement.NearForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 1.25f + Mathf.PingPong(z * 0.011f, 0.45f), trunkColor, crownColor);
-            CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z + 17f, EnvironmentPlacement.NearForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 1.2f + Mathf.PingPong(z * 0.013f, 0.45f), trunkColor, crownColor);
-            CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z + 31f, -EnvironmentPlacement.FarForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 1.45f + Mathf.PingPong(z * 0.009f, 0.5f), trunkColor, crownColor);
-            CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z + 48f, EnvironmentPlacement.FarForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 1.4f + Mathf.PingPong(z * 0.015f, 0.5f), trunkColor, crownColor);
-            CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z + 21f, -EnvironmentPlacement.MidForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 1.55f + Mathf.PingPong(z * 0.012f, 0.5f), trunkColor, crownColor);
-            CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z + 29f, EnvironmentPlacement.MidForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 1.5f + Mathf.PingPong(z * 0.014f, 0.45f), trunkColor, crownColor);
-            CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z + 8f, -EnvironmentPlacement.HighForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 1.7f + Mathf.PingPong(z * 0.01f, 0.55f), trunkColor, crownColor);
-            CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z + 39f, EnvironmentPlacement.HighForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 1.65f + Mathf.PingPong(z * 0.016f, 0.5f), trunkColor, crownColor);
+            CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z, -EnvironmentPlacement.NearForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 0.92f + Mathf.PingPong(z * 0.011f, 0.28f), trunkColor, crownColor);
+            CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z + 17f, EnvironmentPlacement.NearForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 0.88f + Mathf.PingPong(z * 0.013f, 0.28f), trunkColor, crownColor);
+            CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z + 31f, -EnvironmentPlacement.FarForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 1.12f + Mathf.PingPong(z * 0.009f, 0.34f), trunkColor, crownColor);
+            CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z + 48f, EnvironmentPlacement.FarForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 1.08f + Mathf.PingPong(z * 0.015f, 0.34f), trunkColor, crownColor);
+            CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z + 21f, -EnvironmentPlacement.MidForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 1.18f + Mathf.PingPong(z * 0.012f, 0.34f), trunkColor, crownColor);
+            CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z + 29f, EnvironmentPlacement.MidForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 1.14f + Mathf.PingPong(z * 0.014f, 0.32f), trunkColor, crownColor);
+            CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z + 8f, -EnvironmentPlacement.HighForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 1.28f + Mathf.PingPong(z * 0.01f, 0.36f), trunkColor, crownColor);
+            CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z + 39f, EnvironmentPlacement.HighForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 1.24f + Mathf.PingPong(z * 0.016f, 0.34f), trunkColor, crownColor);
         }
     }
 
     private static void CreateConifer(Transform parent, Vector3 position, float scale, Color trunkColor, Color crownColor)
     {
-        if (StarterPackEnvironmentAssets.TryCreatePine(parent, position, scale * 1.35f, position.x + position.z, out _))
+        if (StarterPackEnvironmentAssets.TryCreatePine(parent, position, scale, position.x + position.z, out _))
         {
             return;
         }
@@ -360,18 +360,18 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
         for (var z = 18f; z < RoadLengthMeters; z += 28f)
         {
-            CreateTree(trees.transform, EnvironmentPlacement.SafePointAtDistance(z, -EnvironmentPlacement.NearTreeOffset, EnvironmentPlacement.MaxTreeRadius), 0.85f + Mathf.PingPong(z * 0.013f, 0.5f));
-            CreateTree(trees.transform, EnvironmentPlacement.SafePointAtDistance(z + 11f, EnvironmentPlacement.NearTreeOffset, EnvironmentPlacement.MaxTreeRadius), 0.85f + Mathf.PingPong(z * 0.017f, 0.55f));
-            CreateTree(trees.transform, EnvironmentPlacement.SafePointAtDistance(z + 18f, -EnvironmentPlacement.MidTreeOffset, EnvironmentPlacement.MaxTreeRadius), 1f + Mathf.PingPong(z * 0.011f, 0.6f));
-            CreateTree(trees.transform, EnvironmentPlacement.SafePointAtDistance(z + 25f, EnvironmentPlacement.MidTreeOffset, EnvironmentPlacement.MaxTreeRadius), 0.95f + Mathf.PingPong(z * 0.019f, 0.6f));
-            CreateTree(trees.transform, EnvironmentPlacement.SafePointAtDistance(z + 34f, -EnvironmentPlacement.FarTreeOffset, EnvironmentPlacement.MaxTreeRadius), 1.2f + Mathf.PingPong(z * 0.009f, 0.55f));
-            CreateTree(trees.transform, EnvironmentPlacement.SafePointAtDistance(z + 43f, EnvironmentPlacement.FarTreeOffset, EnvironmentPlacement.MaxTreeRadius), 1.15f + Mathf.PingPong(z * 0.015f, 0.65f));
+            CreateTree(trees.transform, EnvironmentPlacement.SafePointAtDistance(z, -EnvironmentPlacement.NearTreeOffset, EnvironmentPlacement.MaxTreeRadius), 0.66f + Mathf.PingPong(z * 0.013f, 0.28f));
+            CreateTree(trees.transform, EnvironmentPlacement.SafePointAtDistance(z + 11f, EnvironmentPlacement.NearTreeOffset, EnvironmentPlacement.MaxTreeRadius), 0.66f + Mathf.PingPong(z * 0.017f, 0.3f));
+            CreateTree(trees.transform, EnvironmentPlacement.SafePointAtDistance(z + 18f, -EnvironmentPlacement.MidTreeOffset, EnvironmentPlacement.MaxTreeRadius), 0.76f + Mathf.PingPong(z * 0.011f, 0.34f));
+            CreateTree(trees.transform, EnvironmentPlacement.SafePointAtDistance(z + 25f, EnvironmentPlacement.MidTreeOffset, EnvironmentPlacement.MaxTreeRadius), 0.74f + Mathf.PingPong(z * 0.019f, 0.34f));
+            CreateTree(trees.transform, EnvironmentPlacement.SafePointAtDistance(z + 34f, -EnvironmentPlacement.FarTreeOffset, EnvironmentPlacement.MaxTreeRadius), 0.88f + Mathf.PingPong(z * 0.009f, 0.36f));
+            CreateTree(trees.transform, EnvironmentPlacement.SafePointAtDistance(z + 43f, EnvironmentPlacement.FarTreeOffset, EnvironmentPlacement.MaxTreeRadius), 0.86f + Mathf.PingPong(z * 0.015f, 0.38f));
         }
     }
 
     private static void CreateTree(Transform parent, Vector3 position, float scale)
     {
-        if (StarterPackEnvironmentAssets.TryCreateMixedTree(parent, position, scale * 1.15f, position.x * 0.23f + position.z * 0.41f, out _))
+        if (StarterPackEnvironmentAssets.TryCreateMixedTree(parent, position, scale * 0.9f, position.x * 0.23f + position.z * 0.41f, out _))
         {
             return;
         }

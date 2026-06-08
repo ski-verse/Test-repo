@@ -76,6 +76,54 @@ public class EnvironmentGroundRenderingCleanupTests
     }
 
     [Test]
+    public void IsFlatRoadsideGroundCandidate_DetectsLargeBrownOrGreyStripsButKeepsRoad()
+    {
+        var strip = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        strip.name = "Old Brown Side Surface";
+        strip.transform.localScale = new Vector3(12f, 0.08f, 80f);
+        strip.GetComponent<Renderer>().material.color = new Color(0.34f, 0.25f, 0.16f, 1f);
+
+        var road = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        road.name = "Sweeping 3 km Loop Road";
+        road.transform.localScale = new Vector3(8f, 0.08f, 80f);
+        road.GetComponent<Renderer>().material.color = new Color(0.32f, 0.32f, 0.32f, 1f);
+
+        try
+        {
+            Assert.IsTrue(EnvironmentGroundRenderingCleanup.IsFlatRoadsideGroundCandidate(strip.GetComponent<Renderer>()));
+            Assert.IsFalse(EnvironmentGroundRenderingCleanup.IsFlatRoadsideGroundCandidate(road.GetComponent<Renderer>()));
+        }
+        finally
+        {
+            Object.DestroyImmediate(strip);
+            Object.DestroyImmediate(road);
+        }
+    }
+
+    [Test]
+    public void CleanupSceneGround_RecolorsRoadLikeSideStripsToGrass()
+    {
+        var strip = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        strip.name = "Old Grey Roadside Surface";
+        strip.transform.localScale = new Vector3(14f, 0.08f, 90f);
+        strip.GetComponent<Renderer>().material.color = new Color(0.38f, 0.38f, 0.36f, 1f);
+
+        try
+        {
+            EnvironmentGroundRenderingCleanup.CleanupSceneGround();
+
+            var color = strip.GetComponent<Renderer>().material.color;
+            Assert.IsTrue(strip.activeSelf);
+            Assert.Greater(color.g, color.r);
+            Assert.Greater(color.g, color.b);
+        }
+        finally
+        {
+            Object.DestroyImmediate(strip);
+        }
+    }
+
+    [Test]
     public void EdgeFlowCueColors_ReadAsGrassNotRoadStrips()
     {
         AssertGrassColor(SpeedFeelingRuntimeUpdater.EdgeFlowGrassCueColorA);

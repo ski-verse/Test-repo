@@ -10,16 +10,16 @@ public static class EnvironmentPlacement
     public const float ShoulderInnerYOffset = 0.04f;
     public const float ShoulderOuterYOffset = -0.18f;
 
-    public const float NearTreeOffset = 8.4f;
-    public const float MidTreeOffset = 14f;
-    public const float FarTreeOffset = 24f;
-    public const float MaxTreeRadius = 1.35f;
+    public const float NearTreeOffset = 11f;
+    public const float MidTreeOffset = 18f;
+    public const float FarTreeOffset = 30f;
+    public const float MaxTreeRadius = 1.15f;
 
-    public const float NearForestOffset = 9.4f;
-    public const float FarForestOffset = 34f;
-    public const float MidForestOffset = 52f;
-    public const float HighForestOffset = 72f;
-    public const float MaxForestTreeRadius = 1.9f;
+    public const float NearForestOffset = 12f;
+    public const float FarForestOffset = 40f;
+    public const float MidForestOffset = 60f;
+    public const float HighForestOffset = 82f;
+    public const float MaxForestTreeRadius = 1.6f;
 
     public const float TurnSignOffset = 20.5f;
 

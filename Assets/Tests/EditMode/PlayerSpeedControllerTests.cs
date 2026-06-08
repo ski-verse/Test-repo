@@ -280,10 +280,10 @@ public class PlayerSpeedControllerTests
         var nearTreeDistanceFromRoadEdge = EnvironmentPlacement.NearTreeOffset - EnvironmentPlacement.MaxTreeRadius - EnvironmentPlacement.RoadHalfWidth;
         var nearForestDistanceFromRoadEdge = EnvironmentPlacement.NearForestOffset - EnvironmentPlacement.MaxForestTreeRadius - EnvironmentPlacement.RoadHalfWidth;
 
-        Assert.GreaterOrEqual(nearTreeDistanceFromRoadEdge, 3f);
-        Assert.LessOrEqual(nearTreeDistanceFromRoadEdge, 5f);
-        Assert.GreaterOrEqual(nearForestDistanceFromRoadEdge, 3f);
-        Assert.LessOrEqual(nearForestDistanceFromRoadEdge, 5f);
+        Assert.GreaterOrEqual(nearTreeDistanceFromRoadEdge, 5.5f);
+        Assert.LessOrEqual(nearTreeDistanceFromRoadEdge, 8f);
+        Assert.GreaterOrEqual(nearForestDistanceFromRoadEdge, 5.5f);
+        Assert.LessOrEqual(nearForestDistanceFromRoadEdge, 8f);
         Assert.Less(EnvironmentPlacement.OpenTerrainMargin, 5f);
     }
 
