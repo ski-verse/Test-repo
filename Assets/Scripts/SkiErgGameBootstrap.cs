@@ -36,6 +36,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
         CreateStartFinishMarkers();
         CreateRollingHills();
         CreateDistantForests();
+        CreateRockClusters();
         CreateDistantMountains();
         CreateTrees();
     }
@@ -327,6 +328,11 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
     private static void CreateConifer(Transform parent, Vector3 position, float scale, Color trunkColor, Color crownColor)
     {
+        if (StarterPackEnvironmentAssets.TryCreatePine(parent, position, scale * 1.35f, position.x + position.z, out _))
+        {
+            return;
+        }
+
         var tree = new GameObject("Distant Conifer");
         tree.transform.SetParent(parent, false);
         tree.transform.position = position;
@@ -345,6 +351,32 @@ public class SkiErgGameBootstrap : MonoBehaviour
         var meshFilter = crown.AddComponent<MeshFilter>();
         meshFilter.mesh = CreateMoundMesh();
         crown.AddComponent<MeshRenderer>().material.color = crownColor;
+    }
+
+    private static void CreateRockClusters()
+    {
+        var rocks = new GameObject("Nordic Starter Pack Rocks");
+
+        for (var z = 70f; z < RoadLengthMeters; z += 92f)
+        {
+            CreateRockCluster(rocks.transform, EnvironmentPlacement.SafePointAtDistance(z, -EnvironmentPlacement.MidTreeOffset - 6f, 2.8f), 0.8f + Mathf.PingPong(z * 0.021f, 0.45f));
+            CreateRockCluster(rocks.transform, EnvironmentPlacement.SafePointAtDistance(z + 47f, EnvironmentPlacement.FarTreeOffset + 5f, 3.2f), 0.9f + Mathf.PingPong(z * 0.017f, 0.5f));
+        }
+    }
+
+    private static void CreateRockCluster(Transform parent, Vector3 position, float scale)
+    {
+        if (StarterPackEnvironmentAssets.TryCreateRock(parent, position, scale, position.x * 0.37f + position.z * 0.19f, out _))
+        {
+            return;
+        }
+
+        var rock = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        rock.name = "Fallback Low Poly Rock";
+        rock.transform.SetParent(parent, false);
+        rock.transform.position = position;
+        rock.transform.localScale = new Vector3(0.8f * scale, 0.38f * scale, 0.6f * scale);
+        rock.GetComponent<Renderer>().material.color = new Color(0.28f, 0.3f, 0.31f);
     }
 
     private static void CreateDistantMountains()
@@ -392,6 +424,11 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
     private static void CreateTree(Transform parent, Vector3 position, float scale)
     {
+        if (StarterPackEnvironmentAssets.TryCreateMixedTree(parent, position, scale * 1.15f, position.x * 0.23f + position.z * 0.41f, out _))
+        {
+            return;
+        }
+
         var tree = new GameObject("Tree");
         tree.transform.SetParent(parent, false);
         tree.transform.position = position;
