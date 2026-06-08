@@ -8,9 +8,9 @@ public class MountainRangeMeshBuilderTests
     {
         var mesh = MountainRangeMeshBuilder.CreateRangeMesh(8, 12.5f);
 
-        Assert.Greater(mesh.vertexCount, 40);
-        Assert.Less(mesh.vertexCount, 56);
-        Assert.Less(mesh.triangles.Length / 3, 90);
+        Assert.Greater(mesh.vertexCount, 80);
+        Assert.Less(mesh.vertexCount, 112);
+        Assert.Less(mesh.triangles.Length / 3, 180);
         Assert.Greater(mesh.bounds.size.x, 0.9f);
         Assert.Greater(mesh.bounds.size.y, 0.35f);
         Assert.Less(mesh.bounds.size.y, 0.75f);
@@ -18,6 +18,16 @@ public class MountainRangeMeshBuilderTests
         Assert.Greater(CountDistinctHighPoints(mesh.vertices), 3);
         Assert.Greater(CountShoulderPoints(mesh.vertices), 12);
         Assert.Less(CalculateLargestAdjacentHeightJump(mesh.vertices), 0.24f);
+
+        Object.DestroyImmediate(mesh);
+    }
+
+    [Test]
+    public void CreateRangeMesh_BuildsBackfaceSafeSolidGeometry()
+    {
+        var mesh = MountainRangeMeshBuilder.CreateRangeMesh(8, 12.5f);
+
+        AssertEveryTriangleHasReverseFace(mesh);
 
         Object.DestroyImmediate(mesh);
     }
@@ -113,5 +123,43 @@ public class MountainRangeMeshBuilderTests
         }
 
         return false;
+    }
+
+    private static void AssertEveryTriangleHasReverseFace(Mesh mesh)
+    {
+        var triangles = mesh.triangles;
+        var vertices = mesh.vertices;
+
+        for (var index = 0; index < triangles.Length; index += 3)
+        {
+            var a = vertices[triangles[index]];
+            var b = vertices[triangles[index + 1]];
+            var c = vertices[triangles[index + 2]];
+            Assert.IsTrue(
+                ContainsTriangle(vertices, triangles, a, c, b),
+                $"Triangle {a},{b},{c} is missing a reversed backface.");
+        }
+    }
+
+    private static bool ContainsTriangle(Vector3[] vertices, int[] triangles, Vector3 a, Vector3 b, Vector3 c)
+    {
+        for (var index = 0; index < triangles.Length; index += 3)
+        {
+            if (Approximately(vertices[triangles[index]], a)
+                && Approximately(vertices[triangles[index + 1]], b)
+                && Approximately(vertices[triangles[index + 2]], c))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool Approximately(Vector3 a, Vector3 b)
+    {
+        return Mathf.Approximately(a.x, b.x)
+            && Mathf.Approximately(a.y, b.y)
+            && Mathf.Approximately(a.z, b.z);
     }
 }

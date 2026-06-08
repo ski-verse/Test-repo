@@ -31,6 +31,7 @@ public class MountainRangeSceneUpdater : MonoBehaviour
             return false;
         }
 
+        existingMountains.SetActive(false);
         Object.Destroy(existingMountains);
 
         var ranges = new GameObject("Nordic Mountain Ranges");

@@ -52,11 +52,13 @@ public static class MountainRangeMeshBuilder
         AddProfileCap(triangles, ref triangleIndex, 0, false);
         AddProfileCap(triangles, ref triangleIndex, segmentCount * VerticesPerProfile, true);
 
+        var solidVertices = BuildDoubleSidedVertices(vertices);
+        var solidTriangles = BuildDoubleSidedTriangles(triangles, vertices.Length);
         var mesh = new Mesh
         {
             name = "Rounded Low Poly Mountain Range Mesh",
-            vertices = vertices,
-            triangles = triangles
+            vertices = solidVertices,
+            triangles = solidTriangles
         };
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
@@ -109,6 +111,30 @@ public static class MountainRangeMeshBuilder
         triangles[triangleIndex + 1] = b;
         triangles[triangleIndex + 2] = c;
         triangleIndex += 3;
+    }
+
+    private static Vector3[] BuildDoubleSidedVertices(Vector3[] frontVertices)
+    {
+        var vertices = new Vector3[frontVertices.Length * 2];
+        frontVertices.CopyTo(vertices, 0);
+        frontVertices.CopyTo(vertices, frontVertices.Length);
+        return vertices;
+    }
+
+    private static int[] BuildDoubleSidedTriangles(int[] frontTriangles, int backfaceVertexOffset)
+    {
+        var triangles = new int[frontTriangles.Length * 2];
+        frontTriangles.CopyTo(triangles, 0);
+
+        for (var index = 0; index < frontTriangles.Length; index += 3)
+        {
+            var reverseIndex = frontTriangles.Length + index;
+            triangles[reverseIndex] = frontTriangles[index] + backfaceVertexOffset;
+            triangles[reverseIndex + 1] = frontTriangles[index + 2] + backfaceVertexOffset;
+            triangles[reverseIndex + 2] = frontTriangles[index + 1] + backfaceVertexOffset;
+        }
+
+        return triangles;
     }
 
     private static float SmoothNoise01(float value)

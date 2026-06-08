@@ -270,10 +270,40 @@ public class SkiErgGameBootstrap : MonoBehaviour
             new Vector3(0.5f, 0f, 0.5f),
             new Vector3(-0.5f, 0f, 0.5f)
         };
-        var triangles = new[] { 0, 1, 2, 0, 2, 3, 0, 3, 4, 0, 4, 1, 1, 4, 3, 1, 3, 2 };
-        var mesh = new Mesh { vertices = vertices, triangles = triangles };
+        var frontTriangles = new[] { 0, 1, 2, 0, 2, 3, 0, 3, 4, 0, 4, 1, 1, 4, 3, 1, 3, 2 };
+        var mesh = new Mesh
+        {
+            name = "Solid Low Poly Mound Mesh",
+            vertices = BuildDoubleSidedVertices(vertices),
+            triangles = BuildDoubleSidedTriangles(frontTriangles, vertices.Length)
+        };
         mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
         return mesh;
+    }
+
+    private static Vector3[] BuildDoubleSidedVertices(Vector3[] frontVertices)
+    {
+        var vertices = new Vector3[frontVertices.Length * 2];
+        frontVertices.CopyTo(vertices, 0);
+        frontVertices.CopyTo(vertices, frontVertices.Length);
+        return vertices;
+    }
+
+    private static int[] BuildDoubleSidedTriangles(int[] frontTriangles, int backfaceVertexOffset)
+    {
+        var triangles = new int[frontTriangles.Length * 2];
+        frontTriangles.CopyTo(triangles, 0);
+
+        for (var index = 0; index < frontTriangles.Length; index += 3)
+        {
+            var reverseIndex = frontTriangles.Length + index;
+            triangles[reverseIndex] = frontTriangles[index] + backfaceVertexOffset;
+            triangles[reverseIndex + 1] = frontTriangles[index + 2] + backfaceVertexOffset;
+            triangles[reverseIndex + 2] = frontTriangles[index + 1] + backfaceVertexOffset;
+        }
+
+        return triangles;
     }
 
     private static void CreateDistantForests()
