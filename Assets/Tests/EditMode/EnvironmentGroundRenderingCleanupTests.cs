@@ -7,6 +7,7 @@ public class EnvironmentGroundRenderingCleanupTests
     public void IsExtraneousGroundOrTerrain_DisablesImportedTerrainButKeepsGeneratedGrassAndRoad()
     {
         var terrain = new GameObject("Transparent Ground Terrain Strip");
+        var forestTerrain = new GameObject("Low Poly Forest Terrain");
         var shoulder = new GameObject("Roadside Embankment Shoulders");
         var shoulderPart = new GameObject("Left Road Shoulder");
         var road = new GameObject("Sweeping 3 km Loop Road");
@@ -16,12 +17,14 @@ public class EnvironmentGroundRenderingCleanupTests
             shoulderPart.transform.SetParent(shoulder.transform, false);
 
             Assert.IsTrue(EnvironmentGroundRenderingCleanup.IsExtraneousGroundOrTerrain(terrain));
+            Assert.IsTrue(EnvironmentGroundRenderingCleanup.IsExtraneousGroundOrTerrain(forestTerrain));
             Assert.IsFalse(EnvironmentGroundRenderingCleanup.IsExtraneousGroundOrTerrain(shoulderPart));
             Assert.IsFalse(EnvironmentGroundRenderingCleanup.IsExtraneousGroundOrTerrain(road));
         }
         finally
         {
             Object.DestroyImmediate(terrain);
+            Object.DestroyImmediate(forestTerrain);
             Object.DestroyImmediate(shoulder);
             Object.DestroyImmediate(road);
         }

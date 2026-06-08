@@ -39,6 +39,8 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
     {
         return HasSelfOrAncestorName(gameObject, "Roadside Embankment Shoulders")
             || HasSelfOrAncestorName(gameObject, "Road Shoulder")
+            || HasSelfOrAncestorName(gameObject, "Continuous Green Roadside Ground")
+            || HasSelfOrAncestorName(gameObject, "Continuous Grass Terrain")
             || HasSelfOrAncestorName(gameObject, "Open Grass Shoulders")
             || HasSelfOrAncestorName(gameObject, "Open Grass Segment")
             || HasSelfOrAncestorName(gameObject, "Road Edge Flow Cue");
@@ -54,6 +56,7 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
         return HasSelfOrAncestorName(gameObject, "Transparent Ground")
             || HasSelfOrAncestorName(gameObject, "Terrain")
             || HasSelfOrAncestorName(gameObject, "Field")
+            || HasSelfOrAncestorName(gameObject, "Forest")
             || HasSelfOrAncestorName(gameObject, "Canyon")
             || HasSelfOrAncestorName(gameObject, "Lake")
             || HasSelfOrAncestorName(gameObject, "Water")
@@ -172,7 +175,6 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
         return HasSelfOrAncestorName(gameObject, "Tree")
             || HasSelfOrAncestorName(gameObject, "Pine")
             || HasSelfOrAncestorName(gameObject, "Conifer")
-            || HasSelfOrAncestorName(gameObject, "Forest")
             || HasSelfOrAncestorName(gameObject, "Rock")
             || HasSelfOrAncestorName(gameObject, "Mountain");
     }

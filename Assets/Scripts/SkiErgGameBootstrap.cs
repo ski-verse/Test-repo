@@ -6,7 +6,6 @@ public class SkiErgGameBootstrap : MonoBehaviour
 {
     private const float RoadLengthMeters = CoursePath.CourseLengthMeters;
     private const float RoadWidthMeters = 8f;
-    private const float GrassWidthMeters = 18f;
     private const float RoadSegmentLength = 12f;
     private const float SkierVisualScale = 1.18f;
 
@@ -71,15 +70,22 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
     private static void CreateGrass()
     {
-        var grass = new GameObject("Open Grass Shoulders");
+        var grass = new GameObject("Continuous Green Roadside Ground");
         var color = EnvironmentGroundRenderingCleanup.OpenTerrainGrassColor;
-        var lateralOffset = RoadWidthMeters * 0.5f + EnvironmentPlacement.OpenTerrainMargin + GrassWidthMeters * 0.5f;
+        var left = CreateRoadsideGround(grass.transform, "Left Continuous Grass Terrain", -1f);
+        var right = CreateRoadsideGround(grass.transform, "Right Continuous Grass Terrain", 1f);
+        left.GetComponent<MeshRenderer>().material.color = color;
+        right.GetComponent<MeshRenderer>().material.color = color;
+    }
 
-        for (var z = 16f; z < RoadLengthMeters; z += 32f)
-        {
-            CreateEnvironmentPathCube(grass.transform, "Left Open Grass Segment", -lateralOffset, z, 33f, GrassWidthMeters, 0.08f, color, -0.08f);
-            CreateEnvironmentPathCube(grass.transform, "Right Open Grass Segment", lateralOffset, z, 33f, GrassWidthMeters, 0.08f, color, -0.08f);
-        }
+    private static GameObject CreateRoadsideGround(Transform parent, string name, float side)
+    {
+        var ground = new GameObject(name);
+        ground.transform.SetParent(parent, false);
+        var meshFilter = ground.AddComponent<MeshFilter>();
+        meshFilter.mesh = RoadsideGroundMeshBuilder.CreateGroundMesh(side);
+        ground.AddComponent<MeshRenderer>();
+        return ground;
     }
 
     private static void CreateRoadMarkings()
