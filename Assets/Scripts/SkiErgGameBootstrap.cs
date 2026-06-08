@@ -45,11 +45,9 @@ public class SkiErgGameBootstrap : MonoBehaviour
     {
         var road = new GameObject("Sweeping 3 km Loop Road");
         var color = new Color(0.16f, 0.18f, 0.2f);
-
-        for (var z = RoadSegmentLength * 0.5f; z < RoadLengthMeters; z += RoadSegmentLength)
-        {
-            CreatePathCube(road.transform, "Road Segment", 0f, z, RoadSegmentLength + 0.8f, RoadWidthMeters, 0.1f, color);
-        }
+        var meshFilter = road.AddComponent<MeshFilter>();
+        meshFilter.mesh = LoopRoadMeshBuilder.CreateRoadMesh(RoadWidthMeters);
+        road.AddComponent<MeshRenderer>().material.color = color;
     }
 
     private static void CreateRoadShoulders()
