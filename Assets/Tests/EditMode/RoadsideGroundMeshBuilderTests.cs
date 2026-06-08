@@ -23,8 +23,7 @@ public class RoadsideGroundMeshBuilderTests
     {
         Assert.Greater(RoadsideGroundMeshBuilder.InnerOffset, EnvironmentPlacement.RoadHalfWidth);
         Assert.LessOrEqual(RoadsideGroundMeshBuilder.InnerOffset, EnvironmentPlacement.ShoulderOuterOffset);
-        Assert.Greater(RoadsideGroundMeshBuilder.OuterOffset, EnvironmentPlacement.NearTreeOffset + 12f);
-        Assert.Greater(RoadsideGroundMeshBuilder.OuterOffset, EnvironmentPlacement.NearForestOffset + 12f);
+        Assert.Greater(RoadsideGroundMeshBuilder.OuterOffset, EnvironmentPlacement.HighForestOffset + 90f);
     }
 
     [Test]
@@ -36,7 +35,7 @@ public class RoadsideGroundMeshBuilderTests
             var point = RoadsideGroundMeshBuilder.CalculateGroundPoint(distance, RoadsideGroundMeshBuilder.InnerOffset);
 
             Assert.Greater(point.y, roadCenter.y);
-            Assert.Less(point.y, roadCenter.y + LoopRoadMeshBuilder.SurfaceYOffset);
+            Assert.Less(point.y, roadCenter.y + 0.12f);
         }
     }
 }

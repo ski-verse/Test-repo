@@ -79,6 +79,32 @@ public class EnvironmentGroundRenderingCleanupTests
     }
 
     [Test]
+    public void EnsureContinuousGreenRoadsideGroundExists_CreatesRuntimeGroundForExistingScenes()
+    {
+        var root = EnvironmentGroundRenderingCleanup.EnsureContinuousGreenRoadsideGroundExists();
+
+        try
+        {
+            Assert.AreEqual(EnvironmentGroundRenderingCleanup.RuntimeGroundRootName, root.name);
+            Assert.AreEqual(2, root.transform.childCount);
+
+            for (var index = 0; index < root.transform.childCount; index++)
+            {
+                var renderer = root.transform.GetChild(index).GetComponent<MeshRenderer>();
+                var meshFilter = root.transform.GetChild(index).GetComponent<MeshFilter>();
+
+                Assert.IsNotNull(renderer);
+                Assert.IsNotNull(meshFilter);
+                Assert.Greater(renderer.material.color.g, renderer.material.color.r);
+            }
+        }
+        finally
+        {
+            Object.DestroyImmediate(root);
+        }
+    }
+
+    [Test]
     public void IsFlatRoadsideGroundCandidate_DetectsLargeBrownOrGreyStripsButKeepsRoad()
     {
         var strip = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -100,6 +126,26 @@ public class EnvironmentGroundRenderingCleanupTests
         {
             Object.DestroyImmediate(strip);
             Object.DestroyImmediate(road);
+        }
+    }
+
+    [Test]
+    public void IsFlatRoadsideGroundCandidate_DetectsFlatSurfaceEvenUnderTreeParent()
+    {
+        var treeParent = new GameObject("Set Back Roadside Trees");
+        var strip = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        strip.name = "Old Brown Side Surface";
+        strip.transform.SetParent(treeParent.transform, false);
+        strip.transform.localScale = new Vector3(12f, 0.08f, 80f);
+        strip.GetComponent<Renderer>().material.color = new Color(0.34f, 0.25f, 0.16f, 1f);
+
+        try
+        {
+            Assert.IsTrue(EnvironmentGroundRenderingCleanup.IsFlatRoadsideGroundCandidate(strip.GetComponent<Renderer>()));
+        }
+        finally
+        {
+            Object.DestroyImmediate(treeParent);
         }
     }
 

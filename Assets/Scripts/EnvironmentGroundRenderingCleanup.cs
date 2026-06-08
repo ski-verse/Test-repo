@@ -3,6 +3,7 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class EnvironmentGroundRenderingCleanup : MonoBehaviour
 {
+    public const string RuntimeGroundRootName = "Runtime Continuous Green Roadside Ground";
     private const int CleanupFrameCount = 90;
     private const float FlatGroundMaxHeight = 0.45f;
     private const float LargeSurfaceMinWidth = 1.8f;
@@ -75,7 +76,7 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
 
         var gameObject = renderer.gameObject;
 
-        if (IsProtectedRoadObject(gameObject) || IsGeneratedGrassSurface(gameObject) || IsTreeOrSceneryObject(gameObject))
+        if (IsProtectedRoadObject(gameObject) || IsGeneratedGrassSurface(gameObject))
         {
             return false;
         }
@@ -120,6 +121,8 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
 
     public static void CleanupSceneGround()
     {
+        EnsureContinuousGreenRoadsideGroundExists();
+
         var renderers = Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None);
 
         for (var index = 0; index < renderers.Length; index++)
@@ -148,6 +151,31 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
         }
     }
 
+    public static GameObject EnsureContinuousGreenRoadsideGroundExists()
+    {
+        var existing = GameObject.Find(RuntimeGroundRootName) ?? GameObject.Find("Continuous Green Roadside Ground");
+
+        if (existing != null)
+        {
+            return existing;
+        }
+
+        var root = new GameObject(RuntimeGroundRootName);
+        CreateRuntimeGroundSide(root.transform, "Left Runtime Grass Terrain", -1f);
+        CreateRuntimeGroundSide(root.transform, "Right Runtime Grass Terrain", 1f);
+        return root;
+    }
+
+    private static void CreateRuntimeGroundSide(Transform parent, string name, float side)
+    {
+        var ground = new GameObject(name);
+        ground.transform.SetParent(parent, false);
+        var meshFilter = ground.AddComponent<MeshFilter>();
+        meshFilter.mesh = RoadsideGroundMeshBuilder.CreateGroundMesh(side);
+        var renderer = ground.AddComponent<MeshRenderer>();
+        ApplyOpaqueGrassMaterial(renderer, OpenTerrainGrassColor);
+    }
+
     private void ApplyCleanupIfNeeded()
     {
         if (cleanupFramesApplied >= CleanupFrameCount)
@@ -168,15 +196,6 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
             || HasSelfOrAncestorName(gameObject, "Speed Post")
             || HasSelfOrAncestorName(gameObject, "Turn Warning")
             || HasSelfOrAncestorName(gameObject, "Turn Sign");
-    }
-
-    private static bool IsTreeOrSceneryObject(GameObject gameObject)
-    {
-        return HasSelfOrAncestorName(gameObject, "Tree")
-            || HasSelfOrAncestorName(gameObject, "Pine")
-            || HasSelfOrAncestorName(gameObject, "Conifer")
-            || HasSelfOrAncestorName(gameObject, "Rock")
-            || HasSelfOrAncestorName(gameObject, "Mountain");
     }
 
     private static bool IsBrownGreyOrTransparent(Renderer renderer)
