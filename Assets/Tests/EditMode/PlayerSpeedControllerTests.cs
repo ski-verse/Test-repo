@@ -268,6 +268,8 @@ public class PlayerSpeedControllerTests
         Assert.IsTrue(EnvironmentPlacement.HasOpenRoadMargin(EnvironmentPlacement.FarTreeOffset, EnvironmentPlacement.MaxTreeRadius));
         Assert.IsTrue(EnvironmentPlacement.HasOpenRoadMargin(EnvironmentPlacement.NearForestOffset, EnvironmentPlacement.MaxForestTreeRadius));
         Assert.IsTrue(EnvironmentPlacement.HasOpenRoadMargin(EnvironmentPlacement.FarForestOffset, EnvironmentPlacement.MaxForestTreeRadius));
+        Assert.IsTrue(EnvironmentPlacement.HasOpenRoadMargin(EnvironmentPlacement.MidForestOffset, EnvironmentPlacement.MaxForestTreeRadius));
+        Assert.IsTrue(EnvironmentPlacement.HasOpenRoadMargin(EnvironmentPlacement.HighForestOffset, EnvironmentPlacement.MaxForestTreeRadius));
         Assert.IsTrue(EnvironmentPlacement.HasOpenRoadMargin(EnvironmentPlacement.NearHillOffset, EnvironmentPlacement.NearHillHalfWidth));
         Assert.IsTrue(EnvironmentPlacement.HasOpenRoadMargin(EnvironmentPlacement.FarHillOffset, EnvironmentPlacement.FarHillHalfWidth));
         Assert.IsTrue(EnvironmentPlacement.HasOpenRoadMargin(EnvironmentPlacement.NearMountainOffset, EnvironmentPlacement.NearMountainHalfWidth));
@@ -298,26 +300,39 @@ public class PlayerSpeedControllerTests
             AssertSafeGeneratedPoint(distance, -EnvironmentPlacement.NearTreeOffset, EnvironmentPlacement.MaxTreeRadius);
             AssertSafeGeneratedPoint(distance, EnvironmentPlacement.NearForestOffset, EnvironmentPlacement.MaxForestTreeRadius);
             AssertSafeGeneratedPoint(distance, -EnvironmentPlacement.NearForestOffset, EnvironmentPlacement.MaxForestTreeRadius);
+            AssertSafeGeneratedPoint(distance, EnvironmentPlacement.MidForestOffset, EnvironmentPlacement.MaxForestTreeRadius);
+            AssertSafeGeneratedPoint(distance, -EnvironmentPlacement.MidForestOffset, EnvironmentPlacement.MaxForestTreeRadius);
+            AssertSafeGeneratedPoint(distance, EnvironmentPlacement.HighForestOffset, EnvironmentPlacement.MaxForestTreeRadius);
+            AssertSafeGeneratedPoint(distance, -EnvironmentPlacement.HighForestOffset, EnvironmentPlacement.MaxForestTreeRadius);
             AssertSafeGeneratedPoint(distance, EnvironmentPlacement.TurnSignOffset, 0.6f);
             AssertSafeGeneratedPoint(distance, -EnvironmentPlacement.TurnSignOffset, 0.6f);
-            AssertSafeGeneratedPoint(distance, EnvironmentPlacement.NearHillOffset, CalculateFootprintRadius(EnvironmentPlacement.NearHillHalfWidth * 2f, 120f));
-            AssertSafeGeneratedPoint(distance, -EnvironmentPlacement.NearHillOffset, CalculateFootprintRadius(EnvironmentPlacement.NearHillHalfWidth * 2f, 120f));
+            AssertSafeGeneratedPoint(distance, EnvironmentPlacement.NearHillOffset, CalculateFootprintRadius(EnvironmentPlacement.NearHillHalfWidth * 2f, 150f));
+            AssertSafeGeneratedPoint(distance, -EnvironmentPlacement.NearHillOffset, CalculateFootprintRadius(EnvironmentPlacement.NearHillHalfWidth * 2f, 150f));
+            AssertSafeGeneratedPoint(distance, EnvironmentPlacement.FarHillOffset, CalculateFootprintRadius(EnvironmentPlacement.FarHillHalfWidth * 2f, 200f));
+            AssertSafeGeneratedPoint(distance, -EnvironmentPlacement.FarHillOffset, CalculateFootprintRadius(EnvironmentPlacement.FarHillHalfWidth * 2f, 200f));
             AssertSafeGeneratedPoint(distance, EnvironmentPlacement.NearMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.NearMountainHalfWidth * 2f, 360f));
             AssertSafeGeneratedPoint(distance, -EnvironmentPlacement.NearMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.NearMountainHalfWidth * 2f, 360f));
+            AssertSafeGeneratedPoint(distance, EnvironmentPlacement.FarMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.FarMountainHalfWidth * 2f, 490f));
+            AssertSafeGeneratedPoint(distance, -EnvironmentPlacement.FarMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.FarMountainHalfWidth * 2f, 490f));
         }
     }
 
     [Test]
-    public void EnvironmentPlacement_FramesRoadWithVisibleMountainsAndForests()
+    public void EnvironmentPlacement_CreatesOpenJamtlandSceneryLayers()
     {
         var nearMountainInnerEdge = EnvironmentPlacement.NearMountainOffset - EnvironmentPlacement.NearMountainHalfWidth;
         var farMountainInnerEdge = EnvironmentPlacement.FarMountainOffset - EnvironmentPlacement.FarMountainHalfWidth;
 
         Assert.LessOrEqual(EnvironmentPlacement.MountainFirstDistance, 650f);
-        Assert.LessOrEqual(nearMountainInnerEdge, 110f);
-        Assert.LessOrEqual(farMountainInnerEdge, 150f);
-        Assert.Greater(EnvironmentPlacement.NearMountainOffset, EnvironmentPlacement.FarForestOffset);
-        Assert.Greater(nearMountainInnerEdge, EnvironmentPlacement.FarForestOffset + EnvironmentPlacement.MaxForestTreeRadius);
+        Assert.GreaterOrEqual(EnvironmentPlacement.MountainHeightScale, 0.69f);
+        Assert.LessOrEqual(EnvironmentPlacement.MountainHeightScale, 0.71f);
+        Assert.GreaterOrEqual(nearMountainInnerEdge, 165f);
+        Assert.GreaterOrEqual(farMountainInnerEdge, 270f);
+        Assert.Greater(EnvironmentPlacement.NearHillOffset, EnvironmentPlacement.FarForestOffset);
+        Assert.Greater(EnvironmentPlacement.FarHillOffset, EnvironmentPlacement.NearHillOffset);
+        Assert.Greater(EnvironmentPlacement.HighForestOffset, EnvironmentPlacement.FarHillOffset);
+        Assert.Less(EnvironmentPlacement.HighForestOffset + EnvironmentPlacement.MaxForestTreeRadius, nearMountainInnerEdge);
+        Assert.Greater(EnvironmentPlacement.NearMountainOffset, EnvironmentPlacement.HighForestOffset);
     }
 
     [Test]

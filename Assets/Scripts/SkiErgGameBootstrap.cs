@@ -56,7 +56,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
         var shoulders = new GameObject("Roadside Embankment Shoulders");
         var left = CreateRoadShoulder(shoulders.transform, "Left Road Shoulder", -1f);
         var right = CreateRoadShoulder(shoulders.transform, "Right Road Shoulder", 1f);
-        var color = new Color(0.16f, 0.38f, 0.15f);
+        var color = new Color(0.2f, 0.48f, 0.18f);
         left.GetComponent<MeshRenderer>().material.color = color;
         right.GetComponent<MeshRenderer>().material.color = color;
     }
@@ -234,13 +234,16 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
     private static void CreateRollingHills()
     {
-        var hills = new GameObject("Distant Low Poly Rolling Hills");
-        var hillColor = new Color(0.12f, 0.44f, 0.16f);
+        var hills = new GameObject("Open Jamtland Rolling Hills");
+        var nearHillColor = new Color(0.2f, 0.5f, 0.18f);
+        var farHillColor = new Color(0.15f, 0.4f, 0.17f);
 
-        for (var z = 130f; z < RoadLengthMeters; z += 240f)
+        for (var z = 110f; z < RoadLengthMeters; z += 185f)
         {
-            CreateLowPolyHill(hills.transform, EnvironmentPlacement.SafePointAtDistance(z, -EnvironmentPlacement.NearHillOffset, CalculateFootprintRadius(EnvironmentPlacement.NearHillHalfWidth * 2f, 120f)), new Vector3(EnvironmentPlacement.NearHillHalfWidth * 2f, 10f, 120f), hillColor);
-            CreateLowPolyHill(hills.transform, EnvironmentPlacement.SafePointAtDistance(z + 110f, EnvironmentPlacement.FarHillOffset, CalculateFootprintRadius(EnvironmentPlacement.FarHillHalfWidth * 2f, 140f)), new Vector3(EnvironmentPlacement.FarHillHalfWidth * 2f, 12f, 140f), hillColor);
+            CreateLowPolyHill(hills.transform, EnvironmentPlacement.SafePointAtDistance(z, -EnvironmentPlacement.NearHillOffset, CalculateFootprintRadius(EnvironmentPlacement.NearHillHalfWidth * 2f, 150f)), new Vector3(EnvironmentPlacement.NearHillHalfWidth * 2f, 8f, 150f), nearHillColor);
+            CreateLowPolyHill(hills.transform, EnvironmentPlacement.SafePointAtDistance(z + 62f, EnvironmentPlacement.NearHillOffset, CalculateFootprintRadius(EnvironmentPlacement.NearHillHalfWidth * 2f, 145f)), new Vector3(EnvironmentPlacement.NearHillHalfWidth * 2f, 7.5f, 145f), nearHillColor);
+            CreateLowPolyHill(hills.transform, EnvironmentPlacement.SafePointAtDistance(z + 116f, -EnvironmentPlacement.FarHillOffset, CalculateFootprintRadius(EnvironmentPlacement.FarHillHalfWidth * 2f, 190f)), new Vector3(EnvironmentPlacement.FarHillHalfWidth * 2f, 11f, 190f), farHillColor);
+            CreateLowPolyHill(hills.transform, EnvironmentPlacement.SafePointAtDistance(z + 155f, EnvironmentPlacement.FarHillOffset, CalculateFootprintRadius(EnvironmentPlacement.FarHillHalfWidth * 2f, 200f)), new Vector3(EnvironmentPlacement.FarHillHalfWidth * 2f, 12f, 200f), farHillColor);
         }
     }
 
@@ -279,12 +282,16 @@ public class SkiErgGameBootstrap : MonoBehaviour
         var trunkColor = new Color(0.23f, 0.14f, 0.08f);
         var crownColor = new Color(0.035f, 0.19f, 0.09f);
 
-        for (var z = 46f; z < RoadLengthMeters; z += 64f)
+        for (var z = 38f; z < RoadLengthMeters; z += 48f)
         {
             CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z, -EnvironmentPlacement.NearForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 1.25f + Mathf.PingPong(z * 0.011f, 0.45f), trunkColor, crownColor);
             CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z + 17f, EnvironmentPlacement.NearForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 1.2f + Mathf.PingPong(z * 0.013f, 0.45f), trunkColor, crownColor);
             CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z + 31f, -EnvironmentPlacement.FarForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 1.45f + Mathf.PingPong(z * 0.009f, 0.5f), trunkColor, crownColor);
             CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z + 48f, EnvironmentPlacement.FarForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 1.4f + Mathf.PingPong(z * 0.015f, 0.5f), trunkColor, crownColor);
+            CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z + 21f, -EnvironmentPlacement.MidForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 1.55f + Mathf.PingPong(z * 0.012f, 0.5f), trunkColor, crownColor);
+            CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z + 29f, EnvironmentPlacement.MidForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 1.5f + Mathf.PingPong(z * 0.014f, 0.45f), trunkColor, crownColor);
+            CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z + 8f, -EnvironmentPlacement.HighForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 1.7f + Mathf.PingPong(z * 0.01f, 0.55f), trunkColor, crownColor);
+            CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z + 39f, EnvironmentPlacement.HighForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 1.65f + Mathf.PingPong(z * 0.016f, 0.5f), trunkColor, crownColor);
         }
     }
 
@@ -318,10 +325,10 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
         for (var z = EnvironmentPlacement.MountainFirstDistance; z <= RoadLengthMeters; z += EnvironmentPlacement.MountainSpacing)
         {
-            CreateLowPolyMountain(mountains.transform, EnvironmentPlacement.SafePointAtDistance(z, -EnvironmentPlacement.NearMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.NearMountainHalfWidth * 2f, 310f)), new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2f, 170f, 310f), nearColor);
-            CreateLowPolyMountain(mountains.transform, EnvironmentPlacement.SafePointAtDistance(z + 120f, EnvironmentPlacement.NearMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.NearMountainHalfWidth * 2.1f, 320f)), new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2.1f, 185f, 320f), nearColor);
-            CreateLowPolyMountain(mountains.transform, EnvironmentPlacement.SafePointAtDistance(z + 240f, -EnvironmentPlacement.FarMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.FarMountainHalfWidth * 2f, 390f)), new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2f, 220f, 390f), farColor);
-            CreateLowPolyMountain(mountains.transform, EnvironmentPlacement.SafePointAtDistance(z + 360f, EnvironmentPlacement.FarMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.FarMountainHalfWidth * 2.05f, 405f)), new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2.05f, 235f, 405f), farColor);
+            CreateLowPolyMountain(mountains.transform, EnvironmentPlacement.SafePointAtDistance(z, -EnvironmentPlacement.NearMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.NearMountainHalfWidth * 2f, 310f)), new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2f, 170f * EnvironmentPlacement.MountainHeightScale, 310f), nearColor);
+            CreateLowPolyMountain(mountains.transform, EnvironmentPlacement.SafePointAtDistance(z + 120f, EnvironmentPlacement.NearMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.NearMountainHalfWidth * 2.1f, 320f)), new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2.1f, 185f * EnvironmentPlacement.MountainHeightScale, 320f), nearColor);
+            CreateLowPolyMountain(mountains.transform, EnvironmentPlacement.SafePointAtDistance(z + 240f, -EnvironmentPlacement.FarMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.FarMountainHalfWidth * 2f, 390f)), new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2f, 220f * EnvironmentPlacement.MountainHeightScale, 390f), farColor);
+            CreateLowPolyMountain(mountains.transform, EnvironmentPlacement.SafePointAtDistance(z + 360f, EnvironmentPlacement.FarMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.FarMountainHalfWidth * 2.05f, 405f)), new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2.05f, 235f * EnvironmentPlacement.MountainHeightScale, 405f), farColor);
         }
     }
 
