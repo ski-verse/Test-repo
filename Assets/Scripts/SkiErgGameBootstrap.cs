@@ -34,7 +34,6 @@ public class SkiErgGameBootstrap : MonoBehaviour
         CreateRoadsidePosts();
         CreateTurnSigns();
         CreateStartFinishMarkers();
-        CreateRollingHills();
         CreateDistantForests();
         CreateRockClusters();
         CreateDistantMountains();
@@ -231,34 +230,6 @@ public class SkiErgGameBootstrap : MonoBehaviour
         part.GetComponent<Renderer>().material.color = color;
     }
 
-    private static void CreateRollingHills()
-    {
-        var hills = new GameObject("Open Jamtland Rolling Hills");
-        var nearHillColor = new Color(0.2f, 0.5f, 0.18f);
-        var farHillColor = new Color(0.15f, 0.4f, 0.17f);
-
-        for (var z = 110f; z < RoadLengthMeters; z += 185f)
-        {
-            CreateLowPolyHill(hills.transform, EnvironmentPlacement.SafePointAtDistance(z, -EnvironmentPlacement.NearHillOffset, CalculateFootprintRadius(EnvironmentPlacement.NearHillHalfWidth * 2f, 150f)), new Vector3(EnvironmentPlacement.NearHillHalfWidth * 2f, 8f, 150f), nearHillColor);
-            CreateLowPolyHill(hills.transform, EnvironmentPlacement.SafePointAtDistance(z + 62f, EnvironmentPlacement.NearHillOffset, CalculateFootprintRadius(EnvironmentPlacement.NearHillHalfWidth * 2f, 145f)), new Vector3(EnvironmentPlacement.NearHillHalfWidth * 2f, 7.5f, 145f), nearHillColor);
-            CreateLowPolyHill(hills.transform, EnvironmentPlacement.SafePointAtDistance(z + 116f, -EnvironmentPlacement.FarHillOffset, CalculateFootprintRadius(EnvironmentPlacement.FarHillHalfWidth * 2f, 190f)), new Vector3(EnvironmentPlacement.FarHillHalfWidth * 2f, 11f, 190f), farHillColor);
-            CreateLowPolyHill(hills.transform, EnvironmentPlacement.SafePointAtDistance(z + 155f, EnvironmentPlacement.FarHillOffset, CalculateFootprintRadius(EnvironmentPlacement.FarHillHalfWidth * 2f, 200f)), new Vector3(EnvironmentPlacement.FarHillHalfWidth * 2f, 12f, 200f), farHillColor);
-        }
-    }
-
-    private static void CreateLowPolyHill(Transform parent, Vector3 position, Vector3 scale, Color color)
-    {
-        var hill = new GameObject("Low Poly Hill");
-        hill.transform.SetParent(parent, false);
-        position.y += -0.1f;
-        hill.transform.position = position;
-        hill.transform.localScale = scale;
-
-        var meshFilter = hill.AddComponent<MeshFilter>();
-        meshFilter.mesh = CreateMoundMesh();
-        hill.AddComponent<MeshRenderer>().material.color = color;
-    }
-
     private static Mesh CreateMoundMesh()
     {
         var vertices = new[]
@@ -380,29 +351,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
     private static void CreateDistantMountains()
     {
         var mountains = new GameObject("Nordic Mountain Ranges");
-        var nearColor = new Color(0.34f, 0.4f, 0.46f);
-        var farColor = new Color(0.48f, 0.53f, 0.58f);
-
-        for (var z = EnvironmentPlacement.MountainFirstDistance; z <= RoadLengthMeters; z += EnvironmentPlacement.MountainSpacing)
-        {
-            CreateLowPolyMountain(mountains.transform, EnvironmentPlacement.SafePointAtDistance(z, -EnvironmentPlacement.NearMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.NearMountainHalfWidth * 2f, 310f)), new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2f, 170f * EnvironmentPlacement.MountainHeightScale, 310f), nearColor);
-            CreateLowPolyMountain(mountains.transform, EnvironmentPlacement.SafePointAtDistance(z + 120f, EnvironmentPlacement.NearMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.NearMountainHalfWidth * 2.1f, 320f)), new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2.1f, 185f * EnvironmentPlacement.MountainHeightScale, 320f), nearColor);
-            CreateLowPolyMountain(mountains.transform, EnvironmentPlacement.SafePointAtDistance(z + 240f, -EnvironmentPlacement.FarMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.FarMountainHalfWidth * 2f, 390f)), new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2f, 220f * EnvironmentPlacement.MountainHeightScale, 390f), farColor);
-            CreateLowPolyMountain(mountains.transform, EnvironmentPlacement.SafePointAtDistance(z + 360f, EnvironmentPlacement.FarMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.FarMountainHalfWidth * 2.05f, 405f)), new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2.05f, 235f * EnvironmentPlacement.MountainHeightScale, 405f), farColor);
-        }
-    }
-
-    private static void CreateLowPolyMountain(Transform parent, Vector3 position, Vector3 scale, Color color)
-    {
-        var mountain = new GameObject("Low Poly Mountain");
-        mountain.transform.SetParent(parent, false);
-        position.y += -8f;
-        mountain.transform.position = position;
-        mountain.transform.localScale = scale;
-
-        var meshFilter = mountain.AddComponent<MeshFilter>();
-        meshFilter.mesh = CreateMoundMesh();
-        mountain.AddComponent<MeshRenderer>().material.color = color;
+        MountainRangeSceneUpdater.BuildMountainRanges(mountains.transform);
     }
 
     private static void CreateTrees()

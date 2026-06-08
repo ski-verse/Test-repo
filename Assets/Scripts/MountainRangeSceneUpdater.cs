@@ -31,12 +31,35 @@ public class MountainRangeSceneUpdater : MonoBehaviour
             return false;
         }
 
+        if (ContainsGeneratedMountainChains(existingMountains.transform))
+        {
+            return false;
+        }
+
         existingMountains.SetActive(false);
         Object.Destroy(existingMountains);
 
         var ranges = new GameObject("Nordic Mountain Ranges");
         BuildMountainRanges(ranges.transform);
         return true;
+    }
+
+    public static bool ContainsGeneratedMountainChains(Transform parent)
+    {
+        if (parent == null)
+        {
+            return false;
+        }
+
+        for (var index = 0; index < parent.childCount; index++)
+        {
+            if (parent.GetChild(index).name.Contains("Mountain Chain"))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static void BuildMountainRanges(Transform parent)

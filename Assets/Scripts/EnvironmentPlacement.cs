@@ -23,11 +23,6 @@ public static class EnvironmentPlacement
 
     public const float TurnSignOffset = 20.5f;
 
-    public const float NearHillOffset = 96f;
-    public const float FarHillOffset = 142f;
-    public const float NearHillHalfWidth = 24f;
-    public const float FarHillHalfWidth = 34f;
-
     public const float MountainFirstDistance = 520f;
     public const float MountainSpacing = 620f;
     public const float NearMountainOffset = 270f;
