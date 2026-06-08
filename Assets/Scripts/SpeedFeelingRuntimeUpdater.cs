@@ -14,6 +14,8 @@ public class SpeedFeelingRuntimeUpdater : MonoBehaviour
     public const float EdgeFlowCueSpacingMeters = 9.5f;
     public const float EdgeFlowCueLateralOffset = EnvironmentPlacement.RoadHalfWidth + EnvironmentPlacement.OpenTerrainMargin + 0.75f;
     public const float EdgeFlowCueHalfWidth = 0.055f;
+    public static readonly Color EdgeFlowGrassCueColorA = new Color(0.16f, 0.46f, 0.16f, 1f);
+    public static readonly Color EdgeFlowGrassCueColorB = new Color(0.2f, 0.58f, 0.2f, 1f);
 
     private bool cameraConfigured;
     private bool motionCuesCreated;
@@ -151,7 +153,7 @@ public class SpeedFeelingRuntimeUpdater : MonoBehaviour
         cue.transform.rotation = CoursePath.RotationAtDistance(zPosition);
         cue.transform.localScale = new Vector3(EdgeFlowCueHalfWidth * 2f, 0.035f, 1.45f);
 
-        var color = index % 4 < 2 ? new Color(0.92f, 0.96f, 1f) : new Color(0.16f, 0.58f, 0.95f);
+        var color = index % 4 < 2 ? EdgeFlowGrassCueColorA : EdgeFlowGrassCueColorB;
         cue.GetComponent<Renderer>().material.color = color;
     }
 }

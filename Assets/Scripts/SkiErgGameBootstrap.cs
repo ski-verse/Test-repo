@@ -54,7 +54,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
         var shoulders = new GameObject("Roadside Embankment Shoulders");
         var left = CreateRoadShoulder(shoulders.transform, "Left Road Shoulder", -1f);
         var right = CreateRoadShoulder(shoulders.transform, "Right Road Shoulder", 1f);
-        var color = new Color(0.2f, 0.48f, 0.18f);
+        var color = EnvironmentGroundRenderingCleanup.RoadShoulderGrassColor;
         left.GetComponent<MeshRenderer>().material.color = color;
         right.GetComponent<MeshRenderer>().material.color = color;
     }
@@ -72,7 +72,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
     private static void CreateGrass()
     {
         var grass = new GameObject("Open Grass Shoulders");
-        var color = new Color(0.18f, 0.55f, 0.18f);
+        var color = EnvironmentGroundRenderingCleanup.OpenTerrainGrassColor;
         var lateralOffset = RoadWidthMeters * 0.5f + EnvironmentPlacement.OpenTerrainMargin + GrassWidthMeters * 0.5f;
 
         for (var z = 16f; z < RoadLengthMeters; z += 32f)
