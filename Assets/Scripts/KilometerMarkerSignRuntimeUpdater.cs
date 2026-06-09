@@ -73,7 +73,7 @@ public class KilometerMarkerSignRuntimeUpdater : MonoBehaviour
         sign.transform.position = CalculateMarkerPosition(distanceMeters, side);
         sign.transform.rotation = CalculateApproachFacingRotation(distanceMeters);
 
-        AddSignPart(sign.transform, "Marker Post", new Vector3(0f, -1.05f, 0f), new Vector3(0.2f, 2.1f, 0.2f), PostColor);
+        AddSignPart(sign.transform, "Marker Post", new Vector3(0f, -1.45f, 0f), new Vector3(0.2f, 1.25f, 0.2f), PostColor);
         AddSignPart(sign.transform, "Marker Board", new Vector3(0f, 0.55f, 0f), new Vector3(3.35f, 2.75f, 0.16f), BoardColor);
         AddSignPart(sign.transform, "Marker Board Border Top", new Vector3(0f, 1.98f, -0.01f), new Vector3(3.62f, 0.18f, 0.18f), BorderColor);
         AddSignPart(sign.transform, "Marker Board Border Bottom", new Vector3(0f, -0.88f, -0.01f), new Vector3(3.62f, 0.18f, 0.18f), BorderColor);
@@ -122,16 +122,16 @@ public class KilometerMarkerSignRuntimeUpdater : MonoBehaviour
 
         var text = textObject.AddComponent<TextMeshPro>();
         text.text = label;
-        text.fontSize = 9.2f;
+        text.fontSize = 18.4f;
         text.fontStyle = FontStyles.Bold;
         text.alignment = TextAlignmentOptions.Center;
         text.color = TextColor;
         text.enableAutoSizing = false;
         text.textWrappingMode = TextWrappingModes.NoWrap;
-        text.characterSpacing = -6f;
+        text.characterSpacing = -14f;
 
         var rect = text.GetComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(3.25f, 2.15f);
+        rect.sizeDelta = new Vector2(3.6f, 2.45f);
     }
 
     private static void ClearChildren(Transform root)

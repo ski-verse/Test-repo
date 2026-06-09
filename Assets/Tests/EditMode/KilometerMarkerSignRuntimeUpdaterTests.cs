@@ -57,15 +57,18 @@ public class KilometerMarkerSignRuntimeUpdaterTests
             Assert.AreEqual("1 km", GameObject.Find("Left 1 km Marker").GetComponentInChildren<TextMeshPro>().text);
             Assert.AreEqual(2, GameObject.Find("Left 1 km Marker").GetComponentsInChildren<TextMeshPro>().Length);
             Assert.Greater(GameObject.Find("Left 1 km Marker").transform.position.y, CoursePath.HeightAtDistance(1000f) + 1.5f);
-            Assert.Greater(GameObject.Find("Left 1 km Marker").transform.Find("Marker Board").localScale.x, 3f);
-            Assert.GreaterOrEqual(GameObject.Find("Left 1 km Marker").transform.Find("Marker Board").localScale.y, 2.7f);
-            Assert.AreEqual(Color.white, GameObject.Find("Left 1 km Marker").transform.Find("Marker Board").GetComponent<Renderer>().sharedMaterial.color);
+            var board = GameObject.Find("Left 1 km Marker").transform.Find("Marker Board");
+            var post = GameObject.Find("Left 1 km Marker").transform.Find("Marker Post");
+            Assert.Greater(board.localScale.x, 3f);
+            Assert.GreaterOrEqual(board.localScale.y, 2.7f);
+            Assert.AreEqual(Color.white, board.GetComponent<Renderer>().sharedMaterial.color);
+            Assert.LessOrEqual(post.localPosition.y + post.localScale.y * 0.5f, board.localPosition.y - board.localScale.y * 0.5f + 0.001f);
             Assert.AreEqual(Color.black, GameObject.Find("Left 1 km Marker").GetComponentInChildren<TextMeshPro>().color);
             var approachText = GameObject.Find("Left 1 km Marker").transform.Find("Marker Text Approach Face");
             Assert.IsNotNull(approachText);
             Assert.Less(approachText.localPosition.z, -0.15f);
             Assert.AreEqual(Quaternion.identity, approachText.localRotation);
-            Assert.Greater(approachText.GetComponent<TextMeshPro>().fontSize, 9f);
+            Assert.Greater(approachText.GetComponent<TextMeshPro>().fontSize, 18f);
             Assert.GreaterOrEqual(approachText.localScale.x, 1f);
         }
         finally
