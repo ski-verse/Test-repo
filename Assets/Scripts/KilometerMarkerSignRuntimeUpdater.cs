@@ -8,9 +8,10 @@ public class KilometerMarkerSignRuntimeUpdater : MonoBehaviour
     public const float MarkerSpacingMeters = 1000f;
     public const float MarkerLateralOffset = EnvironmentPlacement.RoadHalfWidth + 1.45f;
     public const float MarkerFootprintRadius = 0.45f;
-    public static readonly Color BoardColor = new Color(0.95f, 0.95f, 0.9f, 1f);
+    public static readonly Color BoardColor = new Color(1f, 0.96f, 0.18f, 1f);
     public static readonly Color TextColor = new Color(0.02f, 0.02f, 0.02f, 1f);
     public static readonly Color PostColor = new Color(0.12f, 0.12f, 0.12f, 1f);
+    public static readonly Color BorderColor = new Color(0.02f, 0.1f, 0.45f, 1f);
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void InstallKilometerMarkers()
@@ -27,7 +28,7 @@ public class KilometerMarkerSignRuntimeUpdater : MonoBehaviour
     {
         var sideSign = side < 0f ? -1f : 1f;
         var position = CoursePath.PointAtDistance(distanceMeters, sideSign * MarkerLateralOffset);
-        position.y += 0.95f;
+        position.y += 1.35f;
         return position;
     }
 
@@ -41,21 +42,27 @@ public class KilometerMarkerSignRuntimeUpdater : MonoBehaviour
                 existing.AddComponent<KilometerMarkerSignRuntimeUpdater>();
             }
 
+            RebuildKilometerMarkers(existing.transform);
             return existing;
         }
 
         var root = new GameObject(MarkerRootName);
         root.AddComponent<KilometerMarkerSignRuntimeUpdater>();
+        RebuildKilometerMarkers(root.transform);
+        return root;
+    }
+
+    private static void RebuildKilometerMarkers(Transform root)
+    {
+        ClearChildren(root);
 
         var markerCount = CalculateMarkerCount(CoursePath.CourseLengthMeters);
         for (var kilometer = 1; kilometer <= markerCount; kilometer++)
         {
             var distanceMeters = kilometer * MarkerSpacingMeters;
-            CreateMarkerSign(root.transform, kilometer, distanceMeters, -1f);
-            CreateMarkerSign(root.transform, kilometer, distanceMeters, 1f);
+            CreateMarkerSign(root, kilometer, distanceMeters, -1f);
+            CreateMarkerSign(root, kilometer, distanceMeters, 1f);
         }
-
-        return root;
     }
 
     private static void CreateMarkerSign(Transform parent, int kilometer, float distanceMeters, float side)
@@ -64,25 +71,28 @@ public class KilometerMarkerSignRuntimeUpdater : MonoBehaviour
         var sign = new GameObject($"{sideName} {kilometer} km Marker");
         sign.transform.SetParent(parent, false);
         sign.transform.position = CalculateMarkerPosition(distanceMeters, side);
-        sign.transform.rotation = CalculateInwardFacingRotation(distanceMeters, side);
+        sign.transform.rotation = CalculateApproachFacingRotation(distanceMeters);
 
-        AddSignPart(sign.transform, "Marker Post", new Vector3(0f, -0.42f, 0f), new Vector3(0.12f, 0.9f, 0.12f), PostColor);
-        AddSignPart(sign.transform, "Marker Board", new Vector3(0f, 0.18f, 0f), new Vector3(1.08f, 0.48f, 0.08f), BoardColor);
+        AddSignPart(sign.transform, "Marker Post", new Vector3(0f, -0.64f, 0f), new Vector3(0.18f, 1.35f, 0.18f), PostColor);
+        AddSignPart(sign.transform, "Marker Board", new Vector3(0f, 0.28f, 0f), new Vector3(2.35f, 1.05f, 0.12f), BoardColor);
+        AddSignPart(sign.transform, "Marker Board Border Top", new Vector3(0f, 0.85f, -0.01f), new Vector3(2.55f, 0.11f, 0.14f), BorderColor);
+        AddSignPart(sign.transform, "Marker Board Border Bottom", new Vector3(0f, -0.29f, -0.01f), new Vector3(2.55f, 0.11f, 0.14f), BorderColor);
+        AddSignPart(sign.transform, "Marker Board Border Left", new Vector3(-1.22f, 0.28f, -0.01f), new Vector3(0.11f, 1.16f, 0.14f), BorderColor);
+        AddSignPart(sign.transform, "Marker Board Border Right", new Vector3(1.22f, 0.28f, -0.01f), new Vector3(0.11f, 1.16f, 0.14f), BorderColor);
         AddMarkerText(sign.transform, $"{kilometer} km");
     }
 
-    private static Quaternion CalculateInwardFacingRotation(float distanceMeters, float side)
+    public static Quaternion CalculateApproachFacingRotation(float distanceMeters)
     {
-        var right = CoursePath.RightAtDistance(distanceMeters);
-        var inward = side < 0f ? right : -right;
-        inward.y = 0f;
+        var direction = CoursePath.DirectionAtDistance(distanceMeters);
+        direction.y = 0f;
 
-        if (inward.sqrMagnitude <= 0.001f)
+        if (direction.sqrMagnitude <= 0.001f)
         {
             return Quaternion.identity;
         }
 
-        return Quaternion.LookRotation(inward.normalized, Vector3.up);
+        return Quaternion.LookRotation(-direction.normalized, Vector3.up);
     }
 
     private static void AddSignPart(Transform parent, string name, Vector3 localPosition, Vector3 scale, Color color)
@@ -97,8 +107,8 @@ public class KilometerMarkerSignRuntimeUpdater : MonoBehaviour
 
     private static void AddMarkerText(Transform parent, string label)
     {
-        AddMarkerTextFace(parent, "Marker Text Road Face", label, -0.046f, 180f);
-        AddMarkerTextFace(parent, "Marker Text Outer Face", label, 0.046f, 0f);
+        AddMarkerTextFace(parent, "Marker Text Approach Face", label, 0.086f, 0f);
+        AddMarkerTextFace(parent, "Marker Text Reverse Face", label, -0.086f, 180f);
     }
 
     private static void AddMarkerTextFace(Transform parent, string name, string label, float localZ, float yRotation)
@@ -106,13 +116,13 @@ public class KilometerMarkerSignRuntimeUpdater : MonoBehaviour
         var textObject = new GameObject("Marker Text");
         textObject.name = name;
         textObject.transform.SetParent(parent, false);
-        textObject.transform.localPosition = new Vector3(0f, 0.18f, localZ);
+        textObject.transform.localPosition = new Vector3(0f, 0.28f, localZ);
         textObject.transform.localRotation = Quaternion.Euler(0f, yRotation, 0f);
-        textObject.transform.localScale = new Vector3(0.08f, 0.08f, 0.08f);
+        textObject.transform.localScale = new Vector3(0.18f, 0.18f, 0.18f);
 
         var text = textObject.AddComponent<TextMeshPro>();
         text.text = label;
-        text.fontSize = 4.2f;
+        text.fontSize = 5.2f;
         text.fontStyle = FontStyles.Bold;
         text.alignment = TextAlignmentOptions.Center;
         text.color = TextColor;
@@ -120,6 +130,22 @@ public class KilometerMarkerSignRuntimeUpdater : MonoBehaviour
         text.textWrappingMode = TextWrappingModes.NoWrap;
 
         var rect = text.GetComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(9f, 3.2f);
+        rect.sizeDelta = new Vector2(10f, 3.2f);
+    }
+
+    private static void ClearChildren(Transform root)
+    {
+        for (var index = root.childCount - 1; index >= 0; index--)
+        {
+            var child = root.GetChild(index).gameObject;
+            if (Application.isPlaying)
+            {
+                Destroy(child);
+            }
+            else
+            {
+                DestroyImmediate(child);
+            }
+        }
     }
 }

@@ -31,6 +31,16 @@ public class KilometerMarkerSignRuntimeUpdaterTests
     }
 
     [Test]
+    public void CalculateApproachFacingRotation_PointsSignTowardApproachingPlayer()
+    {
+        var rotation = KilometerMarkerSignRuntimeUpdater.CalculateApproachFacingRotation(1000f);
+        var courseDirection = CoursePath.DirectionAtDistance(1000f);
+        courseDirection.y = 0f;
+
+        Assert.Greater(Vector3.Dot(rotation * Vector3.forward, -courseDirection.normalized), 0.99f);
+    }
+
+    [Test]
     public void EnsureKilometerMarkers_CreatesTwoSignsPerCompletedKilometer()
     {
         var root = KilometerMarkerSignRuntimeUpdater.EnsureKilometerMarkers();
@@ -46,6 +56,8 @@ public class KilometerMarkerSignRuntimeUpdaterTests
             Assert.IsNotNull(GameObject.Find("Left 1 km Marker").GetComponentInChildren<TextMeshPro>());
             Assert.AreEqual("1 km", GameObject.Find("Left 1 km Marker").GetComponentInChildren<TextMeshPro>().text);
             Assert.AreEqual(2, GameObject.Find("Left 1 km Marker").GetComponentsInChildren<TextMeshPro>().Length);
+            Assert.Greater(GameObject.Find("Left 1 km Marker").transform.position.y, CoursePath.HeightAtDistance(1000f) + 1f);
+            Assert.Greater(GameObject.Find("Left 1 km Marker").transform.Find("Marker Board").localScale.x, 2f);
         }
         finally
         {
@@ -67,6 +79,29 @@ public class KilometerMarkerSignRuntimeUpdaterTests
         finally
         {
             Object.DestroyImmediate(first);
+        }
+    }
+
+    [Test]
+    public void EnsureKilometerMarkers_RebuildsExistingSmallMarkers()
+    {
+        var root = new GameObject(KilometerMarkerSignRuntimeUpdater.MarkerRootName);
+        var oldMarker = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        oldMarker.name = "Tiny Old Marker";
+        oldMarker.transform.SetParent(root.transform, false);
+
+        var rebuilt = KilometerMarkerSignRuntimeUpdater.EnsureKilometerMarkers();
+
+        try
+        {
+            Assert.AreSame(root, rebuilt);
+            Assert.IsNull(GameObject.Find("Tiny Old Marker"));
+            Assert.IsNotNull(GameObject.Find("Left 1 km Marker"));
+            Assert.IsNotNull(GameObject.Find("Right 1 km Marker"));
+        }
+        finally
+        {
+            Object.DestroyImmediate(root);
         }
     }
 }
