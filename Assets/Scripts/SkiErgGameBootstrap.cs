@@ -213,28 +213,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
     private static void CreateStartFinishMarkers()
     {
-        CreateGate("Start Finish Gate", 0f, new Color(0.1f, 0.45f, 0.95f));
-        CreatePathCube(null, "Start Finish Line", 0f, 1f, 0.4f, RoadWidthMeters, 0.05f, Color.white, 0.04f);
-    }
-
-    private static void CreateGate(string name, float zPosition, Color color)
-    {
-        var gate = new GameObject(name);
-        gate.transform.position = CoursePath.CenterPointAtDistance(zPosition);
-        gate.transform.rotation = HorizontalRotationAtDistance(zPosition);
-        AddGatePart(gate.transform, "Left Post", new Vector3(-RoadWidthMeters * 0.5f - 0.35f, 1.5f, 0f), new Vector3(0.28f, 3f, 0.28f), color);
-        AddGatePart(gate.transform, "Right Post", new Vector3(RoadWidthMeters * 0.5f + 0.35f, 1.5f, 0f), new Vector3(0.28f, 3f, 0.28f), color);
-        AddGatePart(gate.transform, "Top Bar", new Vector3(0f, 3.05f, 0f), new Vector3(RoadWidthMeters + 1.2f, 0.3f, 0.3f), color);
-    }
-
-    private static void AddGatePart(Transform parent, string name, Vector3 localPosition, Vector3 scale, Color color)
-    {
-        var part = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        part.name = name;
-        part.transform.SetParent(parent, false);
-        part.transform.localPosition = localPosition;
-        part.transform.localScale = scale;
-        part.GetComponent<Renderer>().material.color = color;
+        StartFinishPortalRuntimeUpdater.EnsureStartFinishPortal();
     }
 
     private static Mesh CreateMoundMesh()
