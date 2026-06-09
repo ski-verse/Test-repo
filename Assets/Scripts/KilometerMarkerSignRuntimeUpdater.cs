@@ -107,8 +107,20 @@ public class KilometerMarkerSignRuntimeUpdater : MonoBehaviour
 
     private static void AddMarkerText(Transform parent, string label)
     {
-        AddMarkerTextFace(parent, "Marker Text Approach Face", label, -0.22f, 0f);
-        AddMarkerTextFace(parent, "Marker Text Reverse Face", label, 0.22f, 180f);
+        var formattedLabel = FormatMarkerLabel(label);
+        AddMarkerTextFace(parent, "Marker Text Approach Face", formattedLabel, -0.22f, 0f);
+        AddMarkerTextFace(parent, "Marker Text Reverse Face", formattedLabel, 0.22f, 180f);
+    }
+
+    public static string FormatMarkerLabel(string label)
+    {
+        var parts = label.Split(' ');
+        if (parts.Length == 2 && parts[1] == "km")
+        {
+            return $"{parts[0]}<size=50%> km</size>";
+        }
+
+        return label;
     }
 
     private static void AddMarkerTextFace(Transform parent, string name, string label, float localZ, float yRotation)
@@ -122,16 +134,16 @@ public class KilometerMarkerSignRuntimeUpdater : MonoBehaviour
 
         var text = textObject.AddComponent<TextMeshPro>();
         text.text = label;
-        text.fontSize = 18.4f;
+        text.fontSize = 23.9f;
         text.fontStyle = FontStyles.Bold;
         text.alignment = TextAlignmentOptions.Center;
         text.color = TextColor;
         text.enableAutoSizing = false;
         text.textWrappingMode = TextWrappingModes.NoWrap;
-        text.characterSpacing = -14f;
+        text.characterSpacing = -10f;
 
         var rect = text.GetComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(3.6f, 2.45f);
+        rect.sizeDelta = new Vector2(3.7f, 2.5f);
     }
 
     private static void ClearChildren(Transform root)
