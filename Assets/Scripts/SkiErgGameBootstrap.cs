@@ -31,6 +31,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
         CreateGrass();
         CreateRoadMarkings();
         CreateRoadsidePosts();
+        KilometerMarkerSignRuntimeUpdater.EnsureKilometerMarkers();
         CreateTurnSigns();
         CreateStartFinishMarkers();
         CreateDistantForests();
