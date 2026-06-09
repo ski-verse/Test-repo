@@ -55,9 +55,12 @@ public class KilometerMarkerSignRuntimeUpdaterTests
             Assert.IsNotNull(GameObject.Find("Right 3 km Marker"));
             Assert.IsNotNull(GameObject.Find("Left 1 km Marker").GetComponentInChildren<TextMeshPro>());
             Assert.AreEqual("1 km", GameObject.Find("Left 1 km Marker").GetComponentInChildren<TextMeshPro>().text);
-            Assert.AreEqual(2, GameObject.Find("Left 1 km Marker").GetComponentsInChildren<TextMeshPro>().Length);
-            Assert.Greater(GameObject.Find("Left 1 km Marker").transform.position.y, CoursePath.HeightAtDistance(1000f) + 1f);
-            Assert.Greater(GameObject.Find("Left 1 km Marker").transform.Find("Marker Board").localScale.x, 2f);
+            Assert.AreEqual(4, GameObject.Find("Left 1 km Marker").GetComponentsInChildren<TextMeshPro>().Length);
+            Assert.Greater(GameObject.Find("Left 1 km Marker").transform.position.y, CoursePath.HeightAtDistance(1000f) + 1.5f);
+            Assert.Greater(GameObject.Find("Left 1 km Marker").transform.Find("Marker Board").localScale.x, 3f);
+            Assert.GreaterOrEqual(GameObject.Find("Left 1 km Marker").transform.Find("Marker Board").localScale.y, 2f);
+            Assert.AreEqual(Color.white, GameObject.Find("Left 1 km Marker").transform.Find("Marker Board").GetComponent<Renderer>().sharedMaterial.color);
+            Assert.AreEqual(Color.black, GameObject.Find("Left 1 km Marker").GetComponentInChildren<TextMeshPro>().color);
         }
         finally
         {

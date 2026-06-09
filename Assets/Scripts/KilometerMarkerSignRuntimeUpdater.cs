@@ -8,10 +8,10 @@ public class KilometerMarkerSignRuntimeUpdater : MonoBehaviour
     public const float MarkerSpacingMeters = 1000f;
     public const float MarkerLateralOffset = EnvironmentPlacement.RoadHalfWidth + 1.45f;
     public const float MarkerFootprintRadius = 0.45f;
-    public static readonly Color BoardColor = new Color(1f, 0.96f, 0.18f, 1f);
-    public static readonly Color TextColor = new Color(0.02f, 0.02f, 0.02f, 1f);
+    public static readonly Color BoardColor = Color.white;
+    public static readonly Color TextColor = Color.black;
     public static readonly Color PostColor = new Color(0.12f, 0.12f, 0.12f, 1f);
-    public static readonly Color BorderColor = new Color(0.02f, 0.1f, 0.45f, 1f);
+    public static readonly Color BorderColor = Color.black;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void InstallKilometerMarkers()
@@ -28,7 +28,7 @@ public class KilometerMarkerSignRuntimeUpdater : MonoBehaviour
     {
         var sideSign = side < 0f ? -1f : 1f;
         var position = CoursePath.PointAtDistance(distanceMeters, sideSign * MarkerLateralOffset);
-        position.y += 1.35f;
+        position.y += 1.8f;
         return position;
     }
 
@@ -73,12 +73,12 @@ public class KilometerMarkerSignRuntimeUpdater : MonoBehaviour
         sign.transform.position = CalculateMarkerPosition(distanceMeters, side);
         sign.transform.rotation = CalculateApproachFacingRotation(distanceMeters);
 
-        AddSignPart(sign.transform, "Marker Post", new Vector3(0f, -0.64f, 0f), new Vector3(0.18f, 1.35f, 0.18f), PostColor);
-        AddSignPart(sign.transform, "Marker Board", new Vector3(0f, 0.28f, 0f), new Vector3(2.35f, 1.05f, 0.12f), BoardColor);
-        AddSignPart(sign.transform, "Marker Board Border Top", new Vector3(0f, 0.85f, -0.01f), new Vector3(2.55f, 0.11f, 0.14f), BorderColor);
-        AddSignPart(sign.transform, "Marker Board Border Bottom", new Vector3(0f, -0.29f, -0.01f), new Vector3(2.55f, 0.11f, 0.14f), BorderColor);
-        AddSignPart(sign.transform, "Marker Board Border Left", new Vector3(-1.22f, 0.28f, -0.01f), new Vector3(0.11f, 1.16f, 0.14f), BorderColor);
-        AddSignPart(sign.transform, "Marker Board Border Right", new Vector3(1.22f, 0.28f, -0.01f), new Vector3(0.11f, 1.16f, 0.14f), BorderColor);
+        AddSignPart(sign.transform, "Marker Post", new Vector3(0f, -0.86f, 0f), new Vector3(0.2f, 1.8f, 0.2f), PostColor);
+        AddSignPart(sign.transform, "Marker Board", new Vector3(0f, 0.42f, 0f), new Vector3(3.2f, 2.1f, 0.16f), BoardColor);
+        AddSignPart(sign.transform, "Marker Board Border Top", new Vector3(0f, 1.52f, -0.01f), new Vector3(3.45f, 0.16f, 0.18f), BorderColor);
+        AddSignPart(sign.transform, "Marker Board Border Bottom", new Vector3(0f, -0.68f, -0.01f), new Vector3(3.45f, 0.16f, 0.18f), BorderColor);
+        AddSignPart(sign.transform, "Marker Board Border Left", new Vector3(-1.66f, 0.42f, -0.01f), new Vector3(0.16f, 2.25f, 0.18f), BorderColor);
+        AddSignPart(sign.transform, "Marker Board Border Right", new Vector3(1.66f, 0.42f, -0.01f), new Vector3(0.16f, 2.25f, 0.18f), BorderColor);
         AddMarkerText(sign.transform, $"{kilometer} km");
     }
 
@@ -107,8 +107,10 @@ public class KilometerMarkerSignRuntimeUpdater : MonoBehaviour
 
     private static void AddMarkerText(Transform parent, string label)
     {
-        AddMarkerTextFace(parent, "Marker Text Approach Face", label, 0.086f, 0f);
-        AddMarkerTextFace(parent, "Marker Text Reverse Face", label, -0.086f, 180f);
+        AddMarkerTextFace(parent, "Marker Text Approach Face A", label, -0.105f, 0f);
+        AddMarkerTextFace(parent, "Marker Text Approach Face B", label, -0.115f, 180f);
+        AddMarkerTextFace(parent, "Marker Text Reverse Face A", label, 0.105f, 0f);
+        AddMarkerTextFace(parent, "Marker Text Reverse Face B", label, 0.115f, 180f);
     }
 
     private static void AddMarkerTextFace(Transform parent, string name, string label, float localZ, float yRotation)
@@ -116,13 +118,13 @@ public class KilometerMarkerSignRuntimeUpdater : MonoBehaviour
         var textObject = new GameObject("Marker Text");
         textObject.name = name;
         textObject.transform.SetParent(parent, false);
-        textObject.transform.localPosition = new Vector3(0f, 0.28f, localZ);
+        textObject.transform.localPosition = new Vector3(0f, 0.42f, localZ);
         textObject.transform.localRotation = Quaternion.Euler(0f, yRotation, 0f);
-        textObject.transform.localScale = new Vector3(0.18f, 0.18f, 0.18f);
+        textObject.transform.localScale = new Vector3(0.34f, 0.34f, 0.34f);
 
         var text = textObject.AddComponent<TextMeshPro>();
         text.text = label;
-        text.fontSize = 5.2f;
+        text.fontSize = 6.8f;
         text.fontStyle = FontStyles.Bold;
         text.alignment = TextAlignmentOptions.Center;
         text.color = TextColor;
@@ -130,7 +132,7 @@ public class KilometerMarkerSignRuntimeUpdater : MonoBehaviour
         text.textWrappingMode = TextWrappingModes.NoWrap;
 
         var rect = text.GetComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(10f, 3.2f);
+        rect.sizeDelta = new Vector2(9f, 3.2f);
     }
 
     private static void ClearChildren(Transform root)
