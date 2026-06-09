@@ -37,7 +37,7 @@ public class KilometerMarkerSignRuntimeUpdaterTests
         var courseDirection = CoursePath.DirectionAtDistance(1000f);
         courseDirection.y = 0f;
 
-        Assert.Greater(Vector3.Dot(rotation * Vector3.forward, -courseDirection.normalized), 0.99f);
+        Assert.Greater(Vector3.Dot(rotation * Vector3.forward, courseDirection.normalized), 0.99f);
     }
 
     [Test]

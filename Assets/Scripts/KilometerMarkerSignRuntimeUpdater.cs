@@ -92,7 +92,7 @@ public class KilometerMarkerSignRuntimeUpdater : MonoBehaviour
             return Quaternion.identity;
         }
 
-        return Quaternion.LookRotation(-direction.normalized, Vector3.up);
+        return Quaternion.LookRotation(direction.normalized, Vector3.up);
     }
 
     private static void AddSignPart(Transform parent, string name, Vector3 localPosition, Vector3 scale, Color color)
