@@ -61,7 +61,12 @@ public class KilometerMarkerSignRuntimeUpdaterTests
             Assert.GreaterOrEqual(GameObject.Find("Left 1 km Marker").transform.Find("Marker Board").localScale.y, 2.7f);
             Assert.AreEqual(Color.white, GameObject.Find("Left 1 km Marker").transform.Find("Marker Board").GetComponent<Renderer>().sharedMaterial.color);
             Assert.AreEqual(Color.black, GameObject.Find("Left 1 km Marker").GetComponentInChildren<TextMeshPro>().color);
-            Assert.Greater(GameObject.Find("Left 1 km Marker").GetComponentInChildren<TextMeshPro>().transform.localScale.x, 0.8f);
+            var approachText = GameObject.Find("Left 1 km Marker").transform.Find("Marker Text Approach Face");
+            Assert.IsNotNull(approachText);
+            Assert.Less(approachText.localPosition.z, -0.15f);
+            Assert.AreEqual(Quaternion.identity, approachText.localRotation);
+            Assert.Greater(approachText.GetComponent<TextMeshPro>().fontSize, 9f);
+            Assert.GreaterOrEqual(approachText.localScale.x, 1f);
         }
         finally
         {
