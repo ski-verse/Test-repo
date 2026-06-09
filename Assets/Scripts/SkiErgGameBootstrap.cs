@@ -550,6 +550,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
         display.Refresh();
 
         CourseMinimapDisplay.CreateRuntimeMinimap(canvasObject.transform, player);
+        CourseElevationProfileDisplay.CreateRuntimeProfile(canvasObject.transform, player);
     }
 
     private static TextMeshProUGUI CreateHudText(Transform parent, string name, Vector2 anchoredPosition)
