@@ -75,6 +75,7 @@ public class EnvironmentGroundRenderingCleanupTests
         {
             Object.DestroyImmediate(terrain);
             Object.DestroyImmediate(grassRoot);
+            DestroyRuntimeGround();
         }
     }
 
@@ -169,6 +170,55 @@ public class EnvironmentGroundRenderingCleanupTests
         finally
         {
             Object.DestroyImmediate(strip);
+            DestroyRuntimeGround();
+        }
+    }
+
+    [Test]
+    public void IsLargeBrownGroundCandidate_DetectsWideBrownTerrainEvenWhenNotFlat()
+    {
+        var ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        ground.name = "Wide Brown Terrain Surface";
+        ground.transform.localScale = new Vector3(80f, 2.2f, 140f);
+        ground.GetComponent<Renderer>().material.color = new Color(0.34f, 0.27f, 0.2f, 1f);
+
+        var trunk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        trunk.name = "Tree Trunk";
+        trunk.transform.localScale = new Vector3(0.35f, 3f, 0.35f);
+        trunk.GetComponent<Renderer>().material.color = new Color(0.34f, 0.22f, 0.1f, 1f);
+
+        try
+        {
+            Assert.IsTrue(EnvironmentGroundRenderingCleanup.IsLargeBrownGroundCandidate(ground.GetComponent<Renderer>()));
+            Assert.IsFalse(EnvironmentGroundRenderingCleanup.IsLargeBrownGroundCandidate(trunk.GetComponent<Renderer>()));
+        }
+        finally
+        {
+            Object.DestroyImmediate(ground);
+            Object.DestroyImmediate(trunk);
+        }
+    }
+
+    [Test]
+    public void CleanupSceneGround_RecolorsWideBrownTerrainToGrass()
+    {
+        var ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        ground.name = "Wide Brown Terrain Surface";
+        ground.transform.localScale = new Vector3(80f, 2.2f, 140f);
+        ground.GetComponent<Renderer>().material.color = new Color(0.34f, 0.27f, 0.2f, 1f);
+
+        try
+        {
+            EnvironmentGroundRenderingCleanup.CleanupSceneGround();
+
+            var color = ground.GetComponent<Renderer>().material.color;
+            Assert.Greater(color.g, color.r);
+            Assert.Greater(color.g, color.b);
+        }
+        finally
+        {
+            Object.DestroyImmediate(ground);
+            DestroyRuntimeGround();
         }
     }
 
@@ -184,5 +234,15 @@ public class EnvironmentGroundRenderingCleanupTests
         Assert.AreEqual(1f, color.a, 0.001f);
         Assert.Greater(color.g, color.r);
         Assert.Greater(color.g, color.b);
+    }
+
+    private static void DestroyRuntimeGround()
+    {
+        var runtimeGround = GameObject.Find(EnvironmentGroundRenderingCleanup.RuntimeGroundRootName);
+
+        if (runtimeGround != null)
+        {
+            Object.DestroyImmediate(runtimeGround);
+        }
     }
 }

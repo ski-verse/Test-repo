@@ -8,6 +8,7 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
     private const float FlatGroundMaxHeight = 0.45f;
     private const float LargeSurfaceMinWidth = 1.8f;
     private const float LargeSurfaceMinLength = 2.8f;
+    private const float LargeBrownGroundMinSpan = 8f;
     public static readonly Color RoadShoulderGrassColor = new Color(0.18f, 0.48f, 0.17f, 1f);
     public static readonly Color OpenTerrainGrassColor = new Color(0.2f, 0.56f, 0.2f, 1f);
     public static readonly Color RoadsideStripGrassColor = new Color(0.17f, 0.52f, 0.18f, 1f);
@@ -147,6 +148,12 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
             if (IsFlatRoadsideGroundCandidate(renderer))
             {
                 ApplyOpaqueGrassMaterial(renderer, RoadsideStripGrassColor);
+                continue;
+            }
+
+            if (IsLargeBrownGroundCandidate(renderer))
+            {
+                ApplyOpaqueGrassMaterial(renderer, OpenTerrainGrassColor);
             }
         }
     }
@@ -212,6 +219,45 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
         var greyRoadLike = Mathf.Abs(color.r - color.g) < 0.09f && Mathf.Abs(color.g - color.b) < 0.09f && color.r > 0.18f && color.r < 0.72f;
         var transparent = color.a < 0.95f || material.renderQueue >= (int)UnityEngine.Rendering.RenderQueue.Transparent;
         return mostlyBrown || greyRoadLike || transparent;
+    }
+
+    public static bool IsLargeBrownGroundCandidate(Renderer renderer)
+    {
+        if (renderer == null)
+        {
+            return false;
+        }
+
+        var gameObject = renderer.gameObject;
+
+        if (IsProtectedRoadObject(gameObject) || IsGeneratedGrassSurface(gameObject))
+        {
+            return false;
+        }
+
+        var bounds = renderer.bounds;
+        var largeGroundSpan = Mathf.Max(bounds.size.x, bounds.size.z) >= LargeBrownGroundMinSpan
+            && Mathf.Min(bounds.size.x, bounds.size.z) >= LargeSurfaceMinWidth;
+
+        if (!largeGroundSpan)
+        {
+            return false;
+        }
+
+        return IsBrown(renderer);
+    }
+
+    private static bool IsBrown(Renderer renderer)
+    {
+        var material = renderer.material;
+
+        if (material == null)
+        {
+            return false;
+        }
+
+        var color = material.HasProperty("_BaseColor") ? material.GetColor("_BaseColor") : material.color;
+        return color.r > color.g * 1.05f && color.g >= color.b * 0.75f && color.r > 0.18f;
     }
 
     private static bool HasSelfOrAncestorName(GameObject gameObject, string text)
