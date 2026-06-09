@@ -89,6 +89,7 @@ public class WorkoutSessionController : MonoBehaviour
 
         RefreshElapsedTimeText();
         RefreshLapText();
+        ResetStrokeMetrics();
     }
 
     public void AdvanceSession(float deltaTime, float distanceKm, float speedKmh)
@@ -230,6 +231,15 @@ public class WorkoutSessionController : MonoBehaviour
         player.CurrentSpeed = 4f;
         player.AlignToCourse(0f);
         player.SetStartDistanceZ(0f);
+    }
+
+    private static void ResetStrokeMetrics()
+    {
+        var strokeDisplays = Object.FindObjectsByType<StrokeMetricsDisplay>(FindObjectsSortMode.None);
+        for (var index = 0; index < strokeDisplays.Length; index++)
+        {
+            strokeDisplays[index].ResetStrokeSession();
+        }
     }
 
     private void CreateRuntimeUiIfNeeded()
