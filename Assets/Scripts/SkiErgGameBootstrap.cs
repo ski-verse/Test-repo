@@ -38,6 +38,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
         CreateRockClusters();
         CreateDistantMountains();
         CreateTrees();
+        NordicLandscapeRuntimeUpdater.EnsureNordicLandscapeAtmosphere();
     }
 
     private static void CreateRoad()
