@@ -164,23 +164,51 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
 
         if (existing != null)
         {
+            RefreshContinuousGreenRoadsideGround(existing.transform);
             return existing;
         }
 
         var root = new GameObject(RuntimeGroundRootName);
-        CreateRuntimeGroundSide(root.transform, "Left Runtime Grass Terrain", -1f);
-        CreateRuntimeGroundSide(root.transform, "Right Runtime Grass Terrain", 1f);
+        RefreshContinuousGreenRoadsideGround(root.transform);
         return root;
     }
 
-    private static void CreateRuntimeGroundSide(Transform parent, string name, float side)
+    private static void RefreshContinuousGreenRoadsideGround(Transform parent)
     {
-        var ground = new GameObject(name);
-        ground.transform.SetParent(parent, false);
-        var meshFilter = ground.AddComponent<MeshFilter>();
+        RefreshRuntimeGroundSide(parent, "Left Runtime Grass Terrain", -1f, "Left");
+        RefreshRuntimeGroundSide(parent, "Right Runtime Grass Terrain", 1f, "Right");
+    }
+
+    private static void RefreshRuntimeGroundSide(Transform parent, string name, float side, string sideName)
+    {
+        var ground = FindChildContaining(parent, sideName);
+
+        if (ground == null)
+        {
+            ground = new GameObject(name).transform;
+            ground.SetParent(parent, false);
+        }
+
+        ground.name = name;
+        var meshFilter = ground.GetComponent<MeshFilter>() ?? ground.gameObject.AddComponent<MeshFilter>();
         meshFilter.mesh = RoadsideGroundMeshBuilder.CreateGroundMesh(side);
-        var renderer = ground.AddComponent<MeshRenderer>();
+        var renderer = ground.GetComponent<MeshRenderer>() ?? ground.gameObject.AddComponent<MeshRenderer>();
         ApplyOpaqueGrassMaterial(renderer, OpenTerrainGrassColor);
+    }
+
+    private static Transform FindChildContaining(Transform parent, string namePart)
+    {
+        for (var index = 0; index < parent.childCount; index++)
+        {
+            var child = parent.GetChild(index);
+
+            if (child.name.Contains(namePart))
+            {
+                return child;
+            }
+        }
+
+        return null;
     }
 
     private void ApplyCleanupIfNeeded()

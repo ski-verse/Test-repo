@@ -106,6 +106,38 @@ public class EnvironmentGroundRenderingCleanupTests
     }
 
     [Test]
+    public void EnsureContinuousGreenRoadsideGroundExists_RebuildsExistingSavedGroundMeshes()
+    {
+        var root = new GameObject("Continuous Green Roadside Ground");
+        var oldLeft = new GameObject("Left Continuous Grass Terrain");
+        oldLeft.transform.SetParent(root.transform, false);
+        oldLeft.AddComponent<MeshFilter>().mesh = new Mesh
+        {
+            vertices = new[] { Vector3.zero, Vector3.right, Vector3.forward },
+            triangles = new[] { 0, 1, 2 }
+        };
+        oldLeft.AddComponent<MeshRenderer>().material.color = new Color(0.35f, 0.25f, 0.16f, 0.45f);
+
+        try
+        {
+            var refreshed = EnvironmentGroundRenderingCleanup.EnsureContinuousGreenRoadsideGroundExists();
+            var left = refreshed.transform.Find("Left Runtime Grass Terrain");
+            var right = refreshed.transform.Find("Right Runtime Grass Terrain");
+
+            Assert.AreSame(root, refreshed);
+            Assert.IsNotNull(left);
+            Assert.IsNotNull(right);
+            Assert.Greater(left.GetComponent<MeshFilter>().sharedMesh.vertexCount, 3);
+            Assert.AreEqual(1f, left.GetComponent<MeshRenderer>().material.color.a, 0.001f);
+            Assert.Greater(left.GetComponent<MeshRenderer>().material.color.g, left.GetComponent<MeshRenderer>().material.color.r);
+        }
+        finally
+        {
+            Object.DestroyImmediate(root);
+        }
+    }
+
+    [Test]
     public void IsFlatRoadsideGroundCandidate_DetectsLargeBrownOrGreyStripsButKeepsRoad()
     {
         var strip = GameObject.CreatePrimitive(PrimitiveType.Cube);
