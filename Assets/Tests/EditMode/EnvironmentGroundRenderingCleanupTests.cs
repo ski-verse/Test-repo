@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using System.Reflection;
 using UnityEngine;
 
 public class EnvironmentGroundRenderingCleanupTests
@@ -77,6 +78,40 @@ public class EnvironmentGroundRenderingCleanupTests
             Object.DestroyImmediate(grassRoot);
             DestroyRuntimeGround();
         }
+    }
+
+    [Test]
+    public void CleanupSceneGroundWithStats_ReportsSinglePassWork()
+    {
+        var terrain = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        terrain.name = "Transparent Ground Terrain Strip";
+        var grass = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        grass.name = "Left Open Grass Segment";
+
+        try
+        {
+            var stats = EnvironmentGroundRenderingCleanup.CleanupSceneGroundWithStats();
+
+            Assert.GreaterOrEqual(stats.RenderersScanned, 2);
+            Assert.GreaterOrEqual(stats.DisabledObjects, 1);
+            Assert.GreaterOrEqual(stats.RecoloredObjects, 1);
+            Assert.IsFalse(terrain.activeSelf);
+            Assert.IsTrue(grass.activeSelf);
+        }
+        finally
+        {
+            Object.DestroyImmediate(terrain);
+            Object.DestroyImmediate(grass);
+            DestroyRuntimeGround();
+        }
+    }
+
+    [Test]
+    public void EnvironmentGroundRenderingCleanup_DoesNotRunCleanupEveryUpdateFrame()
+    {
+        var updateMethod = typeof(EnvironmentGroundRenderingCleanup).GetMethod("Update", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+
+        Assert.IsNull(updateMethod);
     }
 
     [Test]

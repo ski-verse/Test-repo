@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -6,6 +7,12 @@ using UnityEditor;
 
 public static class StarterPackEnvironmentAssets
 {
+#if UNITY_EDITOR
+    private static readonly Dictionary<string, GameObject> PrefabCache = new Dictionary<string, GameObject>();
+    private static int prefabLoadCount;
+    private static int prefabInstantiateCount;
+#endif
+
     public static readonly string[] PinePrefabPaths =
     {
         "Assets/Low Poly Environment Starter Kit/Prefabs/Standard/Trees/Pine 1.prefab",
@@ -85,7 +92,7 @@ public static class StarterPackEnvironmentAssets
             return false;
         }
 
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+        var prefab = LoadPrefabCached(prefabPath);
         if (prefab == null)
         {
             return false;
@@ -101,12 +108,32 @@ public static class StarterPackEnvironmentAssets
         instance.transform.position = position;
         instance.transform.rotation = Quaternion.Euler(0f, Mathf.Repeat(seed * 137.5f, 360f), 0f);
         instance.transform.localScale = Vector3.one * scale;
+        prefabInstantiateCount++;
         DisableColliders(instance);
         return true;
 #else
         return false;
 #endif
     }
+
+#if UNITY_EDITOR
+    private static GameObject LoadPrefabCached(string prefabPath)
+    {
+        if (PrefabCache.TryGetValue(prefabPath, out var cachedPrefab))
+        {
+            return cachedPrefab;
+        }
+
+        using (StartupPerformanceProfiler.Measure($"StarterPackEnvironmentAssets.LoadAssetAtPath {prefabPath}"))
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            PrefabCache[prefabPath] = prefab;
+            prefabLoadCount++;
+            StartupPerformanceProfiler.Log($"starter pack prefab cache loads={prefabLoadCount}, instantiates={prefabInstantiateCount}");
+            return prefab;
+        }
+    }
+#endif
 
     private static void DisableColliders(GameObject root)
     {

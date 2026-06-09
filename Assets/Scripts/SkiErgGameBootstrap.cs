@@ -12,33 +12,56 @@ public class SkiErgGameBootstrap : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void BuildPrototypeScene()
     {
-        if (Object.FindObjectOfType<PlayerSpeedController>() != null)
+        using (StartupPerformanceProfiler.Measure("SkiErgGameBootstrap.BuildPrototypeScene"))
         {
-            return;
-        }
+            if (Object.FindObjectOfType<PlayerSpeedController>() != null)
+            {
+                StartupPerformanceProfiler.Log("SkiErgGameBootstrap skipped because player already exists");
+                return;
+            }
 
-        CreateEnvironment();
-        var player = CreateSkier();
-        CreateCamera(player.transform, player.GetComponent<PlayerSpeedController>());
-        CreateLight();
-        CreateHud(player.GetComponent<PlayerSpeedController>());
+            CreateEnvironment();
+            GameObject player;
+            using (StartupPerformanceProfiler.Measure("CreateSkier"))
+            {
+                player = CreateSkier();
+            }
+
+            using (StartupPerformanceProfiler.Measure("CreateCamera"))
+            {
+                CreateCamera(player.transform, player.GetComponent<PlayerSpeedController>());
+            }
+
+            using (StartupPerformanceProfiler.Measure("CreateLight"))
+            {
+                CreateLight();
+            }
+
+            using (StartupPerformanceProfiler.Measure("CreateHud"))
+            {
+                CreateHud(player.GetComponent<PlayerSpeedController>());
+            }
+        }
     }
 
     private static void CreateEnvironment()
     {
-        CreateRoad();
-        CreateRoadShoulders();
-        CreateGrass();
-        CreateRoadMarkings();
-        CreateRoadsidePosts();
-        KilometerMarkerSignRuntimeUpdater.EnsureKilometerMarkers();
-        CreateTurnSigns();
-        CreateStartFinishMarkers();
-        CreateDistantForests();
-        CreateRockClusters();
-        CreateDistantMountains();
-        CreateTrees();
-        NordicLandscapeRuntimeUpdater.EnsureNordicLandscapeAtmosphere();
+        using (StartupPerformanceProfiler.Measure("CreateEnvironment"))
+        {
+            using (StartupPerformanceProfiler.Measure("CreateRoad")) CreateRoad();
+            using (StartupPerformanceProfiler.Measure("CreateRoadShoulders")) CreateRoadShoulders();
+            using (StartupPerformanceProfiler.Measure("CreateGrass")) CreateGrass();
+            using (StartupPerformanceProfiler.Measure("CreateRoadMarkings")) CreateRoadMarkings();
+            using (StartupPerformanceProfiler.Measure("CreateRoadsidePosts")) CreateRoadsidePosts();
+            using (StartupPerformanceProfiler.Measure("KilometerMarkerSignRuntimeUpdater.EnsureKilometerMarkers")) KilometerMarkerSignRuntimeUpdater.EnsureKilometerMarkers();
+            using (StartupPerformanceProfiler.Measure("CreateTurnSigns")) CreateTurnSigns();
+            using (StartupPerformanceProfiler.Measure("CreateStartFinishMarkers")) CreateStartFinishMarkers();
+            using (StartupPerformanceProfiler.Measure("CreateDistantForests")) CreateDistantForests();
+            using (StartupPerformanceProfiler.Measure("CreateRockClusters")) CreateRockClusters();
+            using (StartupPerformanceProfiler.Measure("CreateDistantMountains")) CreateDistantMountains();
+            using (StartupPerformanceProfiler.Measure("CreateTrees")) CreateTrees();
+            using (StartupPerformanceProfiler.Measure("NordicLandscapeRuntimeUpdater.EnsureNordicLandscapeAtmosphere")) NordicLandscapeRuntimeUpdater.EnsureNordicLandscapeAtmosphere();
+        }
     }
 
     private static void CreateRoad()
@@ -530,9 +553,9 @@ public class SkiErgGameBootstrap : MonoBehaviour
         display.lapText = lapText;
         display.Refresh();
 
-        CourseMinimapDisplay.CreateRuntimeMinimap(canvasObject.transform, player);
-        CourseElevationProfileDisplay.CreateRuntimeProfile(canvasObject.transform, player);
-        StrokeMetricsDisplay.CreateRuntimeStrokeHud(canvasObject.transform, player);
+        using (StartupPerformanceProfiler.Measure("CourseMinimapDisplay.CreateRuntimeMinimap")) CourseMinimapDisplay.CreateRuntimeMinimap(canvasObject.transform, player);
+        using (StartupPerformanceProfiler.Measure("CourseElevationProfileDisplay.CreateRuntimeProfile")) CourseElevationProfileDisplay.CreateRuntimeProfile(canvasObject.transform, player);
+        using (StartupPerformanceProfiler.Measure("StrokeMetricsDisplay.CreateRuntimeStrokeHud")) StrokeMetricsDisplay.CreateRuntimeStrokeHud(canvasObject.transform, player);
     }
 
     private static TextMeshProUGUI CreateHudText(Transform parent, string name, Vector2 anchoredPosition)

@@ -4,7 +4,6 @@ using UnityEngine;
 public class EnvironmentGroundRenderingCleanup : MonoBehaviour
 {
     public const string RuntimeGroundRootName = "Runtime Continuous Green Roadside Ground";
-    private const int CleanupFrameCount = 90;
     private const float FlatGroundMaxHeight = 0.45f;
     private const float LargeSurfaceMinWidth = 1.8f;
     private const float LargeSurfaceMinLength = 2.8f;
@@ -13,7 +12,7 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
     public static readonly Color OpenTerrainGrassColor = new Color(0.2f, 0.56f, 0.2f, 1f);
     public static readonly Color RoadsideStripGrassColor = new Color(0.17f, 0.52f, 0.18f, 1f);
 
-    private int cleanupFramesApplied;
+    private bool cleanupApplied;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void InstallRuntimeCleanup()
@@ -28,11 +27,6 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
     }
 
     private void Start()
-    {
-        ApplyCleanupIfNeeded();
-    }
-
-    private void Update()
     {
         ApplyCleanupIfNeeded();
     }
@@ -122,9 +116,19 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
 
     public static void CleanupSceneGround()
     {
+        using (StartupPerformanceProfiler.Measure("EnvironmentGroundRenderingCleanup.CleanupSceneGround"))
+        {
+            var stats = CleanupSceneGroundWithStats();
+            StartupPerformanceProfiler.Log($"Environment cleanup scanned {stats.RenderersScanned} renderers, disabled {stats.DisabledObjects}, recolored {stats.RecoloredObjects}");
+        }
+    }
+
+    public static EnvironmentCleanupStats CleanupSceneGroundWithStats()
+    {
         EnsureContinuousGreenRoadsideGroundExists();
 
         var renderers = Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None);
+        var stats = new EnvironmentCleanupStats(renderers.Length);
 
         for (var index = 0; index < renderers.Length; index++)
         {
@@ -136,26 +140,32 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
                 var color = HasSelfOrAncestorName(target, "Open Grass") ? OpenTerrainGrassColor : RoadShoulderGrassColor;
                 color = HasSelfOrAncestorName(target, "Road Edge Flow Cue") ? RoadsideStripGrassColor : color;
                 ApplyOpaqueGrassMaterial(renderer, color);
+                stats.RecoloredObjects++;
                 continue;
             }
 
             if (IsExtraneousGroundOrTerrain(target))
             {
                 target.SetActive(false);
+                stats.DisabledObjects++;
                 continue;
             }
 
             if (IsFlatRoadsideGroundCandidate(renderer))
             {
                 ApplyOpaqueGrassMaterial(renderer, RoadsideStripGrassColor);
+                stats.RecoloredObjects++;
                 continue;
             }
 
             if (IsLargeBrownGroundCandidate(renderer))
             {
                 ApplyOpaqueGrassMaterial(renderer, OpenTerrainGrassColor);
+                stats.RecoloredObjects++;
             }
         }
+
+        return stats;
     }
 
     public static GameObject EnsureContinuousGreenRoadsideGroundExists()
@@ -213,14 +223,15 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
 
     private void ApplyCleanupIfNeeded()
     {
-        if (cleanupFramesApplied >= CleanupFrameCount)
+        if (cleanupApplied)
         {
             Destroy(gameObject);
             return;
         }
 
         CleanupSceneGround();
-        cleanupFramesApplied++;
+        cleanupApplied = true;
+        Destroy(gameObject);
     }
 
     private static bool IsProtectedRoadObject(GameObject gameObject)
@@ -325,4 +336,20 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
             material.SetFloat(propertyName, value);
         }
     }
+}
+
+public struct EnvironmentCleanupStats
+{
+    public EnvironmentCleanupStats(int renderersScanned)
+    {
+        RenderersScanned = renderersScanned;
+        DisabledObjects = 0;
+        RecoloredObjects = 0;
+    }
+
+    public int RenderersScanned { get; }
+
+    public int DisabledObjects { get; set; }
+
+    public int RecoloredObjects { get; set; }
 }
