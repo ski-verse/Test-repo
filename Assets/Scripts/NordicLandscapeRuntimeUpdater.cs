@@ -29,6 +29,11 @@ public class NordicLandscapeRuntimeUpdater : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void InstallNordicLandscapeAtmosphere()
     {
+        if (BakedNordicEnvironmentMarker.HasBakedEnvironment())
+        {
+            return;
+        }
+
         EnsureNordicLandscapeAtmosphere(NordicEnvironmentSettings.GetOrCreateRuntimeSettings());
     }
 
@@ -52,7 +57,13 @@ public class NordicLandscapeRuntimeUpdater : MonoBehaviour
             return existing;
         }
 
+        return CreateNordicLandscapeAtmosphere(null, settings);
+    }
+
+    public static GameObject CreateNordicLandscapeAtmosphere(Transform parent, NordicEnvironmentSettings settings)
+    {
         var root = new GameObject(LandscapeRootName);
+        root.transform.SetParent(parent, false);
         root.AddComponent<NordicLandscapeRuntimeUpdater>();
         EnsureWaterFeatureLayers(root.transform, settings);
         CreateRoadsideGrassClusters(root.transform, settings);

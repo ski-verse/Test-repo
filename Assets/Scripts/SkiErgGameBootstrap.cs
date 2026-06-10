@@ -53,20 +53,38 @@ public class SkiErgGameBootstrap : MonoBehaviour
         using (StartupPerformanceProfiler.Measure("CreateEnvironment"))
         {
             var environmentSettings = NordicEnvironmentSettings.GetOrCreateRuntimeSettings();
+            var hasBakedEnvironment = BakedNordicEnvironmentMarker.HasBakedEnvironment();
 
             using (StartupPerformanceProfiler.Measure("CreateRoad")) CreateRoad();
             using (StartupPerformanceProfiler.Measure("CreateRoadShoulders")) CreateRoadShoulders();
-            using (StartupPerformanceProfiler.Measure("CreateGrass")) CreateGrass();
             using (StartupPerformanceProfiler.Measure("CreateRoadMarkings")) CreateRoadMarkings();
             using (StartupPerformanceProfiler.Measure("KilometerMarkerSignRuntimeUpdater.EnsureKilometerMarkers")) KilometerMarkerSignRuntimeUpdater.EnsureKilometerMarkers();
             using (StartupPerformanceProfiler.Measure("CreateTurnSigns")) CreateTurnSigns();
             using (StartupPerformanceProfiler.Measure("CreateStartFinishMarkers")) CreateStartFinishMarkers();
-            using (StartupPerformanceProfiler.Measure("CreateDistantForests")) CreateDistantForests(environmentSettings);
-            using (StartupPerformanceProfiler.Measure("CreateRockClusters")) CreateRockClusters(environmentSettings);
-            using (StartupPerformanceProfiler.Measure("CreateDistantMountains")) CreateDistantMountains(environmentSettings);
-            using (StartupPerformanceProfiler.Measure("CreateTrees")) CreateTrees(environmentSettings);
-            using (StartupPerformanceProfiler.Measure("NordicLandscapeRuntimeUpdater.EnsureNordicLandscapeAtmosphere")) NordicLandscapeRuntimeUpdater.EnsureNordicLandscapeAtmosphere(environmentSettings);
+
+            if (hasBakedEnvironment)
+            {
+                StartupPerformanceProfiler.Log("Skipping procedural Nordic environment decorations because baked environment exists");
+                return;
+            }
+
+            using (StartupPerformanceProfiler.Measure("CreateNordicEnvironmentDecorations")) CreateNordicEnvironmentDecorations(environmentSettings, null);
         }
+    }
+
+    public static GameObject CreateNordicEnvironmentDecorations(NordicEnvironmentSettings settings, Transform parent)
+    {
+        var root = parent != null ? parent.gameObject : null;
+        ParentIfNeeded(CreateGrass(), parent);
+        ParentIfNeeded(CreateDistantForests(settings), parent);
+        ParentIfNeeded(CreateRockClusters(settings), parent);
+        ParentIfNeeded(CreateDistantMountains(settings), parent);
+        ParentIfNeeded(CreateTrees(settings), parent);
+        var nordicLandscape = parent != null
+            ? NordicLandscapeRuntimeUpdater.CreateNordicLandscapeAtmosphere(parent, settings)
+            : NordicLandscapeRuntimeUpdater.EnsureNordicLandscapeAtmosphere(settings);
+        ParentIfNeeded(nordicLandscape, parent);
+        return root;
     }
 
     private static void CreateRoad()
@@ -98,7 +116,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
         return shoulder;
     }
 
-    private static void CreateGrass()
+    private static GameObject CreateGrass()
     {
         var grass = new GameObject("Continuous Green Roadside Ground");
         var color = EnvironmentGroundRenderingCleanup.OpenTerrainGrassColor;
@@ -106,6 +124,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
         var right = CreateRoadsideGround(grass.transform, "Right Continuous Grass Terrain", 1f);
         left.GetComponent<MeshRenderer>().material.color = color;
         right.GetComponent<MeshRenderer>().material.color = color;
+        return grass;
     }
 
     private static GameObject CreateRoadsideGround(Transform parent, string name, float side)
@@ -265,7 +284,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
         return triangles;
     }
 
-    private static void CreateDistantForests(NordicEnvironmentSettings settings)
+    private static GameObject CreateDistantForests(NordicEnvironmentSettings settings)
     {
         var forests = new GameObject("Nordic Distant Forest Bands");
         var trunkColor = new Color(0.23f, 0.14f, 0.08f);
@@ -287,6 +306,8 @@ public class SkiErgGameBootstrap : MonoBehaviour
             CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z + 8f, -highForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 1.28f + Mathf.PingPong(z * 0.01f, 0.36f), trunkColor, crownColor);
             CreateConifer(forests.transform, EnvironmentPlacement.SafePointAtDistance(z + 39f, highForestOffset, EnvironmentPlacement.MaxForestTreeRadius), 1.24f + Mathf.PingPong(z * 0.016f, 0.34f), trunkColor, crownColor);
         }
+
+        return forests;
     }
 
     private static void CreateConifer(Transform parent, Vector3 position, float scale, Color trunkColor, Color crownColor)
@@ -316,7 +337,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
         crown.AddComponent<MeshRenderer>().material.color = crownColor;
     }
 
-    private static void CreateRockClusters(NordicEnvironmentSettings settings)
+    private static GameObject CreateRockClusters(NordicEnvironmentSettings settings)
     {
         var rocks = new GameObject("Nordic Starter Pack Rocks");
         var rockSpacing = settings != null ? settings.EffectiveRockSpacingMeters : DefaultRockClusterSpacingMeters;
@@ -328,6 +349,8 @@ public class SkiErgGameBootstrap : MonoBehaviour
             CreateRockCluster(rocks.transform, EnvironmentPlacement.SafePointAtDistance(z, -midTreeOffset - 6f, 2.8f), 0.8f + Mathf.PingPong(z * 0.021f, 0.45f));
             CreateRockCluster(rocks.transform, EnvironmentPlacement.SafePointAtDistance(z + 47f, farTreeOffset + 5f, 3.2f), 0.9f + Mathf.PingPong(z * 0.017f, 0.5f));
         }
+
+        return rocks;
     }
 
     private static void CreateRockCluster(Transform parent, Vector3 position, float scale)
@@ -345,13 +368,14 @@ public class SkiErgGameBootstrap : MonoBehaviour
         rock.GetComponent<Renderer>().material.color = new Color(0.28f, 0.3f, 0.31f);
     }
 
-    private static void CreateDistantMountains(NordicEnvironmentSettings settings)
+    private static GameObject CreateDistantMountains(NordicEnvironmentSettings settings)
     {
         var mountains = new GameObject("Nordic Mountain Ranges");
         MountainRangeSceneUpdater.BuildMountainRanges(mountains.transform, settings);
+        return mountains;
     }
 
-    private static void CreateTrees(NordicEnvironmentSettings settings)
+    private static GameObject CreateTrees(NordicEnvironmentSettings settings)
     {
         var trees = new GameObject("Set Back Roadside Trees");
         var treeSpacing = settings != null ? settings.EffectiveBootstrapTreeSpacingMeters : DefaultTreeSpacingMeters;
@@ -368,6 +392,8 @@ public class SkiErgGameBootstrap : MonoBehaviour
             CreateTree(trees.transform, EnvironmentPlacement.SafePointAtDistance(z + 34f, -farTreeOffset, EnvironmentPlacement.MaxTreeRadius), 0.88f + Mathf.PingPong(z * 0.009f, 0.36f));
             CreateTree(trees.transform, EnvironmentPlacement.SafePointAtDistance(z + 43f, farTreeOffset, EnvironmentPlacement.MaxTreeRadius), 0.86f + Mathf.PingPong(z * 0.015f, 0.38f));
         }
+
+        return trees;
     }
 
     private static void CreateTree(Transform parent, Vector3 position, float scale)
@@ -576,6 +602,14 @@ public class SkiErgGameBootstrap : MonoBehaviour
     private static float CalculateFootprintRadius(float width, float length)
     {
         return Mathf.Sqrt(width * width + length * length) * 0.5f;
+    }
+
+    private static void ParentIfNeeded(GameObject child, Transform parent)
+    {
+        if (child != null && parent != null && child.transform.parent != parent)
+        {
+            child.transform.SetParent(parent, true);
+        }
     }
 
     private static Quaternion HorizontalRotationAtDistance(float zPosition)
