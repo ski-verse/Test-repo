@@ -3,35 +3,54 @@ using UnityEngine;
 public static class RoadsideGroundMeshBuilder
 {
     public const int DefaultSampleCount = 384;
-    public const float InnerOffset = EnvironmentPlacement.RoadHalfWidth + 0.18f;
+    public const float InnerOffset = EnvironmentPlacement.RoadHalfWidth + 0.06f;
     public const float OuterOffset = 420f;
     public const float InnerSurfaceYOffset = -0.035f;
     public const float OuterSurfaceYOffset = -0.11f;
+    public static readonly float[] CoverageOffsets =
+    {
+        InnerOffset,
+        EnvironmentPlacement.RoadHalfWidth + 0.7f,
+        EnvironmentPlacement.ShoulderOuterOffset + 0.25f,
+        12f,
+        24f,
+        48f,
+        96f,
+        180f,
+        OuterOffset
+    };
 
     public static Mesh CreateGroundMesh(float side, int sampleCount = DefaultSampleCount)
     {
         var safeSampleCount = Mathf.Max(12, sampleCount);
         var sideSign = side < 0f ? -1f : 1f;
-        var vertices = new Vector3[(safeSampleCount + 1) * 2];
-        var frontTriangles = new int[safeSampleCount * 6];
+        var vertices = new Vector3[(safeSampleCount + 1) * CoverageOffsets.Length];
+        var frontTriangles = new int[safeSampleCount * (CoverageOffsets.Length - 1) * 6];
 
         for (var index = 0; index <= safeSampleCount; index++)
         {
             var distance = CoursePath.CourseLengthMeters * (index / (float)safeSampleCount);
-            vertices[index * 2] = CalculateGroundPoint(distance, sideSign * InnerOffset, true);
-            vertices[index * 2 + 1] = CalculateGroundPoint(distance, sideSign * OuterOffset, false);
+
+            for (var band = 0; band < CoverageOffsets.Length; band++)
+            {
+                vertices[index * CoverageOffsets.Length + band] = CalculateGroundPoint(distance, sideSign * CoverageOffsets[band]);
+            }
         }
 
         for (var index = 0; index < safeSampleCount; index++)
         {
-            var vertex = index * 2;
-            var triangle = index * 6;
-            frontTriangles[triangle] = vertex;
-            frontTriangles[triangle + 1] = vertex + 2;
-            frontTriangles[triangle + 2] = vertex + 1;
-            frontTriangles[triangle + 3] = vertex + 1;
-            frontTriangles[triangle + 4] = vertex + 2;
-            frontTriangles[triangle + 5] = vertex + 3;
+            for (var band = 0; band < CoverageOffsets.Length - 1; band++)
+            {
+                var vertex = index * CoverageOffsets.Length + band;
+                var nextRowVertex = vertex + CoverageOffsets.Length;
+                var triangle = (index * (CoverageOffsets.Length - 1) + band) * 6;
+                frontTriangles[triangle] = vertex;
+                frontTriangles[triangle + 1] = nextRowVertex;
+                frontTriangles[triangle + 2] = vertex + 1;
+                frontTriangles[triangle + 3] = vertex + 1;
+                frontTriangles[triangle + 4] = nextRowVertex;
+                frontTriangles[triangle + 5] = nextRowVertex + 1;
+            }
         }
 
         var mesh = new Mesh
@@ -47,13 +66,10 @@ public static class RoadsideGroundMeshBuilder
 
     public static Vector3 CalculateGroundPoint(float distanceMeters, float lateralOffset)
     {
-        return CalculateGroundPoint(distanceMeters, lateralOffset, Mathf.Abs(lateralOffset) <= InnerOffset + 0.01f);
-    }
-
-    public static Vector3 CalculateGroundPoint(float distanceMeters, float lateralOffset, bool innerEdge)
-    {
         var point = CoursePath.PointAtDistance(distanceMeters, lateralOffset);
-        point.y += innerEdge ? InnerSurfaceYOffset : OuterSurfaceYOffset;
+        var distanceFromRoad = Mathf.Abs(lateralOffset);
+        var blend = Mathf.InverseLerp(InnerOffset, OuterOffset, distanceFromRoad);
+        point.y += Mathf.Lerp(InnerSurfaceYOffset, OuterSurfaceYOffset, blend);
         return point;
     }
 

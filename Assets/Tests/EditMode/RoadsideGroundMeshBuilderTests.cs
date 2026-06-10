@@ -9,8 +9,8 @@ public class RoadsideGroundMeshBuilderTests
         var left = RoadsideGroundMeshBuilder.CreateGroundMesh(-1f, 24);
         var right = RoadsideGroundMeshBuilder.CreateGroundMesh(1f, 24);
 
-        Assert.AreEqual((24 + 1) * 4, left.vertexCount);
-        Assert.AreEqual(24 * 12, left.triangles.Length);
+        Assert.AreEqual((24 + 1) * RoadsideGroundMeshBuilder.CoverageOffsets.Length * 2, left.vertexCount);
+        Assert.AreEqual(24 * (RoadsideGroundMeshBuilder.CoverageOffsets.Length - 1) * 12, left.triangles.Length);
         Assert.AreEqual(left.vertexCount, right.vertexCount);
         Assert.AreEqual(left.triangles.Length, right.triangles.Length);
 
@@ -25,7 +25,10 @@ public class RoadsideGroundMeshBuilderTests
         Assert.Less(RoadsideGroundMeshBuilder.InnerOffset, EnvironmentPlacement.ShoulderOuterOffset);
         Assert.Less(
             RoadsideGroundMeshBuilder.InnerOffset - EnvironmentPlacement.RoadHalfWidth,
-            EnvironmentPlacement.ShoulderInnerClearance + 0.2f);
+            EnvironmentPlacement.ShoulderInnerClearance + 0.05f);
+        Assert.AreEqual(RoadsideGroundMeshBuilder.InnerOffset, RoadsideGroundMeshBuilder.CoverageOffsets[0]);
+        Assert.AreEqual(RoadsideGroundMeshBuilder.OuterOffset, RoadsideGroundMeshBuilder.CoverageOffsets[RoadsideGroundMeshBuilder.CoverageOffsets.Length - 1]);
+        Assert.Greater(RoadsideGroundMeshBuilder.CoverageOffsets.Length, 6);
         Assert.Greater(RoadsideGroundMeshBuilder.OuterOffset, EnvironmentPlacement.FarMountainOffset);
     }
 
@@ -35,13 +38,29 @@ public class RoadsideGroundMeshBuilderTests
         for (var distance = 0f; distance < CoursePath.CourseLengthMeters; distance += 375f)
         {
             var roadCenter = CoursePath.CenterPointAtDistance(distance);
-            var inner = RoadsideGroundMeshBuilder.CalculateGroundPoint(distance, RoadsideGroundMeshBuilder.InnerOffset, true);
-            var outer = RoadsideGroundMeshBuilder.CalculateGroundPoint(distance, RoadsideGroundMeshBuilder.OuterOffset, false);
+            var inner = RoadsideGroundMeshBuilder.CalculateGroundPoint(distance, RoadsideGroundMeshBuilder.InnerOffset);
+            var outer = RoadsideGroundMeshBuilder.CalculateGroundPoint(distance, RoadsideGroundMeshBuilder.OuterOffset);
 
             Assert.Less(inner.y, roadCenter.y);
             Assert.Greater(inner.y, roadCenter.y - 0.08f);
             Assert.Less(outer.y, inner.y);
         }
+    }
+
+    [Test]
+    public void CoverageOffsets_BuildMultipleNarrowBandsToAvoidCurveGaps()
+    {
+        for (var index = 1; index < RoadsideGroundMeshBuilder.CoverageOffsets.Length; index++)
+        {
+            Assert.Greater(RoadsideGroundMeshBuilder.CoverageOffsets[index], RoadsideGroundMeshBuilder.CoverageOffsets[index - 1]);
+        }
+
+        Assert.LessOrEqual(
+            RoadsideGroundMeshBuilder.CoverageOffsets[1] - RoadsideGroundMeshBuilder.CoverageOffsets[0],
+            0.8f);
+        Assert.LessOrEqual(
+            RoadsideGroundMeshBuilder.CoverageOffsets[2] - RoadsideGroundMeshBuilder.CoverageOffsets[1],
+            3.0f);
     }
 
     [Test]
