@@ -7,6 +7,11 @@ public class NordicLandscapeRuntimeUpdater : MonoBehaviour
     public const float NearTreeLineOffset = EnvironmentPlacement.RoadHalfWidth + 4.35f;
     public const float MidTreeLineOffset = 15.5f;
     public const float ForestTreeSpacingMeters = 24f;
+    public const float RoadsideGrassInnerOffset = EnvironmentPlacement.ShoulderOuterOffset + 0.35f;
+    public const float RoadsideGrassOuterOffset = EnvironmentPlacement.RoadHalfWidth + 4.05f;
+    public const float RoadsideGrassFootprintRadius = 0.22f;
+    public const float RoadsideGrassClusterSpacingMeters = 14f;
+    public const float SignVisibilityClearanceMeters = 42f;
     public const float LakeNearOffset = 58f;
     public const float LakeFarOffset = 82f;
     public const float LakeFootprintRadius = 26f;
@@ -31,12 +36,14 @@ public class NordicLandscapeRuntimeUpdater : MonoBehaviour
                 existing.AddComponent<NordicLandscapeRuntimeUpdater>();
             }
 
+            EnsureRoadsideGrassLayer(existing.transform);
             return existing;
         }
 
         var root = new GameObject(LandscapeRootName);
         root.AddComponent<NordicLandscapeRuntimeUpdater>();
         CreateLakes(root.transform);
+        CreateRoadsideGrassClusters(root.transform);
         CreateCloserForestBands(root.transform);
         return root;
     }
@@ -111,6 +118,105 @@ public class NordicLandscapeRuntimeUpdater : MonoBehaviour
             CreateAtmosphereTree(forests.transform, distance + 15f, -MidTreeLineOffset, 1.05f);
             CreateAtmosphereTree(forests.transform, distance + 21f, MidTreeLineOffset, 1.03f);
         }
+    }
+
+    public static bool ShouldSkipRoadsideGrass(float distanceMeters)
+    {
+        var distance = CoursePath.NormalizeDistance(distanceMeters);
+        if (distance <= SignVisibilityClearanceMeters || distance >= CoursePath.CourseLengthMeters - SignVisibilityClearanceMeters)
+        {
+            return true;
+        }
+
+        for (var marker = KilometerMarkerSignRuntimeUpdater.MarkerSpacingMeters; marker <= CoursePath.CourseLengthMeters; marker += KilometerMarkerSignRuntimeUpdater.MarkerSpacingMeters)
+        {
+            if (Mathf.Abs(distance - marker) <= SignVisibilityClearanceMeters)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static Vector3 CalculateRoadsideGrassPosition(float distanceMeters, float side, int clusterIndex)
+    {
+        var sideSign = side < 0f ? -1f : 1f;
+        var lateralJitter = Mathf.PingPong(distanceMeters * 0.071f + clusterIndex * 0.37f, RoadsideGrassOuterOffset - RoadsideGrassInnerOffset);
+        var forwardJitter = Mathf.PingPong(distanceMeters * 0.19f + clusterIndex * 1.7f, 4.8f) - 2.4f;
+        return EnvironmentPlacement.SafePointAtDistance(
+            distanceMeters + forwardJitter,
+            sideSign * (RoadsideGrassInnerOffset + lateralJitter),
+            RoadsideGrassFootprintRadius);
+    }
+
+    private static void CreateRoadsideGrassClusters(Transform parent)
+    {
+        if (parent.Find("Roadside Starter Pack Grass") != null)
+        {
+            return;
+        }
+
+        var grasses = new GameObject("Roadside Starter Pack Grass");
+        grasses.transform.SetParent(parent, false);
+
+        for (var distance = 24f; distance < CoursePath.CourseLengthMeters; distance += RoadsideGrassClusterSpacingMeters)
+        {
+            if (ShouldSkipRoadsideGrass(distance))
+            {
+                continue;
+            }
+
+            CreateGrassCluster(grasses.transform, distance, -1f, 0);
+            CreateGrassCluster(grasses.transform, distance + 5.5f, 1f, 1);
+
+            if (Mathf.FloorToInt(distance / RoadsideGrassClusterSpacingMeters) % 3 != 0)
+            {
+                CreateGrassCluster(grasses.transform, distance + 8.5f, -1f, 2);
+            }
+
+            if (Mathf.FloorToInt(distance / RoadsideGrassClusterSpacingMeters) % 4 != 0)
+            {
+                CreateGrassCluster(grasses.transform, distance + 11.5f, 1f, 3);
+            }
+        }
+    }
+
+    private static void EnsureRoadsideGrassLayer(Transform parent)
+    {
+        if (parent.Find("Roadside Starter Pack Grass") == null)
+        {
+            CreateRoadsideGrassClusters(parent);
+        }
+    }
+
+    private static void CreateGrassCluster(Transform parent, float distanceMeters, float side, int clusterIndex)
+    {
+        if (ShouldSkipRoadsideGrass(distanceMeters))
+        {
+            return;
+        }
+
+        var position = CalculateRoadsideGrassPosition(distanceMeters, side, clusterIndex);
+        var scale = 0.58f + Mathf.PingPong(distanceMeters * 0.043f + clusterIndex * 0.19f, 0.42f);
+
+        if (StarterPackEnvironmentAssets.TryCreateGrass(parent, position, scale, distanceMeters + side * 17f + clusterIndex * 3.1f, out _))
+        {
+            return;
+        }
+
+        CreateFallbackGrass(parent, position, scale);
+    }
+
+    private static void CreateFallbackGrass(Transform parent, Vector3 position, float scale)
+    {
+        var grass = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        grass.name = "Fallback Roadside Grass";
+        grass.transform.SetParent(parent, false);
+        grass.transform.position = position + new Vector3(0f, 0.08f * scale, 0f);
+        grass.transform.localScale = new Vector3(0.18f * scale, 0.16f * scale, 0.18f * scale);
+        grass.GetComponent<Renderer>().material.color = new Color(0.12f, 0.46f, 0.08f, 1f);
+        DisableCollider(grass);
     }
 
     private static void CreateGladeEdgeTrees(Transform parent, float distanceMeters)

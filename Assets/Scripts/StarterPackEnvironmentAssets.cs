@@ -54,6 +54,14 @@ public static class StarterPackEnvironmentAssets
         "Assets/Low Poly Environment Starter Kit/Prefabs/Standard/Rocks/Rock Pile 3.prefab"
     };
 
+    public static readonly string[] GrassPrefabPaths =
+    {
+        "Assets/Low Poly Environment Starter Kit/Prefabs/Standard/Other/Grass 1.prefab",
+        "Assets/Low Poly Environment Starter Kit/Prefabs/Standard/Other/Grass 2.prefab",
+        "Assets/Low Poly Environment Starter Kit/Prefabs/Standard/Other/Grass 3.prefab",
+        "Assets/Low Poly Environment Starter Kit/Prefabs/Standard/Other/Grass 4.prefab"
+    };
+
     public static bool TryCreatePine(Transform parent, Vector3 position, float scale, float seed, out GameObject instance)
     {
         return TryInstantiatePrefab(PinePrefabPaths, parent, "Starter Pack Pine", position, scale, seed, out instance);
@@ -68,6 +76,11 @@ public static class StarterPackEnvironmentAssets
     public static bool TryCreateRock(Transform parent, Vector3 position, float scale, float seed, out GameObject instance)
     {
         return TryInstantiatePrefab(RockPrefabPaths, parent, "Starter Pack Rock", position, scale, seed, out instance);
+    }
+
+    public static bool TryCreateGrass(Transform parent, Vector3 position, float scale, float seed, out GameObject instance)
+    {
+        return TryInstantiatePrefab(GrassPrefabPaths, parent, "Starter Pack Grass", position, scale, seed, out instance);
     }
 
     public static string SelectPath(string[] paths, float seed)
