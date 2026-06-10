@@ -53,18 +53,19 @@ public class SpeedFeelingRuntimeUpdaterTests
     }
 
     [Test]
-    public void MotionCues_AreFrequentAndStayOutsideRoadEdge()
+    public void MotionCues_UseOnlyGreenRoadEdgeFlowCues()
     {
-        var cueCount = SpeedFeelingRuntimeUpdater.CalculateMotionCueCount(
+        var totalCueCount = SpeedFeelingRuntimeUpdater.CalculateTotalMotionCueCount(SpeedFeelingRuntimeUpdater.MotionCueCourseLengthMeters);
+        var edgeFlowCueCount = SpeedFeelingRuntimeUpdater.CalculateMotionCueCount(
             SpeedFeelingRuntimeUpdater.MotionCueCourseLengthMeters,
-            SpeedFeelingRuntimeUpdater.MotionCueStartDistanceMeters,
-            SpeedFeelingRuntimeUpdater.MotionCueSpacingMeters);
-        var innerCueEdge = SpeedFeelingRuntimeUpdater.MotionCueLateralOffset - SpeedFeelingRuntimeUpdater.MotionCueHalfWidth;
+            SpeedFeelingRuntimeUpdater.MotionCueStartDistanceMeters + SpeedFeelingRuntimeUpdater.EdgeFlowCueSpacingMeters * 0.5f,
+            SpeedFeelingRuntimeUpdater.EdgeFlowCueSpacingMeters);
 
         Assert.AreEqual(CoursePath.CourseLengthMeters, SpeedFeelingRuntimeUpdater.MotionCueCourseLengthMeters, 0.001f);
-        Assert.Greater(cueCount, 700);
-        Assert.Greater(innerCueEdge, EnvironmentPlacement.RoadHalfWidth + 1f);
-        Assert.GreaterOrEqual(innerCueEdge, EnvironmentPlacement.RoadHalfWidth + EnvironmentPlacement.OpenTerrainMargin);
+        Assert.AreEqual(edgeFlowCueCount, totalCueCount);
+        Assert.Greater(totalCueCount, 600);
+        Assert.Greater(SpeedFeelingRuntimeUpdater.EdgeFlowGrassCueColorA.g, SpeedFeelingRuntimeUpdater.EdgeFlowGrassCueColorA.r);
+        Assert.Greater(SpeedFeelingRuntimeUpdater.EdgeFlowGrassCueColorB.g, SpeedFeelingRuntimeUpdater.EdgeFlowGrassCueColorB.b);
     }
 
     [Test]
@@ -78,7 +79,7 @@ public class SpeedFeelingRuntimeUpdaterTests
         var innerEdgeFlowCueEdge = SpeedFeelingRuntimeUpdater.EdgeFlowCueLateralOffset - SpeedFeelingRuntimeUpdater.EdgeFlowCueHalfWidth;
 
         Assert.Greater(edgeFlowCueCount, 600);
-        Assert.Greater(totalCueCount, 1300);
+        Assert.AreEqual(edgeFlowCueCount, totalCueCount);
         Assert.Greater(innerEdgeFlowCueEdge, EnvironmentPlacement.RoadHalfWidth);
         Assert.GreaterOrEqual(innerEdgeFlowCueEdge, EnvironmentPlacement.RoadHalfWidth + EnvironmentPlacement.OpenTerrainMargin);
     }

@@ -52,7 +52,6 @@ public class SkiErgGameBootstrap : MonoBehaviour
             using (StartupPerformanceProfiler.Measure("CreateRoadShoulders")) CreateRoadShoulders();
             using (StartupPerformanceProfiler.Measure("CreateGrass")) CreateGrass();
             using (StartupPerformanceProfiler.Measure("CreateRoadMarkings")) CreateRoadMarkings();
-            using (StartupPerformanceProfiler.Measure("CreateRoadsidePosts")) CreateRoadsidePosts();
             using (StartupPerformanceProfiler.Measure("KilometerMarkerSignRuntimeUpdater.EnsureKilometerMarkers")) KilometerMarkerSignRuntimeUpdater.EnsureKilometerMarkers();
             using (StartupPerformanceProfiler.Measure("CreateTurnSigns")) CreateTurnSigns();
             using (StartupPerformanceProfiler.Measure("CreateStartFinishMarkers")) CreateStartFinishMarkers();
@@ -155,32 +154,6 @@ public class SkiErgGameBootstrap : MonoBehaviour
         cube.transform.rotation = CoursePath.RotationAtDistance(zPosition);
         cube.transform.localScale = new Vector3(width, height, length);
         cube.GetComponent<Renderer>().material.color = color;
-    }
-
-    private static void CreateRoadsidePosts()
-    {
-        var posts = new GameObject("Roadside Speed Posts");
-        var leftX = -(RoadWidthMeters * 0.5f + EnvironmentPlacement.OpenTerrainMargin + 0.9f);
-        var rightX = RoadWidthMeters * 0.5f + EnvironmentPlacement.OpenTerrainMargin + 0.9f;
-
-        for (var z = 25f; z < RoadLengthMeters; z += 25f)
-        {
-            CreateRoadsidePost(posts.transform, leftX, z);
-            CreateRoadsidePost(posts.transform, rightX, z);
-        }
-    }
-
-    private static void CreateRoadsidePost(Transform parent, float lateralOffset, float zPosition)
-    {
-        var post = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        post.name = "Speed Post";
-        post.transform.SetParent(parent, false);
-        var position = EnvironmentPlacement.SafePointAtDistance(zPosition, lateralOffset, 0.18f);
-        position.y += 0.52f;
-        post.transform.position = position;
-        post.transform.rotation = HorizontalRotationAtDistance(zPosition);
-        post.transform.localScale = new Vector3(0.22f, 1.04f, 0.22f);
-        post.GetComponent<Renderer>().material.color = Color.white;
     }
 
     private static void CreateTurnSigns()

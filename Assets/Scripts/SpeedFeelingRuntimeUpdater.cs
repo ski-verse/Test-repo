@@ -8,9 +8,6 @@ public class SpeedFeelingRuntimeUpdater : MonoBehaviour
     public const float EnhancedSpeedForMaxFieldOfViewKmh = 60f;
     public const float MotionCueCourseLengthMeters = CoursePath.CourseLengthMeters;
     public const float MotionCueStartDistanceMeters = 14f;
-    public const float MotionCueSpacingMeters = 8f;
-    public const float MotionCueLateralOffset = EnvironmentPlacement.RoadHalfWidth + EnvironmentPlacement.OpenTerrainMargin + 1.45f;
-    public const float MotionCueHalfWidth = 0.07f;
     public const float EdgeFlowCueSpacingMeters = 9.5f;
     public const float EdgeFlowCueLateralOffset = EnvironmentPlacement.RoadHalfWidth + EnvironmentPlacement.OpenTerrainMargin + 0.75f;
     public const float EdgeFlowCueHalfWidth = 0.055f;
@@ -81,8 +78,7 @@ public class SpeedFeelingRuntimeUpdater : MonoBehaviour
 
     public static int CalculateTotalMotionCueCount(float courseLengthMeters)
     {
-        return CalculateMotionCueCount(courseLengthMeters, MotionCueStartDistanceMeters, MotionCueSpacingMeters) +
-               CalculateMotionCueCount(courseLengthMeters, MotionCueStartDistanceMeters + EdgeFlowCueSpacingMeters * 0.5f, EdgeFlowCueSpacingMeters);
+        return CalculateMotionCueCount(courseLengthMeters, MotionCueStartDistanceMeters + EdgeFlowCueSpacingMeters * 0.5f, EdgeFlowCueSpacingMeters);
     }
 
     private void ConfigureCameraIfAvailable()
@@ -108,13 +104,6 @@ public class SpeedFeelingRuntimeUpdater : MonoBehaviour
         var root = new GameObject("Roadside Motion Cues");
         var cueCount = 0;
 
-        for (var z = MotionCueStartDistanceMeters; z < MotionCueCourseLengthMeters; z += MotionCueSpacingMeters)
-        {
-            CreateMotionCue(root.transform, z, -MotionCueLateralOffset, cueCount);
-            CreateMotionCue(root.transform, z + MotionCueSpacingMeters * 0.5f, MotionCueLateralOffset, cueCount + 1);
-            cueCount += 2;
-        }
-
         for (var z = MotionCueStartDistanceMeters + EdgeFlowCueSpacingMeters * 0.5f; z < MotionCueCourseLengthMeters; z += EdgeFlowCueSpacingMeters)
         {
             CreateEdgeFlowCue(root.transform, z, -EdgeFlowCueLateralOffset, cueCount);
@@ -123,22 +112,6 @@ public class SpeedFeelingRuntimeUpdater : MonoBehaviour
         }
 
         motionCuesCreated = true;
-    }
-
-    private static void CreateMotionCue(Transform parent, float zPosition, float lateralOffset, int index)
-    {
-        var cue = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        cue.name = "Roadside Motion Cue";
-        cue.transform.SetParent(parent, false);
-
-        var position = EnvironmentPlacement.SafePointAtDistance(zPosition, lateralOffset, Mathf.Max(MotionCueHalfWidth, 0.5f));
-        position.y += 0.25f;
-        cue.transform.position = position;
-        cue.transform.rotation = CoursePath.RotationAtDistance(zPosition);
-        cue.transform.localScale = new Vector3(MotionCueHalfWidth * 2f, 0.5f, 0.95f);
-
-        var color = index % 4 < 2 ? Color.white : new Color(0.12f, 0.45f, 0.95f);
-        cue.GetComponent<Renderer>().material.color = color;
     }
 
     private static void CreateEdgeFlowCue(Transform parent, float zPosition, float lateralOffset, int index)
