@@ -15,9 +15,24 @@ public class NordicLandscapeRuntimeUpdaterTests
     [Test]
     public void CalculateLakePosition_KeepsLakesOutsideRoadCorridor()
     {
-        var lake = NordicLandscapeRuntimeUpdater.CalculateLakePosition(650f, -1f, 26f);
+        var lake = NordicLandscapeRuntimeUpdater.CalculateLakePosition(650f, -1f, NordicLandscapeRuntimeUpdater.LakeFootprintRadius);
 
-        Assert.IsTrue(EnvironmentPlacement.HasLoopRoadClearance(lake, 26f));
+        Assert.IsTrue(EnvironmentPlacement.HasLoopRoadClearance(lake, NordicLandscapeRuntimeUpdater.LakeFootprintRadius));
+    }
+
+    [Test]
+    public void LakeSettings_MakeWaterFeaturesMoreVisibleFromRoad()
+    {
+        Assert.Less(NordicLandscapeRuntimeUpdater.LakeNearOffset, 58f);
+        Assert.Greater(NordicLandscapeRuntimeUpdater.LakeFootprintRadius, 30f);
+    }
+
+    [Test]
+    public void StreamPoints_StayOutsideRoadWhenNotCrossingAtBridge()
+    {
+        var stream = NordicLandscapeRuntimeUpdater.CalculateStreamPoint(620f, -24f);
+
+        Assert.IsTrue(EnvironmentPlacement.HasLoopRoadClearance(stream, NordicLandscapeRuntimeUpdater.StreamFootprintRadius));
     }
 
     [Test]
@@ -58,9 +73,15 @@ public class NordicLandscapeRuntimeUpdaterTests
         {
             Assert.AreSame(first, second);
             Assert.IsNotNull(GameObject.Find("Jamtland Lakes"));
+            Assert.IsNotNull(GameObject.Find("Nordic Streams And Creeks"));
+            Assert.IsNotNull(GameObject.Find("Water Feature Rocks And Vegetation"));
             Assert.IsNotNull(GameObject.Find("Roadside Starter Pack Grass"));
             Assert.IsNotNull(GameObject.Find("Closer Nordic Tree Bands"));
             Assert.GreaterOrEqual(GameObject.Find("Jamtland Lakes").transform.childCount, 3);
+            Assert.GreaterOrEqual(GameObject.Find("Left Roadside Lake").transform.childCount, 5);
+            Assert.IsNotNull(GameObject.Find("Small Timber Creek Bridge"));
+            Assert.Greater(GameObject.Find("Nordic Streams And Creeks").transform.childCount, 2);
+            Assert.Greater(GameObject.Find("Water Feature Rocks And Vegetation").transform.childCount, 12);
             Assert.Greater(GameObject.Find("Roadside Starter Pack Grass").transform.childCount, 150);
             Assert.Greater(GameObject.Find("Closer Nordic Tree Bands").transform.childCount, 100);
         }
@@ -80,11 +101,14 @@ public class NordicLandscapeRuntimeUpdaterTests
             var first = NordicLandscapeRuntimeUpdater.EnsureNordicLandscapeAtmosphere();
             var second = NordicLandscapeRuntimeUpdater.EnsureNordicLandscapeAtmosphere();
             var grass = existing.transform.Find("Roadside Starter Pack Grass");
+            var streams = existing.transform.Find("Nordic Streams And Creeks");
 
             Assert.AreSame(existing, first);
             Assert.AreSame(existing, second);
             Assert.IsNotNull(grass);
+            Assert.IsNotNull(streams);
             Assert.AreEqual(1, CountChildrenNamed(existing.transform, "Roadside Starter Pack Grass"));
+            Assert.AreEqual(1, CountChildrenNamed(existing.transform, "Nordic Streams And Creeks"));
         }
         finally
         {
