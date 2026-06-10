@@ -9,10 +9,11 @@ public class SkiErgGameBootstrap : MonoBehaviour
     public const float DefaultTreeSpacingMeters = 28f;
     public const float CountryRoadCenterDashLengthMeters = 9f;
     public const float CountryRoadCenterDashWidthMeters = 0.16f;
+    public const float CountryRoadCenterDashGapMeters = 23f;
+    public const float CountryRoadEdgeLineWidthMeters = 0.12f;
 
     private const float RoadLengthMeters = CoursePath.CourseLengthMeters;
     private const float RoadWidthMeters = 8f;
-    private const float RoadSegmentLength = 12f;
     private const float SkierVisualScale = 1.18f;
     public static readonly Color RoadAsphaltColor = new Color(0.105f, 0.12f, 0.13f);
     public static readonly Color RoadMarkingColor = Color.white;
@@ -142,19 +143,58 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
     private static void CreateRoadMarkings()
     {
+        RemoveExistingObjectsNamed("Road Markings");
+
         var markings = new GameObject("Road Markings");
         var edgeLeft = -RoadWidthMeters * 0.5f + 0.35f;
         var edgeRight = RoadWidthMeters * 0.5f - 0.35f;
 
-        for (var z = RoadSegmentLength * 0.5f; z < RoadLengthMeters; z += RoadSegmentLength)
-        {
-            CreatePathCube(markings.transform, "Left Edge Line", edgeLeft, z, RoadSegmentLength + 0.4f, 0.12f, 0.04f, RoadMarkingColor, 0.025f);
-            CreatePathCube(markings.transform, "Right Edge Line", edgeRight, z, RoadSegmentLength + 0.4f, 0.12f, 0.04f, RoadMarkingColor, 0.025f);
-        }
+        CreateRoadMarkingMesh(
+            markings.transform,
+            "Left Curved Edge Line",
+            RoadMarkingMeshBuilder.CreateSolidLineMesh(edgeLeft, CountryRoadEdgeLineWidthMeters));
+        CreateRoadMarkingMesh(
+            markings.transform,
+            "Right Curved Edge Line",
+            RoadMarkingMeshBuilder.CreateSolidLineMesh(edgeRight, CountryRoadEdgeLineWidthMeters));
+        CreateRoadMarkingMesh(
+            markings.transform,
+            "Curved Center Dashes",
+            RoadMarkingMeshBuilder.CreateDashedLineMesh(
+                0f,
+                CountryRoadCenterDashWidthMeters,
+                CountryRoadCenterDashLengthMeters,
+                CountryRoadCenterDashGapMeters,
+                14f));
+    }
 
-        for (var z = 14f; z < RoadLengthMeters; z += 32f)
+    private static void CreateRoadMarkingMesh(Transform parent, string name, Mesh mesh)
+    {
+        var marking = new GameObject(name);
+        marking.transform.SetParent(parent, false);
+        marking.AddComponent<MeshFilter>().mesh = mesh;
+        marking.AddComponent<MeshRenderer>().material.color = RoadMarkingColor;
+    }
+
+    private static void RemoveExistingObjectsNamed(string objectName)
+    {
+        var existingObjects = Object.FindObjectsByType<Transform>(FindObjectsSortMode.None);
+
+        for (var index = 0; index < existingObjects.Length; index++)
         {
-            CreatePathCube(markings.transform, "Center Dash", 0f, z, CountryRoadCenterDashLengthMeters, CountryRoadCenterDashWidthMeters, 0.04f, RoadMarkingColor, 0.03f);
+            var existing = existingObjects[index];
+
+            if (existing != null && existing.name == objectName)
+            {
+                if (Application.isPlaying)
+                {
+                    Object.Destroy(existing.gameObject);
+                }
+                else
+                {
+                    Object.DestroyImmediate(existing.gameObject);
+                }
+            }
         }
     }
 
