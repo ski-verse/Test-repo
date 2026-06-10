@@ -8,7 +8,7 @@ public static class CourseGroundCoverageMeshBuilder
     public const float BoundsPaddingMeters = 460f;
     public const float SafetyBaseBoundsPaddingMeters = 900f;
     public const float SurfaceBelowRoadMeters = 0.06f;
-    public const float SafetyBaseBelowRoadMeters = 0.22f;
+    public const float SafetyBaseBelowLowestCourseMeters = 6f;
     private const float FarTerrainDropPerMeter = 0.0009f;
 
     public static Mesh CreateCoverageMesh(int gridResolution = DefaultGridResolution)
@@ -23,7 +23,7 @@ public static class CourseGroundCoverageMeshBuilder
 
         var vertices = new Vector3[(safeResolution + 1) * (safeResolution + 1)];
         var frontTriangles = new int[safeResolution * safeResolution * 6];
-        var courseSamples = BuildCourseSamples();
+        var safetyBaseY = CalculateSafetyBaseHeight();
 
         for (var zIndex = 0; zIndex <= safeResolution; zIndex++)
         {
@@ -84,7 +84,7 @@ public static class CourseGroundCoverageMeshBuilder
             for (var xIndex = 0; xIndex <= safeResolution; xIndex++)
             {
                 var x = Mathf.Lerp(minX, maxX, xIndex / (float)safeResolution);
-                vertices[zIndex * (safeResolution + 1) + xIndex] = CalculateSafetyBaseGroundPoint(x, z, courseSamples);
+                vertices[zIndex * (safeResolution + 1) + xIndex] = new Vector3(x, safetyBaseY, z);
             }
         }
 
@@ -122,7 +122,7 @@ public static class CourseGroundCoverageMeshBuilder
 
     public static Vector3 CalculateSafetyBaseGroundPoint(float x, float z)
     {
-        return CalculateSafetyBaseGroundPoint(x, z, BuildCourseSamples());
+        return new Vector3(x, CalculateSafetyBaseHeight(), z);
     }
 
     private static Vector3 CalculateCoveragePoint(float x, float z, CourseSample[] courseSamples)
@@ -132,11 +132,17 @@ public static class CourseGroundCoverageMeshBuilder
         return new Vector3(x, y, z);
     }
 
-    private static Vector3 CalculateSafetyBaseGroundPoint(float x, float z, CourseSample[] courseSamples)
+    private static float CalculateSafetyBaseHeight()
     {
-        var nearest = FindNearestCourseSample(x, z, courseSamples);
-        var y = nearest.Height - SafetyBaseBelowRoadMeters;
-        return new Vector3(x, y, z);
+        var minimumHeight = float.MaxValue;
+
+        for (var index = 0; index <= CourseSampleCount; index++)
+        {
+            var distance = CoursePath.CourseLengthMeters * (index / (float)CourseSampleCount);
+            minimumHeight = Mathf.Min(minimumHeight, CoursePath.HeightAtDistance(distance));
+        }
+
+        return minimumHeight - SafetyBaseBelowLowestCourseMeters;
     }
 
     private static CourseSample FindNearestCourseSample(float x, float z, CourseSample[] courseSamples)

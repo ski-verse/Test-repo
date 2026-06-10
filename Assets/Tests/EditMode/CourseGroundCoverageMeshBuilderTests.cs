@@ -66,13 +66,15 @@ public class CourseGroundCoverageMeshBuilderTests
     [Test]
     public void CalculateSafetyBaseGroundPoint_SitsBelowRoadAsGapFallback()
     {
+        var firstBaseGround = CourseGroundCoverageMeshBuilder.CalculateSafetyBaseGroundPoint(0f, 0f);
+
         for (var distance = 0f; distance < CoursePath.CourseLengthMeters; distance += 375f)
         {
             var roadCenter = CoursePath.CenterPointAtDistance(distance);
             var baseGround = CourseGroundCoverageMeshBuilder.CalculateSafetyBaseGroundPoint(roadCenter.x, roadCenter.z);
 
-            Assert.Less(baseGround.y, roadCenter.y);
-            Assert.Greater(baseGround.y, roadCenter.y - 0.3f);
+            Assert.AreEqual(firstBaseGround.y, baseGround.y, 0.001f);
+            Assert.Less(baseGround.y, roadCenter.y - 1f);
         }
     }
 
