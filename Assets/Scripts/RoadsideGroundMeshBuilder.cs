@@ -3,9 +3,10 @@ using UnityEngine;
 public static class RoadsideGroundMeshBuilder
 {
     public const int DefaultSampleCount = 384;
-    public const float InnerOffset = EnvironmentPlacement.ShoulderOuterOffset - 0.05f;
+    public const float InnerOffset = EnvironmentPlacement.RoadHalfWidth + 0.18f;
     public const float OuterOffset = 420f;
-    public const float SurfaceYOffset = 0.11f;
+    public const float InnerSurfaceYOffset = -0.035f;
+    public const float OuterSurfaceYOffset = -0.11f;
 
     public static Mesh CreateGroundMesh(float side, int sampleCount = DefaultSampleCount)
     {
@@ -17,8 +18,8 @@ public static class RoadsideGroundMeshBuilder
         for (var index = 0; index <= safeSampleCount; index++)
         {
             var distance = CoursePath.CourseLengthMeters * (index / (float)safeSampleCount);
-            vertices[index * 2] = CalculateGroundPoint(distance, sideSign * InnerOffset);
-            vertices[index * 2 + 1] = CalculateGroundPoint(distance, sideSign * OuterOffset);
+            vertices[index * 2] = CalculateGroundPoint(distance, sideSign * InnerOffset, true);
+            vertices[index * 2 + 1] = CalculateGroundPoint(distance, sideSign * OuterOffset, false);
         }
 
         for (var index = 0; index < safeSampleCount; index++)
@@ -46,8 +47,13 @@ public static class RoadsideGroundMeshBuilder
 
     public static Vector3 CalculateGroundPoint(float distanceMeters, float lateralOffset)
     {
+        return CalculateGroundPoint(distanceMeters, lateralOffset, Mathf.Abs(lateralOffset) <= InnerOffset + 0.01f);
+    }
+
+    public static Vector3 CalculateGroundPoint(float distanceMeters, float lateralOffset, bool innerEdge)
+    {
         var point = CoursePath.PointAtDistance(distanceMeters, lateralOffset);
-        point.y += SurfaceYOffset;
+        point.y += innerEdge ? InnerSurfaceYOffset : OuterSurfaceYOffset;
         return point;
     }
 

@@ -36,8 +36,16 @@ public class CourseGroundCoverageMeshBuilderTests
             var coverage = CourseGroundCoverageMeshBuilder.CalculateCoveragePoint(roadCenter.x, roadCenter.z);
 
             Assert.Less(coverage.y, roadCenter.y);
-            Assert.Greater(coverage.y, roadCenter.y - 0.5f);
+            Assert.Greater(coverage.y, roadCenter.y - 0.12f);
         }
+    }
+
+    [Test]
+    public void DefaultCoverageResolution_IsDenseEnoughToAvoidVisibleTerrainGaps()
+    {
+        Assert.GreaterOrEqual(CourseGroundCoverageMeshBuilder.DefaultGridResolution, 72);
+        Assert.GreaterOrEqual(CourseGroundCoverageMeshBuilder.CourseSampleCount, 384);
+        Assert.LessOrEqual(CourseGroundCoverageMeshBuilder.SurfaceBelowRoadMeters, 0.08f);
     }
 
     private static void AssertEveryTriangleHasReverseFace(Mesh mesh)

@@ -22,20 +22,25 @@ public class RoadsideGroundMeshBuilderTests
     public void GroundOffsets_CoverRoadsideAreaBetweenShoulderAndTrees()
     {
         Assert.Greater(RoadsideGroundMeshBuilder.InnerOffset, EnvironmentPlacement.RoadHalfWidth);
-        Assert.LessOrEqual(RoadsideGroundMeshBuilder.InnerOffset, EnvironmentPlacement.ShoulderOuterOffset);
+        Assert.Less(RoadsideGroundMeshBuilder.InnerOffset, EnvironmentPlacement.ShoulderOuterOffset);
+        Assert.Less(
+            RoadsideGroundMeshBuilder.InnerOffset - EnvironmentPlacement.RoadHalfWidth,
+            EnvironmentPlacement.ShoulderInnerClearance + 0.2f);
         Assert.Greater(RoadsideGroundMeshBuilder.OuterOffset, EnvironmentPlacement.FarMountainOffset);
     }
 
     [Test]
-    public void CalculateGroundPoint_StaysBelowRoadButAboveOldSideStrips()
+    public void CalculateGroundPoint_OverlapsRoadEdgeWithoutCoveringRoadSurface()
     {
         for (var distance = 0f; distance < CoursePath.CourseLengthMeters; distance += 375f)
         {
             var roadCenter = CoursePath.CenterPointAtDistance(distance);
-            var point = RoadsideGroundMeshBuilder.CalculateGroundPoint(distance, RoadsideGroundMeshBuilder.InnerOffset);
+            var inner = RoadsideGroundMeshBuilder.CalculateGroundPoint(distance, RoadsideGroundMeshBuilder.InnerOffset, true);
+            var outer = RoadsideGroundMeshBuilder.CalculateGroundPoint(distance, RoadsideGroundMeshBuilder.OuterOffset, false);
 
-            Assert.Greater(point.y, roadCenter.y);
-            Assert.Less(point.y, roadCenter.y + 0.14f);
+            Assert.Less(inner.y, roadCenter.y);
+            Assert.Greater(inner.y, roadCenter.y - 0.08f);
+            Assert.Less(outer.y, inner.y);
         }
     }
 

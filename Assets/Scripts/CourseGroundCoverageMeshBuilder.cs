@@ -2,11 +2,11 @@ using UnityEngine;
 
 public static class CourseGroundCoverageMeshBuilder
 {
-    public const int DefaultGridResolution = 36;
-    public const int CourseSampleCount = 192;
+    public const int DefaultGridResolution = 72;
+    public const int CourseSampleCount = 384;
     public const float BoundsPaddingMeters = 460f;
-    public const float SurfaceBelowRoadMeters = 0.32f;
-    private const float FarTerrainDropPerMeter = 0.0025f;
+    public const float SurfaceBelowRoadMeters = 0.06f;
+    private const float FarTerrainDropPerMeter = 0.0009f;
 
     public static Mesh CreateCoverageMesh(int gridResolution = DefaultGridResolution)
     {
