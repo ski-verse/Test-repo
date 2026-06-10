@@ -40,7 +40,7 @@ public class MountainRangeSceneUpdater : MonoBehaviour
         Object.Destroy(existingMountains);
 
         var ranges = new GameObject("Nordic Mountain Ranges");
-        BuildMountainRanges(ranges.transform);
+        BuildMountainRanges(ranges.transform, NordicEnvironmentSettings.GetOrCreateRuntimeSettings());
         return true;
     }
 
@@ -64,16 +64,25 @@ public class MountainRangeSceneUpdater : MonoBehaviour
 
     public static void BuildMountainRanges(Transform parent)
     {
+        BuildMountainRanges(parent, NordicEnvironmentSettings.FindActiveSettings());
+    }
+
+    public static void BuildMountainRanges(Transform parent, NordicEnvironmentSettings settings)
+    {
         var nearColor = new Color(0.31f, 0.37f, 0.43f);
         var farColor = new Color(0.46f, 0.51f, 0.56f);
+        var mountainSpacing = settings != null ? settings.mountainSpacing : EnvironmentPlacement.MountainSpacing;
+        var nearMountainOffset = settings != null ? settings.SafeNearMountainOffset : EnvironmentPlacement.NearMountainOffset;
+        var farMountainOffset = settings != null ? settings.SafeFarMountainOffset : EnvironmentPlacement.FarMountainOffset;
+        var mountainHeightScale = settings != null ? Mathf.Max(0.1f, settings.mountainHeightScale) : EnvironmentPlacement.MountainHeightScale;
 
-        for (var z = EnvironmentPlacement.MountainFirstDistance; z <= RoadLengthMeters; z += EnvironmentPlacement.MountainSpacing)
+        for (var z = EnvironmentPlacement.MountainFirstDistance; z <= RoadLengthMeters; z += mountainSpacing)
         {
             CreateMountainChain(
                 parent,
                 "Left Near Mountain Chain",
-                EnvironmentPlacement.SafePointAtDistance(z, -EnvironmentPlacement.NearMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.NearMountainHalfWidth * 2f, 360f)),
-                new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2f, 82.5f * EnvironmentPlacement.MountainHeightScale, 360f),
+                EnvironmentPlacement.SafePointAtDistance(z, -nearMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.NearMountainHalfWidth * 2f, 360f)),
+                new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2f, 82.5f * mountainHeightScale, 360f),
                 nearColor,
                 11f + z * 0.017f,
                 8);
@@ -81,8 +90,8 @@ public class MountainRangeSceneUpdater : MonoBehaviour
             CreateMountainChain(
                 parent,
                 "Right Near Mountain Chain",
-                EnvironmentPlacement.SafePointAtDistance(z + 120f, EnvironmentPlacement.NearMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.NearMountainHalfWidth * 2f, 390f)),
-                new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2f, 91f * EnvironmentPlacement.MountainHeightScale, 390f),
+                EnvironmentPlacement.SafePointAtDistance(z + 120f, nearMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.NearMountainHalfWidth * 2f, 390f)),
+                new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2f, 91f * mountainHeightScale, 390f),
                 nearColor,
                 29f + z * 0.019f,
                 9);
@@ -90,8 +99,8 @@ public class MountainRangeSceneUpdater : MonoBehaviour
             CreateMountainChain(
                 parent,
                 "Left Far Mountain Chain",
-                EnvironmentPlacement.SafePointAtDistance(z + 240f, -EnvironmentPlacement.FarMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.FarMountainHalfWidth * 2f, 460f)),
-                new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2f, 115f * EnvironmentPlacement.MountainHeightScale, 460f),
+                EnvironmentPlacement.SafePointAtDistance(z + 240f, -farMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.FarMountainHalfWidth * 2f, 460f)),
+                new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2f, 115f * mountainHeightScale, 460f),
                 farColor,
                 47f + z * 0.013f,
                 9);
@@ -99,8 +108,8 @@ public class MountainRangeSceneUpdater : MonoBehaviour
             CreateMountainChain(
                 parent,
                 "Right Far Mountain Chain",
-                EnvironmentPlacement.SafePointAtDistance(z + 360f, EnvironmentPlacement.FarMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.FarMountainHalfWidth * 2f, 490f)),
-                new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2f, 122.5f * EnvironmentPlacement.MountainHeightScale, 490f),
+                EnvironmentPlacement.SafePointAtDistance(z + 360f, farMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.FarMountainHalfWidth * 2f, 490f)),
+                new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2f, 122.5f * mountainHeightScale, 490f),
                 farColor,
                 73f + z * 0.015f,
                 8);

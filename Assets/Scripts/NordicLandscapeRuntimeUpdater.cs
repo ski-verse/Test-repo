@@ -29,10 +29,15 @@ public class NordicLandscapeRuntimeUpdater : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void InstallNordicLandscapeAtmosphere()
     {
-        EnsureNordicLandscapeAtmosphere();
+        EnsureNordicLandscapeAtmosphere(NordicEnvironmentSettings.GetOrCreateRuntimeSettings());
     }
 
     public static GameObject EnsureNordicLandscapeAtmosphere()
+    {
+        return EnsureNordicLandscapeAtmosphere(NordicEnvironmentSettings.GetOrCreateRuntimeSettings());
+    }
+
+    public static GameObject EnsureNordicLandscapeAtmosphere(NordicEnvironmentSettings settings)
     {
         var existing = GameObject.Find(LandscapeRootName);
         if (existing != null)
@@ -42,24 +47,31 @@ public class NordicLandscapeRuntimeUpdater : MonoBehaviour
                 existing.AddComponent<NordicLandscapeRuntimeUpdater>();
             }
 
-            EnsureWaterFeatureLayers(existing.transform);
-            EnsureRoadsideGrassLayer(existing.transform);
+            EnsureWaterFeatureLayers(existing.transform, settings);
+            EnsureRoadsideGrassLayer(existing.transform, settings);
             return existing;
         }
 
         var root = new GameObject(LandscapeRootName);
         root.AddComponent<NordicLandscapeRuntimeUpdater>();
-        EnsureWaterFeatureLayers(root.transform);
-        CreateRoadsideGrassClusters(root.transform);
-        CreateOpenTerrainVegetation(root.transform);
-        CreateCloserForestBands(root.transform);
+        EnsureWaterFeatureLayers(root.transform, settings);
+        CreateRoadsideGrassClusters(root.transform, settings);
+        CreateOpenTerrainVegetation(root.transform, settings);
+        CreateCloserForestBands(root.transform, settings);
         return root;
     }
 
     public static Vector3 CalculateLakePosition(float distanceMeters, float side, float footprintRadius)
     {
+        return CalculateLakePosition(distanceMeters, side, footprintRadius, NordicEnvironmentSettings.FindActiveSettings());
+    }
+
+    private static Vector3 CalculateLakePosition(float distanceMeters, float side, float footprintRadius, NordicEnvironmentSettings settings)
+    {
         var sideSign = side < 0f ? -1f : 1f;
-        var offset = sideSign * (side < 0f ? LakeNearOffset : LakeFarOffset);
+        var nearOffset = settings != null ? settings.SafeNearLakeOffset : LakeNearOffset;
+        var farOffset = settings != null ? settings.SafeFarLakeOffset : LakeFarOffset;
+        var offset = sideSign * (side < 0f ? nearOffset : farOffset);
         return EnvironmentPlacement.SafePointAtDistance(distanceMeters, offset, footprintRadius);
     }
 
@@ -76,21 +88,34 @@ public class NordicLandscapeRuntimeUpdater : MonoBehaviour
         return value >= start && value <= end;
     }
 
-    private static void CreateLakes(Transform parent)
+    private static void CreateLakes(Transform parent, NordicEnvironmentSettings settings)
     {
         var lakes = new GameObject("Jamtland Lakes");
         lakes.transform.SetParent(parent, false);
+        var lakeCount = settings != null ? Mathf.Clamp(settings.lakeCount, 0, 3) : 3;
+        var sizeMultiplier = settings != null ? Mathf.Max(0.25f, settings.lakeVisibilitySize) : 1f;
 
-        CreateLake(lakes.transform, "Left Roadside Lake", 640f, -1f, new Vector2(58f, 34f), 8f);
-        CreateLake(lakes.transform, "Right Forest Lake", 1660f, 1f, new Vector2(68f, 38f), -12f);
-        CreateLake(lakes.transform, "Left Open Glade Lake", 2480f, -1f, new Vector2(52f, 30f), 18f);
+        if (lakeCount >= 1)
+        {
+            CreateLake(lakes.transform, "Left Roadside Lake", 640f, -1f, new Vector2(58f, 34f) * sizeMultiplier, 8f, settings);
+        }
+
+        if (lakeCount >= 2)
+        {
+            CreateLake(lakes.transform, "Right Forest Lake", 1660f, 1f, new Vector2(68f, 38f) * sizeMultiplier, -12f, settings);
+        }
+
+        if (lakeCount >= 3)
+        {
+            CreateLake(lakes.transform, "Left Open Glade Lake", 2480f, -1f, new Vector2(52f, 30f) * sizeMultiplier, 18f, settings);
+        }
     }
 
-    private static void CreateLake(Transform parent, string name, float distanceMeters, float side, Vector2 size, float forwardOffset)
+    private static void CreateLake(Transform parent, string name, float distanceMeters, float side, Vector2 size, float forwardOffset, NordicEnvironmentSettings settings)
     {
         var lake = new GameObject(name);
         lake.transform.SetParent(parent, false);
-        lake.transform.position = CalculateLakePosition(distanceMeters, side, Mathf.Max(size.x, size.y) * 0.5f);
+        lake.transform.position = CalculateLakePosition(distanceMeters, side, Mathf.Max(size.x, size.y) * 0.5f, settings);
         lake.transform.rotation = CoursePath.RotationAtDistance(distanceMeters);
 
         AddLakeDisc(lake.transform, "Grass Shore", new Vector3(0f, -0.02f, forwardOffset), new Vector3(size.x * 1.15f, 0.04f, size.y * 1.15f), ShoreColor);
@@ -111,11 +136,11 @@ public class NordicLandscapeRuntimeUpdater : MonoBehaviour
         DisableCollider(disc);
     }
 
-    private static void EnsureWaterFeatureLayers(Transform parent)
+    private static void EnsureWaterFeatureLayers(Transform parent, NordicEnvironmentSettings settings)
     {
-        RebuildLayer(parent, "Jamtland Lakes", CreateLakes);
-        RebuildLayer(parent, "Nordic Streams And Creeks", CreateStreamsAndCreeks);
-        RebuildLayer(parent, "Water Feature Rocks And Vegetation", CreateWaterFeatureDetails);
+        RebuildLayer(parent, "Jamtland Lakes", layerParent => CreateLakes(layerParent, settings));
+        RebuildLayer(parent, "Nordic Streams And Creeks", layerParent => CreateStreamsAndCreeks(layerParent, settings));
+        RebuildLayer(parent, "Water Feature Rocks And Vegetation", layerParent => CreateWaterFeatureDetails(layerParent, settings));
     }
 
     private static void RebuildLayer(Transform parent, string layerName, System.Action<Transform> createLayer)
@@ -146,14 +171,28 @@ public class NordicLandscapeRuntimeUpdater : MonoBehaviour
         return EnvironmentPlacement.SafePointAtDistance(distanceMeters, lateralOffset, StreamFootprintRadius);
     }
 
-    private static void CreateStreamsAndCreeks(Transform parent)
+    private static void CreateStreamsAndCreeks(Transform parent, NordicEnvironmentSettings settings)
     {
         var streams = new GameObject("Nordic Streams And Creeks");
         streams.transform.SetParent(parent, false);
+        var lakeCount = settings != null ? Mathf.Clamp(settings.lakeCount, 0, 3) : 3;
+        var nearLakeOffset = settings != null ? settings.SafeNearLakeOffset : LakeNearOffset;
+        var farLakeOffset = settings != null ? settings.SafeFarLakeOffset : LakeFarOffset;
 
-        CreateCrossRoadCreek(streams.transform, "Left Lake Inlet Creek", 610f, -LakeNearOffset, 24f);
-        CreateForestCreek(streams.transform, "Right Forest Creek", 1600f, 1f, LakeFarOffset, 28f);
-        CreateForestCreek(streams.transform, "Open Glade Creek", 2440f, -1f, LakeNearOffset, 22f);
+        if (lakeCount >= 1)
+        {
+            CreateCrossRoadCreek(streams.transform, "Left Lake Inlet Creek", 610f, -nearLakeOffset, 24f);
+        }
+
+        if (lakeCount >= 2)
+        {
+            CreateForestCreek(streams.transform, "Right Forest Creek", 1600f, 1f, farLakeOffset, 28f);
+        }
+
+        if (lakeCount >= 3)
+        {
+            CreateForestCreek(streams.transform, "Open Glade Creek", 2440f, -1f, nearLakeOffset, 22f);
+        }
     }
 
     private static void CreateCrossRoadCreek(Transform parent, string name, float distanceMeters, float lakeSideOffset, float sourceSideOffset)
@@ -229,16 +268,30 @@ public class NordicLandscapeRuntimeUpdater : MonoBehaviour
         DisableCollider(part);
     }
 
-    private static void CreateWaterFeatureDetails(Transform parent)
+    private static void CreateWaterFeatureDetails(Transform parent, NordicEnvironmentSettings settings)
     {
         var details = new GameObject("Water Feature Rocks And Vegetation");
         details.transform.SetParent(parent, false);
+        var lakeCount = settings != null ? Mathf.Clamp(settings.lakeCount, 0, 3) : 3;
+        var nearLakeOffset = settings != null ? settings.SafeNearLakeOffset : LakeNearOffset;
+        var farLakeOffset = settings != null ? settings.SafeFarLakeOffset : LakeFarOffset;
 
-        CreateWaterDetailCluster(details.transform, 640f, -1f, LakeNearOffset, 0);
-        CreateWaterDetailCluster(details.transform, 1660f, 1f, LakeFarOffset, 1);
-        CreateWaterDetailCluster(details.transform, 2480f, -1f, LakeNearOffset, 2);
-        CreateWaterDetailCluster(details.transform, 610f, -1f, 18f, 3);
-        CreateWaterDetailCluster(details.transform, 1600f, 1f, 50f, 4);
+        if (lakeCount >= 1)
+        {
+            CreateWaterDetailCluster(details.transform, 640f, -1f, nearLakeOffset, 0);
+            CreateWaterDetailCluster(details.transform, 610f, -1f, 18f, 3);
+        }
+
+        if (lakeCount >= 2)
+        {
+            CreateWaterDetailCluster(details.transform, 1660f, 1f, farLakeOffset, 1);
+            CreateWaterDetailCluster(details.transform, 1600f, 1f, 50f, 4);
+        }
+
+        if (lakeCount >= 3)
+        {
+            CreateWaterDetailCluster(details.transform, 2480f, -1f, nearLakeOffset, 2);
+        }
     }
 
     private static void CreateWaterDetailCluster(Transform parent, float distanceMeters, float side, float lateralOffset, int clusterIndex)
@@ -276,34 +329,37 @@ public class NordicLandscapeRuntimeUpdater : MonoBehaviour
         DisableCollider(tuft);
     }
 
-    private static void CreateCloserForestBands(Transform parent)
+    private static void CreateCloserForestBands(Transform parent, NordicEnvironmentSettings settings)
     {
         var forests = new GameObject("Closer Nordic Tree Bands");
         forests.transform.SetParent(parent, false);
+        var forestSpacing = settings != null ? settings.EffectiveForestTreeSpacingMeters : ForestTreeSpacingMeters;
+        var nearTreeLineOffset = settings != null ? settings.SafeNearTreeLineOffset : NearTreeLineOffset;
+        var midTreeLineOffset = settings != null ? settings.SafeMidTreeLineOffset : MidTreeLineOffset;
 
-        for (var distance = 18f; distance < CoursePath.CourseLengthMeters; distance += ForestTreeSpacingMeters)
+        for (var distance = 18f; distance < CoursePath.CourseLengthMeters; distance += forestSpacing)
         {
             if (IsForestOpening(distance))
             {
-                CreateGladeEdgeTrees(forests.transform, distance);
+                CreateGladeEdgeTrees(forests.transform, distance, nearTreeLineOffset, midTreeLineOffset);
                 continue;
             }
 
-            CreateAtmosphereTree(forests.transform, distance, -NearTreeLineOffset, 0.88f);
-            CreateAtmosphereTree(forests.transform, distance + 9f, NearTreeLineOffset, 0.9f);
-            CreateAtmosphereTree(forests.transform, distance + 15f, -MidTreeLineOffset, 1.05f);
-            CreateAtmosphereTree(forests.transform, distance + 21f, MidTreeLineOffset, 1.03f);
+            CreateAtmosphereTree(forests.transform, distance, -nearTreeLineOffset, 0.88f);
+            CreateAtmosphereTree(forests.transform, distance + 9f, nearTreeLineOffset, 0.9f);
+            CreateAtmosphereTree(forests.transform, distance + 15f, -midTreeLineOffset, 1.05f);
+            CreateAtmosphereTree(forests.transform, distance + 21f, midTreeLineOffset, 1.03f);
 
-            if (Mathf.FloorToInt(distance / ForestTreeSpacingMeters) % 2 == 0)
+            if (Mathf.FloorToInt(distance / forestSpacing) % 2 == 0)
             {
-                CreateAtmosphereTree(forests.transform, distance + 6f, -NearTreeLineOffset - 2.2f, 0.82f);
-                CreateAtmosphereTree(forests.transform, distance + 18f, NearTreeLineOffset + 2.4f, 0.84f);
+                CreateAtmosphereTree(forests.transform, distance + 6f, -nearTreeLineOffset - 2.2f, 0.82f);
+                CreateAtmosphereTree(forests.transform, distance + 18f, nearTreeLineOffset + 2.4f, 0.84f);
             }
 
-            if (Mathf.FloorToInt(distance / ForestTreeSpacingMeters) % 3 != 1)
+            if (Mathf.FloorToInt(distance / forestSpacing) % 3 != 1)
             {
-                CreateAtmosphereTree(forests.transform, distance + 27f, -MidTreeLineOffset - 4.5f, 1.0f);
-                CreateAtmosphereTree(forests.transform, distance + 33f, MidTreeLineOffset + 4.5f, 1.02f);
+                CreateAtmosphereTree(forests.transform, distance + 27f, -midTreeLineOffset - 4.5f, 1.0f);
+                CreateAtmosphereTree(forests.transform, distance + 33f, midTreeLineOffset + 4.5f, 1.02f);
             }
         }
     }
@@ -329,8 +385,14 @@ public class NordicLandscapeRuntimeUpdater : MonoBehaviour
 
     public static Vector3 CalculateRoadsideGrassPosition(float distanceMeters, float side, int clusterIndex)
     {
+        return CalculateRoadsideGrassPosition(distanceMeters, side, clusterIndex, NordicEnvironmentSettings.FindActiveSettings());
+    }
+
+    private static Vector3 CalculateRoadsideGrassPosition(float distanceMeters, float side, int clusterIndex, NordicEnvironmentSettings settings)
+    {
         var sideSign = side < 0f ? -1f : 1f;
-        var lateralJitter = Mathf.PingPong(distanceMeters * 0.071f + clusterIndex * 0.37f, RoadsideGrassOuterOffset - RoadsideGrassInnerOffset);
+        var outerOffset = settings != null ? Mathf.Max(RoadsideGrassInnerOffset + 0.1f, Mathf.Min(settings.SafeNearTreeLineOffset - 0.3f, RoadsideGrassOuterOffset)) : RoadsideGrassOuterOffset;
+        var lateralJitter = Mathf.PingPong(distanceMeters * 0.071f + clusterIndex * 0.37f, outerOffset - RoadsideGrassInnerOffset);
         var forwardJitter = Mathf.PingPong(distanceMeters * 0.19f + clusterIndex * 1.7f, 4.8f) - 2.4f;
         return EnvironmentPlacement.SafePointAtDistance(
             distanceMeters + forwardJitter,
@@ -338,7 +400,7 @@ public class NordicLandscapeRuntimeUpdater : MonoBehaviour
             RoadsideGrassFootprintRadius);
     }
 
-    private static void CreateRoadsideGrassClusters(Transform parent)
+    private static void CreateRoadsideGrassClusters(Transform parent, NordicEnvironmentSettings settings)
     {
         if (parent.Find("Roadside Starter Pack Grass") != null)
         {
@@ -347,56 +409,57 @@ public class NordicLandscapeRuntimeUpdater : MonoBehaviour
 
         var grasses = new GameObject("Roadside Starter Pack Grass");
         grasses.transform.SetParent(parent, false);
+        var grassSpacing = settings != null ? settings.EffectiveRoadsideGrassSpacingMeters : RoadsideGrassClusterSpacingMeters;
 
-        for (var distance = 24f; distance < CoursePath.CourseLengthMeters; distance += RoadsideGrassClusterSpacingMeters)
+        for (var distance = 24f; distance < CoursePath.CourseLengthMeters; distance += grassSpacing)
         {
             if (ShouldSkipRoadsideGrass(distance))
             {
                 continue;
             }
 
-            CreateGrassCluster(grasses.transform, distance, -1f, 0);
-            CreateGrassCluster(grasses.transform, distance + 5.5f, 1f, 1);
+            CreateGrassCluster(grasses.transform, distance, -1f, 0, settings);
+            CreateGrassCluster(grasses.transform, distance + 5.5f, 1f, 1, settings);
 
-            if (Mathf.FloorToInt(distance / RoadsideGrassClusterSpacingMeters) % 3 != 0)
+            if (Mathf.FloorToInt(distance / grassSpacing) % 3 != 0)
             {
-                CreateGrassCluster(grasses.transform, distance + 8.5f, -1f, 2);
+                CreateGrassCluster(grasses.transform, distance + 8.5f, -1f, 2, settings);
             }
 
-            if (Mathf.FloorToInt(distance / RoadsideGrassClusterSpacingMeters) % 4 != 0)
+            if (Mathf.FloorToInt(distance / grassSpacing) % 4 != 0)
             {
-                CreateGrassCluster(grasses.transform, distance + 11.5f, 1f, 3);
+                CreateGrassCluster(grasses.transform, distance + 11.5f, 1f, 3, settings);
             }
 
-            if (Mathf.FloorToInt(distance / RoadsideGrassClusterSpacingMeters) % 5 == 2)
+            if (Mathf.FloorToInt(distance / grassSpacing) % 5 == 2)
             {
-                CreateGrassCluster(grasses.transform, distance + 3.2f, -1f, 4);
-                CreateGrassCluster(grasses.transform, distance + 9.7f, 1f, 5);
+                CreateGrassCluster(grasses.transform, distance + 3.2f, -1f, 4, settings);
+                CreateGrassCluster(grasses.transform, distance + 9.7f, 1f, 5, settings);
             }
         }
     }
 
-    private static void EnsureRoadsideGrassLayer(Transform parent)
+    private static void EnsureRoadsideGrassLayer(Transform parent, NordicEnvironmentSettings settings)
     {
         if (parent.Find("Roadside Starter Pack Grass") == null)
         {
-            CreateRoadsideGrassClusters(parent);
+            CreateRoadsideGrassClusters(parent, settings);
         }
 
         if (parent.Find("Open Terrain Vegetation Patches") == null)
         {
-            CreateOpenTerrainVegetation(parent);
+            CreateOpenTerrainVegetation(parent, settings);
         }
     }
 
-    private static void CreateGrassCluster(Transform parent, float distanceMeters, float side, int clusterIndex)
+    private static void CreateGrassCluster(Transform parent, float distanceMeters, float side, int clusterIndex, NordicEnvironmentSettings settings)
     {
         if (ShouldSkipRoadsideGrass(distanceMeters))
         {
             return;
         }
 
-        var position = CalculateRoadsideGrassPosition(distanceMeters, side, clusterIndex);
+        var position = CalculateRoadsideGrassPosition(distanceMeters, side, clusterIndex, settings);
         var scale = 0.58f + Mathf.PingPong(distanceMeters * 0.043f + clusterIndex * 0.19f, 0.42f);
 
         if (StarterPackEnvironmentAssets.TryCreateGrass(parent, position, scale, distanceMeters + side * 17f + clusterIndex * 3.1f, out _))
@@ -418,7 +481,7 @@ public class NordicLandscapeRuntimeUpdater : MonoBehaviour
         DisableCollider(grass);
     }
 
-    private static void CreateOpenTerrainVegetation(Transform parent)
+    private static void CreateOpenTerrainVegetation(Transform parent, NordicEnvironmentSettings settings)
     {
         if (parent.Find("Open Terrain Vegetation Patches") != null)
         {
@@ -427,28 +490,30 @@ public class NordicLandscapeRuntimeUpdater : MonoBehaviour
 
         var vegetation = new GameObject("Open Terrain Vegetation Patches");
         vegetation.transform.SetParent(parent, false);
+        var vegetationSpacing = settings != null ? settings.EffectiveOpenVegetationSpacingMeters : OpenVegetationClusterSpacingMeters;
 
-        for (var distance = 36f; distance < CoursePath.CourseLengthMeters; distance += OpenVegetationClusterSpacingMeters)
+        for (var distance = 36f; distance < CoursePath.CourseLengthMeters; distance += vegetationSpacing)
         {
             if (ShouldSkipRoadsideGrass(distance))
             {
                 continue;
             }
 
-            CreateOpenVegetationPatch(vegetation.transform, distance, -1f, 0);
-            CreateOpenVegetationPatch(vegetation.transform, distance + 13f, 1f, 1);
+            CreateOpenVegetationPatch(vegetation.transform, distance, -1f, 0, settings);
+            CreateOpenVegetationPatch(vegetation.transform, distance + 13f, 1f, 1, settings);
 
-            if (Mathf.FloorToInt(distance / OpenVegetationClusterSpacingMeters) % 2 == 0)
+            if (Mathf.FloorToInt(distance / vegetationSpacing) % 2 == 0)
             {
-                CreateOpenVegetationPatch(vegetation.transform, distance + 19f, -1f, 2);
+                CreateOpenVegetationPatch(vegetation.transform, distance + 19f, -1f, 2, settings);
             }
         }
     }
 
-    private static void CreateOpenVegetationPatch(Transform parent, float distanceMeters, float side, int patchIndex)
+    private static void CreateOpenVegetationPatch(Transform parent, float distanceMeters, float side, int patchIndex, NordicEnvironmentSettings settings)
     {
         var sideSign = side < 0f ? -1f : 1f;
-        var baseOffset = Mathf.Lerp(RoadsideGrassOuterOffset + 4f, MidTreeLineOffset - 1.4f, Mathf.PingPong(distanceMeters * 0.023f + patchIndex * 0.31f, 1f));
+        var midTreeLineOffset = settings != null ? settings.SafeMidTreeLineOffset : MidTreeLineOffset;
+        var baseOffset = Mathf.Lerp(RoadsideGrassOuterOffset + 4f, midTreeLineOffset - 1.4f, Mathf.PingPong(distanceMeters * 0.023f + patchIndex * 0.31f, 1f));
 
         for (var tuft = 0; tuft < 3; tuft++)
         {
@@ -464,12 +529,12 @@ public class NordicLandscapeRuntimeUpdater : MonoBehaviour
         }
     }
 
-    private static void CreateGladeEdgeTrees(Transform parent, float distanceMeters)
+    private static void CreateGladeEdgeTrees(Transform parent, float distanceMeters, float nearTreeLineOffset, float midTreeLineOffset)
     {
-        CreateAtmosphereTree(parent, distanceMeters, -MidTreeLineOffset - 5f, 1.04f);
-        CreateAtmosphereTree(parent, distanceMeters + 12f, MidTreeLineOffset + 5f, 1.02f);
-        CreateAtmosphereTree(parent, distanceMeters + 21f, -NearTreeLineOffset - 3f, 0.86f);
-        CreateAtmosphereTree(parent, distanceMeters + 28f, NearTreeLineOffset + 3.5f, 0.88f);
+        CreateAtmosphereTree(parent, distanceMeters, -midTreeLineOffset - 5f, 1.04f);
+        CreateAtmosphereTree(parent, distanceMeters + 12f, midTreeLineOffset + 5f, 1.02f);
+        CreateAtmosphereTree(parent, distanceMeters + 21f, -nearTreeLineOffset - 3f, 0.86f);
+        CreateAtmosphereTree(parent, distanceMeters + 28f, nearTreeLineOffset + 3.5f, 0.88f);
     }
 
     private static void CreateAtmosphereTree(Transform parent, float distanceMeters, float lateralOffset, float scale)
