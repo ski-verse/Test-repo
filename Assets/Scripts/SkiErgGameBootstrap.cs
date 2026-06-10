@@ -7,11 +7,17 @@ public class SkiErgGameBootstrap : MonoBehaviour
     public const float DefaultDistantForestSpacingMeters = 48f;
     public const float DefaultRockClusterSpacingMeters = 92f;
     public const float DefaultTreeSpacingMeters = 28f;
+    public const float CountryRoadCenterDashLengthMeters = 9f;
+    public const float CountryRoadCenterDashWidthMeters = 0.16f;
 
     private const float RoadLengthMeters = CoursePath.CourseLengthMeters;
     private const float RoadWidthMeters = 8f;
     private const float RoadSegmentLength = 12f;
     private const float SkierVisualScale = 1.18f;
+    public static readonly Color RoadAsphaltColor = new Color(0.105f, 0.12f, 0.13f);
+    public static readonly Color RoadMarkingColor = new Color(0.88f, 0.88f, 0.82f);
+    public static readonly Color RoadShoulderGravelColor = new Color(0.34f, 0.35f, 0.32f);
+    public static readonly Color AsphaltTonePatchColor = new Color(0.075f, 0.085f, 0.09f);
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void BuildPrototypeScene()
@@ -57,7 +63,9 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
             using (StartupPerformanceProfiler.Measure("CreateRoad")) CreateRoad();
             using (StartupPerformanceProfiler.Measure("CreateRoadShoulders")) CreateRoadShoulders();
+            using (StartupPerformanceProfiler.Measure("CreateRoadsideVisualShoulders")) CreateRoadsideVisualShoulders();
             using (StartupPerformanceProfiler.Measure("CreateRoadMarkings")) CreateRoadMarkings();
+            using (StartupPerformanceProfiler.Measure("CreateRoadSurfaceVariation")) CreateRoadSurfaceVariation();
             using (StartupPerformanceProfiler.Measure("KilometerMarkerSignRuntimeUpdater.EnsureKilometerMarkers")) KilometerMarkerSignRuntimeUpdater.EnsureKilometerMarkers();
             using (StartupPerformanceProfiler.Measure("CreateTurnSigns")) CreateTurnSigns();
             using (StartupPerformanceProfiler.Measure("CreateStartFinishMarkers")) CreateStartFinishMarkers();
@@ -90,10 +98,9 @@ public class SkiErgGameBootstrap : MonoBehaviour
     private static void CreateRoad()
     {
         var road = new GameObject("Sweeping 3 km Loop Road");
-        var color = new Color(0.16f, 0.18f, 0.2f);
         var meshFilter = road.AddComponent<MeshFilter>();
         meshFilter.mesh = LoopRoadMeshBuilder.CreateRoadMesh(RoadWidthMeters);
-        road.AddComponent<MeshRenderer>().material.color = color;
+        road.AddComponent<MeshRenderer>().material.color = RoadAsphaltColor;
     }
 
     private static void CreateRoadShoulders()
@@ -112,6 +119,25 @@ public class SkiErgGameBootstrap : MonoBehaviour
         shoulder.transform.SetParent(parent, false);
         var meshFilter = shoulder.AddComponent<MeshFilter>();
         meshFilter.mesh = RoadShoulderMeshBuilder.CreateShoulderMesh(side);
+        shoulder.AddComponent<MeshRenderer>();
+        return shoulder;
+    }
+
+    private static void CreateRoadsideVisualShoulders()
+    {
+        var shoulders = new GameObject("Roadside Gravel Shoulders");
+        var left = CreateRoadsideVisualShoulder(shoulders.transform, "Left Gravel Shoulder", -1f);
+        var right = CreateRoadsideVisualShoulder(shoulders.transform, "Right Gravel Shoulder", 1f);
+        left.GetComponent<MeshRenderer>().material.color = RoadShoulderGravelColor;
+        right.GetComponent<MeshRenderer>().material.color = RoadShoulderGravelColor;
+    }
+
+    private static GameObject CreateRoadsideVisualShoulder(Transform parent, string name, float side)
+    {
+        var shoulder = new GameObject(name);
+        shoulder.transform.SetParent(parent, false);
+        var meshFilter = shoulder.AddComponent<MeshFilter>();
+        meshFilter.mesh = RoadsideVisualShoulderMeshBuilder.CreateShoulderMesh(side);
         shoulder.AddComponent<MeshRenderer>();
         return shoulder;
     }
@@ -145,13 +171,28 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
         for (var z = RoadSegmentLength * 0.5f; z < RoadLengthMeters; z += RoadSegmentLength)
         {
-            CreatePathCube(markings.transform, "Left Edge Line", edgeLeft, z, RoadSegmentLength + 0.4f, 0.16f, 0.04f, Color.white, 0.025f);
-            CreatePathCube(markings.transform, "Right Edge Line", edgeRight, z, RoadSegmentLength + 0.4f, 0.16f, 0.04f, Color.white, 0.025f);
+            CreatePathCube(markings.transform, "Left Edge Line", edgeLeft, z, RoadSegmentLength + 0.4f, 0.12f, 0.04f, RoadMarkingColor, 0.025f);
+            CreatePathCube(markings.transform, "Right Edge Line", edgeRight, z, RoadSegmentLength + 0.4f, 0.12f, 0.04f, RoadMarkingColor, 0.025f);
         }
 
-        for (var z = 14f; z < RoadLengthMeters; z += 30f)
+        for (var z = 14f; z < RoadLengthMeters; z += 32f)
         {
-            CreatePathCube(markings.transform, "Center Dash", 0f, z, 14f, 0.28f, 0.04f, Color.white, 0.03f);
+            CreatePathCube(markings.transform, "Center Dash", 0f, z, CountryRoadCenterDashLengthMeters, CountryRoadCenterDashWidthMeters, 0.04f, RoadMarkingColor, 0.03f);
+        }
+    }
+
+    private static void CreateRoadSurfaceVariation()
+    {
+        var variation = new GameObject("Road Surface Variation");
+
+        for (var z = 24f; z < RoadLengthMeters; z += 38f)
+        {
+            var side = Mathf.Repeat(z * 0.37f, 2f) < 1f ? -1f : 1f;
+            var lateral = side * Mathf.Lerp(0.75f, 2.35f, Mathf.Repeat(z * 0.013f, 1f));
+            var length = Mathf.Lerp(7.5f, 15.5f, Mathf.Repeat(z * 0.021f, 1f));
+            var width = Mathf.Lerp(0.55f, 1.2f, Mathf.Repeat(z * 0.017f, 1f));
+            var color = Color.Lerp(AsphaltTonePatchColor, RoadAsphaltColor, 0.35f + Mathf.Repeat(z * 0.011f, 0.28f));
+            CreatePathCube(variation.transform, "Asphalt Tone Patch", lateral, z, length, width, 0.012f, color, 0.048f);
         }
     }
 
