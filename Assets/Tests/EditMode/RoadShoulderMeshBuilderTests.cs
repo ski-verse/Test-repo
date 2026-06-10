@@ -37,32 +37,6 @@ public class RoadShoulderMeshBuilderTests
     }
 
     [Test]
-    public void CreateVisualShoulderMesh_BuildsNarrowStripBetweenRoadAndGrass()
-    {
-        var mesh = RoadsideVisualShoulderMeshBuilder.CreateShoulderMesh(1f, 24);
-
-        Assert.AreEqual((24 + 1) * 4, mesh.vertexCount);
-        Assert.AreEqual(24 * 12, mesh.triangles.Length);
-        Assert.Greater(RoadsideVisualShoulderMeshBuilder.InnerOffset, EnvironmentPlacement.RoadHalfWidth);
-        Assert.Less(RoadsideVisualShoulderMeshBuilder.OuterOffset, EnvironmentPlacement.ShoulderOuterOffset);
-        Assert.Less(
-            RoadsideVisualShoulderMeshBuilder.OuterOffset - RoadsideVisualShoulderMeshBuilder.InnerOffset,
-            0.65f);
-
-        Object.DestroyImmediate(mesh);
-    }
-
-    [Test]
-    public void CalculateVisualShoulderPoint_KeepsShoulderOutsideRoadGeometry()
-    {
-        for (var distance = 0f; distance < CoursePath.CourseLengthMeters; distance += 375f)
-        {
-            AssertVisualShoulderSide(distance, -1f);
-            AssertVisualShoulderSide(distance, 1f);
-        }
-    }
-
-    [Test]
     public void CalculateShoulderPoint_KeepsTerrainBelowRoadTopAndSlopesOutward()
     {
         for (var distance = 0f; distance < CoursePath.CourseLengthMeters; distance += 375f)
@@ -86,20 +60,6 @@ public class RoadShoulderMeshBuilderTests
         Assert.Greater(outerClearance, innerClearance);
         Assert.Greater(inner.y, outer.y);
         Assert.LessOrEqual(inner.y, roadCenter.y + 0.05f);
-    }
-
-    private static void AssertVisualShoulderSide(float distance, float side)
-    {
-        var roadCenter = CoursePath.CenterPointAtDistance(distance);
-        var inner = RoadsideVisualShoulderMeshBuilder.CalculateShoulderPoint(distance, side, true);
-        var outer = RoadsideVisualShoulderMeshBuilder.CalculateShoulderPoint(distance, side, false);
-        var innerClearance = HorizontalDistance(roadCenter, inner);
-        var outerClearance = HorizontalDistance(roadCenter, outer);
-
-        Assert.Greater(innerClearance, EnvironmentPlacement.RoadHalfWidth);
-        Assert.AreEqual(RoadsideVisualShoulderMeshBuilder.InnerOffset, innerClearance, 0.05f);
-        Assert.AreEqual(RoadsideVisualShoulderMeshBuilder.OuterOffset, outerClearance, 0.05f);
-        Assert.Greater(outerClearance, innerClearance);
     }
 
     private static float HorizontalDistance(Vector3 a, Vector3 b)

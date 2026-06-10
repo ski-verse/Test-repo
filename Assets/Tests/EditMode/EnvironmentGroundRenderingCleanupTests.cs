@@ -198,42 +198,13 @@ public class EnvironmentGroundRenderingCleanupTests
     }
 
     [Test]
-    public void IsFlatRoadsideGroundCandidate_KeepsRoadRealismVisualLayers()
-    {
-        var gravel = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        gravel.name = "Left Gravel Shoulder";
-        var gravelRoot = new GameObject("Roadside Gravel Shoulders");
-        gravel.transform.SetParent(gravelRoot.transform, false);
-        gravel.transform.localScale = new Vector3(2.1f, 0.04f, 80f);
-        gravel.GetComponent<Renderer>().material.color = SkiErgGameBootstrap.RoadShoulderGravelColor;
-
-        var patch = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        patch.name = "Asphalt Tone Patch";
-        var patchRoot = new GameObject("Road Surface Variation");
-        patch.transform.SetParent(patchRoot.transform, false);
-        patch.transform.localScale = new Vector3(2.1f, 0.02f, 12f);
-        patch.GetComponent<Renderer>().material.color = SkiErgGameBootstrap.AsphaltTonePatchColor;
-
-        try
-        {
-            Assert.IsFalse(EnvironmentGroundRenderingCleanup.IsFlatRoadsideGroundCandidate(gravel.GetComponent<Renderer>()));
-            Assert.IsFalse(EnvironmentGroundRenderingCleanup.IsLargeBrownGroundCandidate(gravel.GetComponent<Renderer>()));
-            Assert.IsFalse(EnvironmentGroundRenderingCleanup.IsFlatRoadsideGroundCandidate(patch.GetComponent<Renderer>()));
-        }
-        finally
-        {
-            Object.DestroyImmediate(gravelRoot);
-            Object.DestroyImmediate(patchRoot);
-        }
-    }
-
-    [Test]
-    public void RoadRealismVisualConstants_UseCountryRoadMarkingScale()
+    public void RoadVisualConstants_KeepCleanAsphaltAndWhiteMarkings()
     {
         Assert.Less(SkiErgGameBootstrap.RoadAsphaltColor.r, 0.13f);
         Assert.Less(SkiErgGameBootstrap.CountryRoadCenterDashWidthMeters, 0.2f);
         Assert.Less(SkiErgGameBootstrap.CountryRoadCenterDashLengthMeters, 10f);
         Assert.Greater(SkiErgGameBootstrap.RoadMarkingColor.r, SkiErgGameBootstrap.RoadAsphaltColor.r);
+        Assert.AreEqual(Color.white, SkiErgGameBootstrap.RoadMarkingColor);
     }
 
     [Test]

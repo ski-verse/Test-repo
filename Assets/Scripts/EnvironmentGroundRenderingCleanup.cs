@@ -238,10 +238,6 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
     {
         return HasSelfOrAncestorName(gameObject, "Sweeping 3 km Loop Road")
             || HasSelfOrAncestorName(gameObject, "Road Markings")
-            || HasSelfOrAncestorName(gameObject, "Road Surface Variation")
-            || HasSelfOrAncestorName(gameObject, "Asphalt Tone Patch")
-            || HasSelfOrAncestorName(gameObject, "Roadside Gravel Shoulders")
-            || HasSelfOrAncestorName(gameObject, "Gravel Shoulder")
             || HasSelfOrAncestorName(gameObject, "Start Finish")
             || HasSelfOrAncestorName(gameObject, "Speed Post")
             || HasSelfOrAncestorName(gameObject, "Turn Warning")
