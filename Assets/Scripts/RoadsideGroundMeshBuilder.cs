@@ -4,7 +4,7 @@ public static class RoadsideGroundMeshBuilder
 {
     public const int DefaultSampleCount = 384;
     public const float InnerOffset = EnvironmentPlacement.ShoulderOuterOffset - 0.05f;
-    public const float OuterOffset = 180f;
+    public const float OuterOffset = 420f;
     public const float SurfaceYOffset = 0.11f;
 
     public static Mesh CreateGroundMesh(float side, int sampleCount = DefaultSampleCount)

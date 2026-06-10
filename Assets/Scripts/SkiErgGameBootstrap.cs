@@ -124,11 +124,23 @@ public class SkiErgGameBootstrap : MonoBehaviour
     {
         var grass = new GameObject("Continuous Green Roadside Ground");
         var color = EnvironmentGroundRenderingCleanup.OpenTerrainGrassColor;
+        var coverage = CreateCourseGroundCoverage(grass.transform);
         var left = CreateRoadsideGround(grass.transform, "Left Continuous Grass Terrain", -1f);
         var right = CreateRoadsideGround(grass.transform, "Right Continuous Grass Terrain", 1f);
+        coverage.GetComponent<MeshRenderer>().material.color = color;
         left.GetComponent<MeshRenderer>().material.color = color;
         right.GetComponent<MeshRenderer>().material.color = color;
         return grass;
+    }
+
+    private static GameObject CreateCourseGroundCoverage(Transform parent)
+    {
+        var coverage = new GameObject("Full Course Green Ground Coverage");
+        coverage.transform.SetParent(parent, false);
+        var meshFilter = coverage.AddComponent<MeshFilter>();
+        meshFilter.mesh = CourseGroundCoverageMeshBuilder.CreateCoverageMesh();
+        coverage.AddComponent<MeshRenderer>();
+        return coverage;
     }
 
     private static GameObject CreateRoadsideGround(Transform parent, string name, float side)

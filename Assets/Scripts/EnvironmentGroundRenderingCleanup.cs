@@ -37,6 +37,7 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
             || HasSelfOrAncestorName(gameObject, "Road Shoulder")
             || HasSelfOrAncestorName(gameObject, "Continuous Green Roadside Ground")
             || HasSelfOrAncestorName(gameObject, "Continuous Grass Terrain")
+            || HasSelfOrAncestorName(gameObject, "Full Course Green Ground Coverage")
             || HasSelfOrAncestorName(gameObject, "Open Grass Shoulders")
             || HasSelfOrAncestorName(gameObject, "Open Grass Segment")
             || HasSelfOrAncestorName(gameObject, "Road Edge Flow Cue");
@@ -185,8 +186,26 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
 
     private static void RefreshContinuousGreenRoadsideGround(Transform parent)
     {
+        RefreshCourseGroundCoverage(parent);
         RefreshRuntimeGroundSide(parent, "Left Runtime Grass Terrain", -1f, "Left");
         RefreshRuntimeGroundSide(parent, "Right Runtime Grass Terrain", 1f, "Right");
+    }
+
+    private static void RefreshCourseGroundCoverage(Transform parent)
+    {
+        var coverage = FindChildContaining(parent, "Full Course");
+
+        if (coverage == null)
+        {
+            coverage = new GameObject("Full Course Green Ground Coverage").transform;
+            coverage.SetParent(parent, false);
+        }
+
+        coverage.name = "Full Course Green Ground Coverage";
+        var meshFilter = coverage.GetComponent<MeshFilter>() ?? coverage.gameObject.AddComponent<MeshFilter>();
+        meshFilter.mesh = CourseGroundCoverageMeshBuilder.CreateCoverageMesh();
+        var renderer = coverage.GetComponent<MeshRenderer>() ?? coverage.gameObject.AddComponent<MeshRenderer>();
+        ApplyOpaqueGrassMaterial(renderer, OpenTerrainGrassColor);
     }
 
     private static void RefreshRuntimeGroundSide(Transform parent, string name, float side, string sideName)

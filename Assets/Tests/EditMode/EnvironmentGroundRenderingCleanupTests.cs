@@ -122,7 +122,7 @@ public class EnvironmentGroundRenderingCleanupTests
         try
         {
             Assert.AreEqual(EnvironmentGroundRenderingCleanup.RuntimeGroundRootName, root.name);
-            Assert.AreEqual(2, root.transform.childCount);
+            Assert.AreEqual(3, root.transform.childCount);
 
             for (var index = 0; index < root.transform.childCount; index++)
             {
@@ -160,6 +160,7 @@ public class EnvironmentGroundRenderingCleanupTests
             var right = refreshed.transform.Find("Right Runtime Grass Terrain");
 
             Assert.AreSame(root, refreshed);
+            Assert.IsNotNull(refreshed.transform.Find("Full Course Green Ground Coverage"));
             Assert.IsNotNull(left);
             Assert.IsNotNull(right);
             Assert.Greater(left.GetComponent<MeshFilter>().sharedMesh.vertexCount, 3);
