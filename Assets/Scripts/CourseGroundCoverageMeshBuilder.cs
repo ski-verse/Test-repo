@@ -23,7 +23,7 @@ public static class CourseGroundCoverageMeshBuilder
 
         var vertices = new Vector3[(safeResolution + 1) * (safeResolution + 1)];
         var frontTriangles = new int[safeResolution * safeResolution * 6];
-        var safetyBaseY = CalculateSafetyBaseHeight();
+        var courseSamples = BuildCourseSamples();
 
         for (var zIndex = 0; zIndex <= safeResolution; zIndex++)
         {
@@ -75,7 +75,7 @@ public static class CourseGroundCoverageMeshBuilder
 
         var vertices = new Vector3[(safeResolution + 1) * (safeResolution + 1)];
         var frontTriangles = new int[safeResolution * safeResolution * 6];
-        var courseSamples = BuildCourseSamples();
+        var safetyBaseY = CalculateSafetyBaseHeight();
 
         for (var zIndex = 0; zIndex <= safeResolution; zIndex++)
         {
