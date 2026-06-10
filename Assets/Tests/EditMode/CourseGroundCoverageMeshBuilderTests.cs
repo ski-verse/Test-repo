@@ -28,6 +28,21 @@ public class CourseGroundCoverageMeshBuilderTests
     }
 
     [Test]
+    public void CreateSafetyBaseGroundMesh_BuildsVeryLargeContinuousUnderlay()
+    {
+        var mesh = CourseGroundCoverageMeshBuilder.CreateSafetyBaseGroundMesh(8);
+        var bounds = mesh.bounds;
+
+        Assert.AreEqual((8 + 1) * (8 + 1) * 2, mesh.vertexCount);
+        Assert.AreEqual(8 * 8 * 12, mesh.triangles.Length);
+        Assert.Greater(bounds.size.x, CourseGroundCoverageMeshBuilder.BoundsPaddingMeters * 2f);
+        Assert.Greater(bounds.size.z, CourseGroundCoverageMeshBuilder.BoundsPaddingMeters * 2f);
+        AssertEveryTriangleHasReverseFace(mesh);
+
+        Object.DestroyImmediate(mesh);
+    }
+
+    [Test]
     public void CalculateCoveragePoint_StaysBelowRoadSoRoadSurfaceRemainsClear()
     {
         for (var distance = 0f; distance < CoursePath.CourseLengthMeters; distance += 375f)
@@ -46,6 +61,19 @@ public class CourseGroundCoverageMeshBuilderTests
         Assert.GreaterOrEqual(CourseGroundCoverageMeshBuilder.DefaultGridResolution, 72);
         Assert.GreaterOrEqual(CourseGroundCoverageMeshBuilder.CourseSampleCount, 384);
         Assert.LessOrEqual(CourseGroundCoverageMeshBuilder.SurfaceBelowRoadMeters, 0.08f);
+    }
+
+    [Test]
+    public void CalculateSafetyBaseGroundPoint_SitsBelowRoadAsGapFallback()
+    {
+        for (var distance = 0f; distance < CoursePath.CourseLengthMeters; distance += 375f)
+        {
+            var roadCenter = CoursePath.CenterPointAtDistance(distance);
+            var baseGround = CourseGroundCoverageMeshBuilder.CalculateSafetyBaseGroundPoint(roadCenter.x, roadCenter.z);
+
+            Assert.Less(baseGround.y, roadCenter.y);
+            Assert.Greater(baseGround.y, roadCenter.y - 0.3f);
+        }
     }
 
     private static void AssertEveryTriangleHasReverseFace(Mesh mesh)

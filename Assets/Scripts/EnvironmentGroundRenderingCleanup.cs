@@ -4,6 +4,7 @@ using UnityEngine;
 public class EnvironmentGroundRenderingCleanup : MonoBehaviour
 {
     public const string RuntimeGroundRootName = "Runtime Continuous Green Roadside Ground";
+    public const string SafetyBaseGroundName = "Safety Base Green Ground";
     private const float FlatGroundMaxHeight = 0.45f;
     private const float LargeSurfaceMinWidth = 1.8f;
     private const float LargeSurfaceMinLength = 2.8f;
@@ -38,6 +39,7 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
             || HasSelfOrAncestorName(gameObject, "Continuous Green Roadside Ground")
             || HasSelfOrAncestorName(gameObject, "Continuous Grass Terrain")
             || HasSelfOrAncestorName(gameObject, "Full Course Green Ground Coverage")
+            || HasSelfOrAncestorName(gameObject, SafetyBaseGroundName)
             || HasSelfOrAncestorName(gameObject, "Open Grass Shoulders")
             || HasSelfOrAncestorName(gameObject, "Open Grass Segment")
             || HasSelfOrAncestorName(gameObject, "Road Edge Flow Cue");
@@ -126,6 +128,7 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
 
     public static EnvironmentCleanupStats CleanupSceneGroundWithStats()
     {
+        EnsureSafetyBaseGroundExists();
         EnsureContinuousGreenRoadsideGroundExists();
 
         var renderers = Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None);
@@ -138,7 +141,11 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
 
             if (IsGeneratedGrassSurface(target))
             {
-                var color = HasSelfOrAncestorName(target, "Open Grass") ? OpenTerrainGrassColor : RoadShoulderGrassColor;
+                var color = HasSelfOrAncestorName(target, "Open Grass")
+                    || HasSelfOrAncestorName(target, SafetyBaseGroundName)
+                    || HasSelfOrAncestorName(target, "Full Course Green Ground Coverage")
+                        ? OpenTerrainGrassColor
+                        : RoadShoulderGrassColor;
                 color = HasSelfOrAncestorName(target, "Road Edge Flow Cue") ? RoadsideStripGrassColor : color;
                 ApplyOpaqueGrassMaterial(renderer, color);
                 stats.RecoloredObjects++;
@@ -167,6 +174,22 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
         }
 
         return stats;
+    }
+
+    public static GameObject EnsureSafetyBaseGroundExists()
+    {
+        var existing = GameObject.Find(SafetyBaseGroundName);
+
+        if (existing == null)
+        {
+            existing = new GameObject(SafetyBaseGroundName);
+        }
+
+        var meshFilter = existing.GetComponent<MeshFilter>() ?? existing.AddComponent<MeshFilter>();
+        meshFilter.mesh = CourseGroundCoverageMeshBuilder.CreateSafetyBaseGroundMesh();
+        var renderer = existing.GetComponent<MeshRenderer>() ?? existing.AddComponent<MeshRenderer>();
+        ApplyOpaqueGrassMaterial(renderer, OpenTerrainGrassColor);
+        return existing;
     }
 
     public static GameObject EnsureContinuousGreenRoadsideGroundExists()

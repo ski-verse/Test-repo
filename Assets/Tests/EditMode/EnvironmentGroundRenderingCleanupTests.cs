@@ -141,6 +141,25 @@ public class EnvironmentGroundRenderingCleanupTests
     }
 
     [Test]
+    public void EnsureSafetyBaseGroundExists_CreatesLargeGreenUnderlay()
+    {
+        var baseGround = EnvironmentGroundRenderingCleanup.EnsureSafetyBaseGroundExists();
+
+        try
+        {
+            Assert.AreEqual(EnvironmentGroundRenderingCleanup.SafetyBaseGroundName, baseGround.name);
+            Assert.IsNotNull(baseGround.GetComponent<MeshFilter>());
+            Assert.IsNotNull(baseGround.GetComponent<MeshRenderer>());
+            Assert.Greater(baseGround.GetComponent<MeshFilter>().sharedMesh.bounds.size.x, CourseGroundCoverageMeshBuilder.BoundsPaddingMeters * 2f);
+            Assert.Greater(baseGround.GetComponent<MeshRenderer>().material.color.g, baseGround.GetComponent<MeshRenderer>().material.color.r);
+        }
+        finally
+        {
+            Object.DestroyImmediate(baseGround);
+        }
+    }
+
+    [Test]
     public void EnsureContinuousGreenRoadsideGroundExists_RebuildsExistingSavedGroundMeshes()
     {
         var root = new GameObject("Continuous Green Roadside Ground");
@@ -317,10 +336,16 @@ public class EnvironmentGroundRenderingCleanupTests
     private static void DestroyRuntimeGround()
     {
         var runtimeGround = GameObject.Find(EnvironmentGroundRenderingCleanup.RuntimeGroundRootName);
+        var safetyBaseGround = GameObject.Find(EnvironmentGroundRenderingCleanup.SafetyBaseGroundName);
 
         if (runtimeGround != null)
         {
             Object.DestroyImmediate(runtimeGround);
+        }
+
+        if (safetyBaseGround != null)
+        {
+            Object.DestroyImmediate(safetyBaseGround);
         }
     }
 }

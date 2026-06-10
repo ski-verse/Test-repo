@@ -62,6 +62,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
             using (StartupPerformanceProfiler.Measure("CreateRoad")) CreateRoad();
             using (StartupPerformanceProfiler.Measure("CreateRoadShoulders")) CreateRoadShoulders();
+            using (StartupPerformanceProfiler.Measure("CreateSafetyBaseGround")) EnvironmentGroundRenderingCleanup.EnsureSafetyBaseGroundExists();
             using (StartupPerformanceProfiler.Measure("CreateRoadMarkings")) CreateRoadMarkings();
             using (StartupPerformanceProfiler.Measure("KilometerMarkerSignRuntimeUpdater.EnsureKilometerMarkers")) KilometerMarkerSignRuntimeUpdater.EnsureKilometerMarkers();
             using (StartupPerformanceProfiler.Measure("CreateTurnSigns")) CreateTurnSigns();
