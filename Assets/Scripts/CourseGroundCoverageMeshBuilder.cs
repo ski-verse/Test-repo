@@ -4,7 +4,7 @@ public static class CourseGroundCoverageMeshBuilder
 {
     public const int DefaultGridResolution = 72;
     public const int CourseSampleCount = 384;
-    public const float BoundsPaddingMeters = 460f;
+    public const float BoundsPaddingMeters = 960f;
     public const float SurfaceBelowRoadMeters = 0.06f;
     private const float FarTerrainDropPerMeter = 0.0009f;
 

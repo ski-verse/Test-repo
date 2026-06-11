@@ -62,8 +62,14 @@ public class NordicEnvironmentSettings : MonoBehaviour
     public float SafeMidTreeLineOffset => EnvironmentPlacement.RoadHalfWidth + Mathf.Max(SafeNearTreeLineOffset - EnvironmentPlacement.RoadHalfWidth + 2f, midForestDistanceFromRoad);
     public float SafeNearLakeOffset => Mathf.Max(EnvironmentPlacement.ShoulderOuterOffset + EffectiveLakeFootprintRadius, nearLakeDistanceFromRoad);
     public float SafeFarLakeOffset => Mathf.Max(SafeNearLakeOffset + 6f, farLakeDistanceFromRoad);
-    public float SafeNearMountainOffset => Mathf.Max(EnvironmentPlacement.HighForestOffset + EnvironmentPlacement.NearMountainHalfWidth + 20f, nearMountainDistance);
-    public float SafeFarMountainOffset => Mathf.Max(SafeNearMountainOffset + EnvironmentPlacement.FarMountainHalfWidth + 25f, farMountainDistance);
+    public float SafeNearMountainOffset => Mathf.Max(
+        EnvironmentPlacement.NearMountainOffset,
+        EnvironmentPlacement.HighForestOffset + EnvironmentPlacement.NearMountainHalfWidth + 120f,
+        nearMountainDistance);
+    public float SafeFarMountainOffset => Mathf.Max(
+        EnvironmentPlacement.FarMountainOffset,
+        SafeNearMountainOffset + EnvironmentPlacement.FarMountainHalfWidth + 120f,
+        farMountainDistance);
     public float EffectiveNearTreeOffset => Mathf.Max(
         EnvironmentPlacement.RoadHalfWidth + EnvironmentPlacement.OpenTerrainMargin + EnvironmentPlacement.MaxTreeRadius,
         SafeNearTreeLineOffset + (EnvironmentPlacement.NearTreeOffset - NordicLandscapeRuntimeUpdater.NearTreeLineOffset));

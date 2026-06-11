@@ -3,6 +3,9 @@ using UnityEngine;
 public class MountainRangeSceneUpdater : MonoBehaviour
 {
     private const float RoadLengthMeters = CoursePath.CourseLengthMeters;
+    public const float NearMountainChainLength = 240f;
+    public const float FarMountainChainLength = 320f;
+    public const float MountainRoadVisualClearance = 120f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void InstallRuntimeUpdater()
@@ -33,7 +36,8 @@ public class MountainRangeSceneUpdater : MonoBehaviour
 
         if (ContainsGeneratedMountainChains(existingMountains.transform))
         {
-            return false;
+            RebuildMountainRanges(existingMountains.transform, NordicEnvironmentSettings.GetOrCreateRuntimeSettings());
+            return true;
         }
 
         existingMountains.SetActive(false);
@@ -81,8 +85,8 @@ public class MountainRangeSceneUpdater : MonoBehaviour
             CreateMountainChain(
                 parent,
                 "Left Near Mountain Chain",
-                EnvironmentPlacement.SafePointAtDistance(z, -nearMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.NearMountainHalfWidth * 2f, 360f)),
-                new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2f, 82.5f * mountainHeightScale, 360f),
+                EnvironmentPlacement.SafePointAtDistance(z, -nearMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.NearMountainHalfWidth * 2f, NearMountainChainLength) + MountainRoadVisualClearance),
+                new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2f, 82.5f * mountainHeightScale, NearMountainChainLength),
                 nearColor,
                 11f + z * 0.017f,
                 8);
@@ -90,8 +94,8 @@ public class MountainRangeSceneUpdater : MonoBehaviour
             CreateMountainChain(
                 parent,
                 "Right Near Mountain Chain",
-                EnvironmentPlacement.SafePointAtDistance(z + 120f, nearMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.NearMountainHalfWidth * 2f, 390f)),
-                new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2f, 91f * mountainHeightScale, 390f),
+                EnvironmentPlacement.SafePointAtDistance(z + 120f, nearMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.NearMountainHalfWidth * 2f, NearMountainChainLength) + MountainRoadVisualClearance),
+                new Vector3(EnvironmentPlacement.NearMountainHalfWidth * 2f, 91f * mountainHeightScale, NearMountainChainLength),
                 nearColor,
                 29f + z * 0.019f,
                 9);
@@ -99,8 +103,8 @@ public class MountainRangeSceneUpdater : MonoBehaviour
             CreateMountainChain(
                 parent,
                 "Left Far Mountain Chain",
-                EnvironmentPlacement.SafePointAtDistance(z + 240f, -farMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.FarMountainHalfWidth * 2f, 460f)),
-                new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2f, 115f * mountainHeightScale, 460f),
+                EnvironmentPlacement.SafePointAtDistance(z + 240f, -farMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.FarMountainHalfWidth * 2f, FarMountainChainLength) + MountainRoadVisualClearance),
+                new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2f, 115f * mountainHeightScale, FarMountainChainLength),
                 farColor,
                 47f + z * 0.013f,
                 9);
@@ -108,12 +112,22 @@ public class MountainRangeSceneUpdater : MonoBehaviour
             CreateMountainChain(
                 parent,
                 "Right Far Mountain Chain",
-                EnvironmentPlacement.SafePointAtDistance(z + 360f, farMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.FarMountainHalfWidth * 2f, 490f)),
-                new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2f, 122.5f * mountainHeightScale, 490f),
+                EnvironmentPlacement.SafePointAtDistance(z + 360f, farMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.FarMountainHalfWidth * 2f, FarMountainChainLength) + MountainRoadVisualClearance),
+                new Vector3(EnvironmentPlacement.FarMountainHalfWidth * 2f, 122.5f * mountainHeightScale, FarMountainChainLength),
                 farColor,
                 73f + z * 0.015f,
                 8);
         }
+    }
+
+    public static void RebuildMountainRanges(Transform parent, NordicEnvironmentSettings settings)
+    {
+        for (var index = parent.childCount - 1; index >= 0; index--)
+        {
+            DestroyObject(parent.GetChild(index).gameObject);
+        }
+
+        BuildMountainRanges(parent, settings);
     }
 
     private static void CreateMountainChain(Transform parent, string name, Vector3 position, Vector3 scale, Color color, float seed, int peakCount)
@@ -132,5 +146,17 @@ public class MountainRangeSceneUpdater : MonoBehaviour
     private static float CalculateFootprintRadius(float width, float length)
     {
         return Mathf.Sqrt(width * width + length * length) * 0.5f;
+    }
+
+    private static void DestroyObject(GameObject gameObject)
+    {
+        if (Application.isPlaying)
+        {
+            Destroy(gameObject);
+        }
+        else
+        {
+            DestroyImmediate(gameObject);
+        }
     }
 }

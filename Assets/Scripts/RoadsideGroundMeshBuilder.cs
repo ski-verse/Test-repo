@@ -4,7 +4,7 @@ public static class RoadsideGroundMeshBuilder
 {
     public const int DefaultSampleCount = 384;
     public const float InnerOffset = EnvironmentPlacement.RoadHalfWidth + 0.005f;
-    public const float OuterOffset = 420f;
+    public const float OuterOffset = 900f;
     public const float InnerSurfaceYOffset = -0.005f;
     public const float OuterSurfaceYOffset = -0.11f;
     public static readonly float[] CoverageOffsets =
@@ -17,6 +17,8 @@ public static class RoadsideGroundMeshBuilder
         48f,
         96f,
         180f,
+        360f,
+        620f,
         OuterOffset
     };
 

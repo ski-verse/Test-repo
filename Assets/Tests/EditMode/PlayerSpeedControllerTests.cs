@@ -317,10 +317,10 @@ public class PlayerSpeedControllerTests
             AssertSafeGeneratedPoint(distance, -EnvironmentPlacement.HighForestOffset, EnvironmentPlacement.MaxForestTreeRadius);
             AssertSafeGeneratedPoint(distance, EnvironmentPlacement.TurnSignOffset, 0.6f);
             AssertSafeGeneratedPoint(distance, -EnvironmentPlacement.TurnSignOffset, 0.6f);
-            AssertSafeGeneratedPoint(distance, EnvironmentPlacement.NearMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.NearMountainHalfWidth * 2f, 360f));
-            AssertSafeGeneratedPoint(distance, -EnvironmentPlacement.NearMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.NearMountainHalfWidth * 2f, 360f));
-            AssertSafeGeneratedPoint(distance, EnvironmentPlacement.FarMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.FarMountainHalfWidth * 2f, 490f));
-            AssertSafeGeneratedPoint(distance, -EnvironmentPlacement.FarMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.FarMountainHalfWidth * 2f, 490f));
+            AssertSafeGeneratedPoint(distance, EnvironmentPlacement.NearMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.NearMountainHalfWidth * 2f, MountainRangeSceneUpdater.NearMountainChainLength) + MountainRangeSceneUpdater.MountainRoadVisualClearance);
+            AssertSafeGeneratedPoint(distance, -EnvironmentPlacement.NearMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.NearMountainHalfWidth * 2f, MountainRangeSceneUpdater.NearMountainChainLength) + MountainRangeSceneUpdater.MountainRoadVisualClearance);
+            AssertSafeGeneratedPoint(distance, EnvironmentPlacement.FarMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.FarMountainHalfWidth * 2f, MountainRangeSceneUpdater.FarMountainChainLength) + MountainRangeSceneUpdater.MountainRoadVisualClearance);
+            AssertSafeGeneratedPoint(distance, -EnvironmentPlacement.FarMountainOffset, CalculateFootprintRadius(EnvironmentPlacement.FarMountainHalfWidth * 2f, MountainRangeSceneUpdater.FarMountainChainLength) + MountainRangeSceneUpdater.MountainRoadVisualClearance);
         }
     }
 
@@ -331,10 +331,10 @@ public class PlayerSpeedControllerTests
         var farMountainInnerEdge = EnvironmentPlacement.FarMountainOffset - EnvironmentPlacement.FarMountainHalfWidth;
 
         Assert.LessOrEqual(EnvironmentPlacement.MountainFirstDistance, 650f);
-        Assert.GreaterOrEqual(EnvironmentPlacement.MountainHeightScale, 0.69f);
-        Assert.LessOrEqual(EnvironmentPlacement.MountainHeightScale, 0.71f);
-        Assert.GreaterOrEqual(nearMountainInnerEdge, 165f);
-        Assert.GreaterOrEqual(farMountainInnerEdge, 270f);
+        Assert.GreaterOrEqual(EnvironmentPlacement.MountainHeightScale, 0.54f);
+        Assert.LessOrEqual(EnvironmentPlacement.MountainHeightScale, 0.56f);
+        Assert.GreaterOrEqual(nearMountainInnerEdge, 500f);
+        Assert.GreaterOrEqual(farMountainInnerEdge, 700f);
         Assert.Greater(EnvironmentPlacement.HighForestOffset, EnvironmentPlacement.FarForestOffset);
         Assert.Less(EnvironmentPlacement.HighForestOffset + EnvironmentPlacement.MaxForestTreeRadius, nearMountainInnerEdge);
         Assert.Greater(EnvironmentPlacement.NearMountainOffset, EnvironmentPlacement.HighForestOffset);
