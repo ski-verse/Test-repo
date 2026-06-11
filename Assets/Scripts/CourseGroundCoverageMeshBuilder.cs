@@ -5,7 +5,7 @@ public static class CourseGroundCoverageMeshBuilder
     public const int DefaultGridResolution = 72;
     public const int CourseSampleCount = 384;
     public const float BoundsPaddingMeters = 960f;
-    public const float SurfaceBelowRoadMeters = 0.06f;
+    public const float SurfaceBelowRoadMeters = 6f;
     private const float FarTerrainDropPerMeter = 0.0009f;
 
     public static Mesh CreateCoverageMesh(int gridResolution = DefaultGridResolution)
@@ -52,8 +52,8 @@ public static class CourseGroundCoverageMeshBuilder
         var mesh = new Mesh
         {
             name = "Full Course Ground Coverage Mesh",
-            vertices = BuildDoubleSidedVertices(vertices),
-            triangles = BuildDoubleSidedTriangles(frontTriangles, vertices.Length)
+            vertices = vertices,
+            triangles = frontTriangles
         };
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
@@ -125,30 +125,6 @@ public static class CourseGroundCoverageMeshBuilder
             minZ = Mathf.Min(minZ, center.z);
             maxZ = Mathf.Max(maxZ, center.z);
         }
-    }
-
-    private static Vector3[] BuildDoubleSidedVertices(Vector3[] frontVertices)
-    {
-        var vertices = new Vector3[frontVertices.Length * 2];
-        frontVertices.CopyTo(vertices, 0);
-        frontVertices.CopyTo(vertices, frontVertices.Length);
-        return vertices;
-    }
-
-    private static int[] BuildDoubleSidedTriangles(int[] frontTriangles, int backfaceVertexOffset)
-    {
-        var triangles = new int[frontTriangles.Length * 2];
-        frontTriangles.CopyTo(triangles, 0);
-
-        for (var index = 0; index < frontTriangles.Length; index += 3)
-        {
-            var reverseIndex = frontTriangles.Length + index;
-            triangles[reverseIndex] = frontTriangles[index] + backfaceVertexOffset;
-            triangles[reverseIndex + 1] = frontTriangles[index + 2] + backfaceVertexOffset;
-            triangles[reverseIndex + 2] = frontTriangles[index + 1] + backfaceVertexOffset;
-        }
-
-        return triangles;
     }
 
     private struct CourseSample

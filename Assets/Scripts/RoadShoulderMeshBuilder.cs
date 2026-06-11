@@ -4,7 +4,7 @@ public static class RoadShoulderMeshBuilder
 {
     public const int DefaultSampleCount = 192;
     public const float InnerOffset = EnvironmentPlacement.RoadHalfWidth + 0.001f;
-    public const float OuterOffset = EnvironmentPlacement.RoadHalfWidth + EnvironmentPlacement.OpenTerrainMargin + 1.25f;
+    public const float OuterOffset = EnvironmentPlacement.RoadHalfWidth + 18f;
     public const float InnerSurfaceYOffset = 0.025f;
     public const float OuterSurfaceYOffset = 0.012f;
 
