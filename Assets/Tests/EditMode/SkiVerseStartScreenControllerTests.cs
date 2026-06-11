@@ -32,9 +32,10 @@ public class SkiVerseStartScreenControllerTests
         Assert.AreEqual("Ski-Verse", SkiVerseStartScreenController.TitleText);
         Assert.AreEqual("3 km Circuit", SkiVerseStartScreenController.ThreeKmCourseLabel);
         Assert.AreEqual("40 km Long Course", SkiVerseStartScreenController.FortyKmCourseLabel);
+        Assert.AreEqual("PM5: Not connected", SkiVerseStartScreenController.Pm5NotConnectedText);
+        Assert.AreEqual("PM5: Connected", SkiVerseStartScreenController.Pm5ConnectedText);
         Assert.AreEqual("Jämtland Ski Tour", SkiVerseStartScreenController.JamtlandTourLabel);
     }
-
     [Test]
     public void Start_CreatesProfessionalAlphaMenu()
     {
@@ -48,12 +49,31 @@ public class SkiVerseStartScreenControllerTests
         Assert.IsNotNull(controller.threeKmToggle);
         Assert.IsNotNull(controller.fortyKmToggle);
         Assert.IsNotNull(controller.jamtlandToggle);
+        Assert.IsNotNull(controller.connectPm5Button);
+        Assert.IsNotNull(controller.pm5StatusText);
         Assert.IsTrue(controller.threeKmToggle.isOn);
         Assert.AreEqual(SkiVerseStartScreenController.CourseSelection.ThreeKmCircuit, controller.SelectedCourse);
+        Assert.AreEqual(SkiVerseStartScreenController.Pm5NotConnectedText, controller.pm5StatusText.text);
 
         var title = GameObject.Find("Ski-Verse Title").GetComponent<TextMeshProUGUI>();
         Assert.AreEqual("Ski-Verse", title.text);
-        Assert.AreEqual(64f, title.fontSize, 0.001f);
+        Assert.GreaterOrEqual(title.fontSize, 72f);
+
+        var panelRect = controller.startScreenPanel.GetComponent<RectTransform>();
+        Assert.GreaterOrEqual(panelRect.sizeDelta.x, 980f);
+        Assert.GreaterOrEqual(panelRect.sizeDelta.y, 720f);
+    }
+
+    [Test]
+    public void ConnectPm5_SimulatesConnectionAndUpdatesStatus()
+    {
+        var controller = new GameObject("Start Screen").AddComponent<SkiVerseStartScreenController>();
+
+        controller.SendMessage("Start");
+        controller.ConnectPm5();
+
+        Assert.IsTrue(controller.IsPm5Connected);
+        Assert.AreEqual(SkiVerseStartScreenController.Pm5ConnectedText, controller.pm5StatusText.text);
     }
 
     [Test]
