@@ -30,7 +30,7 @@ public class WorkoutMetricsHudDisplayTests
     }
 
     [Test]
-    public void CreateRuntimeHud_BuildsTabletWorkoutPanelWithAllMetrics()
+    public void CreateRuntimeHud_BuildsCompactLowerLeftWorkoutPanelWithAllMetrics()
     {
         var canvas = new GameObject("Race HUD").AddComponent<Canvas>();
         var player = new GameObject("Player").AddComponent<PlayerSpeedController>();
@@ -50,10 +50,10 @@ public class WorkoutMetricsHudDisplayTests
         Assert.IsNotNull(display.totalStrokesValueText);
 
         var panelRect = display.panelRoot.GetComponent<RectTransform>();
-        Assert.AreEqual(new Vector2(0f, 1f), panelRect.anchorMin);
-        Assert.AreEqual(new Vector2(0f, 1f), panelRect.anchorMax);
-        Assert.GreaterOrEqual(panelRect.sizeDelta.x, 760f);
-        Assert.GreaterOrEqual(panelRect.sizeDelta.y, 270f);
+        Assert.AreEqual(new Vector2(0f, 0f), panelRect.anchorMin);
+        Assert.AreEqual(new Vector2(0f, 0f), panelRect.anchorMax);
+        Assert.LessOrEqual(panelRect.sizeDelta.x, 330f);
+        Assert.LessOrEqual(panelRect.sizeDelta.y, 370f);
     }
 
     [Test]

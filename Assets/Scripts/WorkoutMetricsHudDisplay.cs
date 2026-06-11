@@ -164,15 +164,17 @@ public class WorkoutMetricsHudDisplay : MonoBehaviour
 
     private void CreateMetricGrid(Transform parent)
     {
-        CreateMetricTile(parent, "Speed Metric", new Vector2(16f, -16f), "km/h", out speedValueText, out speedLabelText, true);
-        CreateMetricTile(parent, "Watts Metric", new Vector2(206f, -16f), "WATTS", out wattsValueText, out wattsLabelText, false);
-        CreateMetricTile(parent, "Heart Rate Metric", new Vector2(396f, -16f), "BPM", out heartRateValueText, out heartRateLabelText, false);
-        CreateMetricTile(parent, "Stroke Rate Metric", new Vector2(586f, -16f), "SPM", out strokeRateValueText, out strokeRateLabelText, false);
+        CreateMetricTile(parent, "Speed Metric", new Vector2(12f, -12f), "km/h", out speedValueText, out speedLabelText, true);
+        CreateMetricTile(parent, "Watts Metric", new Vector2(158f, -12f), "WATTS", out wattsValueText, out wattsLabelText, false);
 
-        CreateMetricTile(parent, "Time Metric", new Vector2(16f, -136f), "TIME", out timeValueText, out timeLabelText, false);
-        CreateMetricTile(parent, "Distance Metric", new Vector2(206f, -136f), "DISTANCE", out distanceValueText, out distanceLabelText, false);
-        CreateMetricTile(parent, "Gradient Metric", new Vector2(396f, -136f), "GRADIENT", out gradientValueText, out gradientLabelText, false);
-        CreateMetricTile(parent, "Lap Metric", new Vector2(586f, -136f), "LAP", out lapValueText, out lapLabelText, false);
+        CreateMetricTile(parent, "Heart Rate Metric", new Vector2(12f, -84f), "BPM", out heartRateValueText, out heartRateLabelText, false);
+        CreateMetricTile(parent, "Stroke Rate Metric", new Vector2(158f, -84f), "SPM", out strokeRateValueText, out strokeRateLabelText, false);
+
+        CreateMetricTile(parent, "Time Metric", new Vector2(12f, -156f), "TIME", out timeValueText, out timeLabelText, false);
+        CreateMetricTile(parent, "Distance Metric", new Vector2(158f, -156f), "DISTANCE", out distanceValueText, out distanceLabelText, false);
+
+        CreateMetricTile(parent, "Gradient Metric", new Vector2(12f, -228f), "GRADIENT", out gradientValueText, out gradientLabelText, false);
+        CreateMetricTile(parent, "Lap Metric", new Vector2(158f, -228f), "LAP", out lapValueText, out lapLabelText, false);
 
         var totalStrokesPanel = new GameObject("Total Strokes Metric");
         totalStrokesPanel.transform.SetParent(parent, false);
@@ -182,12 +184,12 @@ public class WorkoutMetricsHudDisplay : MonoBehaviour
         rect.anchorMin = new Vector2(0f, 1f);
         rect.anchorMax = new Vector2(0f, 1f);
         rect.pivot = new Vector2(0f, 1f);
-        rect.anchoredPosition = new Vector2(16f, -256f);
-        rect.sizeDelta = new Vector2(760f, 50f);
+        rect.anchoredPosition = new Vector2(12f, -300f);
+        rect.sizeDelta = new Vector2(288f, 38f);
 
-        totalStrokesLabelText = CreateText(totalStrokesPanel.transform, "Total Strokes Label", new Vector2(18f, -9f), new Vector2(220f, 28f), 18f, FontStyles.Bold, TextAlignmentOptions.Left, new Color(0.74f, 0.86f, 0.92f, 1f));
+        totalStrokesLabelText = CreateText(totalStrokesPanel.transform, "Total Strokes Label", new Vector2(12f, -7f), new Vector2(130f, 24f), 13f, FontStyles.Bold, TextAlignmentOptions.Left, new Color(0.74f, 0.86f, 0.92f, 1f));
         totalStrokesLabelText.text = "TOTAL STROKES";
-        totalStrokesValueText = CreateText(totalStrokesPanel.transform, "Total Strokes Value", new Vector2(250f, -5f), new Vector2(480f, 36f), 30f, FontStyles.Bold, TextAlignmentOptions.Right, Color.white);
+        totalStrokesValueText = CreateText(totalStrokesPanel.transform, "Total Strokes Value", new Vector2(150f, -4f), new Vector2(120f, 28f), 23f, FontStyles.Bold, TextAlignmentOptions.Right, Color.white);
     }
 
     private static GameObject CreatePanel(Transform parent)
@@ -196,14 +198,14 @@ public class WorkoutMetricsHudDisplay : MonoBehaviour
         panel.transform.SetParent(parent, false);
 
         var image = panel.AddComponent<Image>();
-        image.color = new Color(0.015f, 0.02f, 0.025f, 0.76f);
+        image.color = new Color(0.015f, 0.02f, 0.025f, 0.68f);
 
         var rect = panel.GetComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0f, 1f);
-        rect.anchorMax = new Vector2(0f, 1f);
-        rect.pivot = new Vector2(0f, 1f);
-        rect.anchoredPosition = new Vector2(18f, -18f);
-        rect.sizeDelta = new Vector2(800f, 324f);
+        rect.anchorMin = new Vector2(0f, 0f);
+        rect.anchorMax = new Vector2(0f, 0f);
+        rect.pivot = new Vector2(0f, 0f);
+        rect.anchoredPosition = new Vector2(16f, 16f);
+        rect.sizeDelta = new Vector2(312f, 350f);
         return panel;
     }
 
@@ -220,10 +222,10 @@ public class WorkoutMetricsHudDisplay : MonoBehaviour
         rect.anchorMax = new Vector2(0f, 1f);
         rect.pivot = new Vector2(0f, 1f);
         rect.anchoredPosition = anchoredPosition;
-        rect.sizeDelta = new Vector2(174f, 104f);
+        rect.sizeDelta = new Vector2(142f, 64f);
 
-        valueText = CreateText(tile.transform, "Value", new Vector2(12f, -9f), new Vector2(150f, 56f), 36f, FontStyles.Bold, TextAlignmentOptions.Left, accent ? new Color(0.52f, 1f, 0.78f, 1f) : Color.white);
-        labelText = CreateText(tile.transform, "Label", new Vector2(12f, -64f), new Vector2(150f, 28f), 18f, FontStyles.Bold, TextAlignmentOptions.Left, new Color(0.74f, 0.86f, 0.92f, 1f));
+        valueText = CreateText(tile.transform, "Value", new Vector2(10f, -6f), new Vector2(122f, 36f), accent ? 26f : 23f, FontStyles.Bold, TextAlignmentOptions.Left, accent ? new Color(0.52f, 1f, 0.78f, 1f) : Color.white);
+        labelText = CreateText(tile.transform, "Label", new Vector2(10f, -40f), new Vector2(122f, 20f), 12f, FontStyles.Bold, TextAlignmentOptions.Left, new Color(0.74f, 0.86f, 0.92f, 1f));
         labelText.text = label;
     }
 
