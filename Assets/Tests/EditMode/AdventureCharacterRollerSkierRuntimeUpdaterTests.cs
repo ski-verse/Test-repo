@@ -150,24 +150,31 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
     [Test]
     public void ImportedAnimationTest_KeepsAdventureCharacterAnimatorEnabled()
     {
+        var playerRoot = new GameObject("Low Poly Roller Skier");
         var character = new GameObject("Imported Double Poling Test Skier");
         var armature = new GameObject("Armature");
         var controller = new AnimatorOverrideController();
 
         try
         {
+            character.transform.SetParent(playerRoot.transform, false);
+            var player = playerRoot.AddComponent<PlayerSpeedController>();
             armature.transform.SetParent(character.transform, false);
             var importedAnimator = armature.AddComponent<Animator>();
             importedAnimator.enabled = true;
 
-            AdventureCharacterRollerSkierRuntimeUpdater.ConfigureImportedDoublePolingTestVisual(character, controller);
+            AdventureCharacterRollerSkierRuntimeUpdater.ConfigureImportedDoublePolingTestVisual(character, controller, player);
 
             Assert.IsTrue(importedAnimator.enabled);
             Assert.AreSame(controller, importedAnimator.runtimeAnimatorController);
+            var driver = character.GetComponent<ImportedDoublePolingAnimationInputDriver>();
+            Assert.IsNotNull(driver);
+            Assert.AreSame(importedAnimator, driver.animator);
+            Assert.AreSame(player, driver.player);
         }
         finally
         {
-            Object.DestroyImmediate(character);
+            Object.DestroyImmediate(playerRoot);
             Object.DestroyImmediate(controller);
         }
     }

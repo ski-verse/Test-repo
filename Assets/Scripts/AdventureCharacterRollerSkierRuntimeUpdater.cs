@@ -148,7 +148,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
             importedSkier.transform.localPosition = Vector3.zero;
             importedSkier.transform.localRotation = Quaternion.Euler(0f, CharacterYawDegrees, 0f);
             importedSkier.transform.localScale = Vector3.one;
-            ConfigureImportedDoublePolingTestVisual(importedSkier, GetImportedDoublePolingController());
+            ConfigureImportedDoublePolingTestVisual(importedSkier, GetImportedDoublePolingController(), animator.player);
 
             new GameObject(AdventureCharacterAppliedMarkerName).transform.SetParent(visualRoot, false);
             ConfigureProceduralAnimatorForAdventureMode(animator, true);
@@ -228,6 +228,11 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
 
     public static void ConfigureImportedDoublePolingTestVisual(GameObject character, RuntimeAnimatorController importedDoublePolingController)
     {
+        ConfigureImportedDoublePolingTestVisual(character, importedDoublePolingController, null);
+    }
+
+    public static void ConfigureImportedDoublePolingTestVisual(GameObject character, RuntimeAnimatorController importedDoublePolingController, PlayerSpeedController player)
+    {
         if (character == null)
         {
             return;
@@ -248,6 +253,16 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
                 animators[i].runtimeAnimatorController = importedDoublePolingController;
             }
         }
+
+        var driver = character.GetComponent<ImportedDoublePolingAnimationInputDriver>();
+        if (driver == null)
+        {
+            driver = character.AddComponent<ImportedDoublePolingAnimationInputDriver>();
+        }
+
+        driver.animator = animators[0];
+        driver.player = player != null ? player : character.GetComponentInParent<PlayerSpeedController>();
+        driver.ApplyPolingState(false);
 
         if (importedDoublePolingController == null)
         {

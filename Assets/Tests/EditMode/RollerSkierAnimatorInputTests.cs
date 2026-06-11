@@ -1,5 +1,9 @@
 using NUnit.Framework;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEditor.Animations;
+#endif
 
 public class RollerSkierAnimatorInputTests
 {
@@ -21,6 +25,52 @@ public class RollerSkierAnimatorInputTests
         Assert.IsFalse(RollerSkierAnimator.ShouldDoublePole(new PlayerMovementInput(0f, 20f), 25f));
         Assert.IsFalse(RollerSkierAnimator.ShouldDoublePole(PlayerMovementInput.Decelerate, 25f));
     }
+
+    [Test]
+    public void ImportedDoublePolingAnimationInputDriver_UsesPropulsionInputNotSpeed()
+    {
+        Assert.IsTrue(ImportedDoublePolingAnimationInputDriver.HasActivePropulsionInput(PlayerMovementInput.Accelerate, 0f));
+        Assert.IsTrue(ImportedDoublePolingAnimationInputDriver.HasActivePropulsionInput(new PlayerMovementInput(0f, 0.5f), 0f));
+        Assert.IsFalse(ImportedDoublePolingAnimationInputDriver.HasActivePropulsionInput(PlayerMovementInput.None, 0f));
+        Assert.IsFalse(ImportedDoublePolingAnimationInputDriver.HasActivePropulsionInput(PlayerMovementInput.Decelerate, 0f));
+    }
+
+    [Test]
+    public void ImportedDoublePolingAnimationInputDriver_StopsAnimatorWhenPropulsionIsIdle()
+    {
+        var visual = new GameObject("Imported Double Poling Test Skier");
+
+        try
+        {
+            var animator = visual.AddComponent<Animator>();
+            animator.speed = 1f;
+            var driver = visual.AddComponent<ImportedDoublePolingAnimationInputDriver>();
+            driver.animator = animator;
+
+            driver.ApplyPolingState(false);
+
+            Assert.AreEqual(0f, animator.speed, 0.001f);
+
+            driver.ApplyPolingState(true);
+
+            Assert.AreEqual(1f, animator.speed, 0.001f);
+        }
+        finally
+        {
+            Object.DestroyImmediate(visual);
+        }
+    }
+
+#if UNITY_EDITOR
+    [Test]
+    public void ImportedDoublePolingController_ExposesIsPolingBoolParameter()
+    {
+        var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>("Assets/Player animator controller.controller");
+
+        Assert.IsNotNull(controller);
+        Assert.IsTrue(HasBoolParameter(controller, ImportedDoublePolingAnimationInputDriver.IsPolingParameterName));
+    }
+#endif
 
     [Test]
     public void CalculateNextPhase_DoesNotAdvanceDoublePoleWithoutPropulsion()
@@ -67,4 +117,19 @@ public class RollerSkierAnimatorInputTests
         Assert.Greater(controller.LastMovementInput.SpeedAxis, 0f);
         Object.DestroyImmediate(controller.gameObject);
     }
+
+#if UNITY_EDITOR
+    private static bool HasBoolParameter(AnimatorController controller, string parameterName)
+    {
+        for (var i = 0; i < controller.parameters.Length; i++)
+        {
+            if (controller.parameters[i].type == AnimatorControllerParameterType.Bool && controller.parameters[i].name == parameterName)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+#endif
 }
