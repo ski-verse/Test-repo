@@ -157,7 +157,7 @@ public class WorkoutMetricsHudDisplay : MonoBehaviour
         display.strokeMetricsDisplay = Object.FindFirstObjectByType<StrokeMetricsDisplay>();
         display.panelRoot = CreatePanel(displayObject.transform);
         display.CreateMetricGrid(display.panelRoot.transform);
-        display.HideLegacyHudTexts();
+        HideLegacyHudTexts();
         display.Refresh();
         return display;
     }
