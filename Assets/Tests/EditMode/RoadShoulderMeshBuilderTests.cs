@@ -81,7 +81,7 @@ public class RoadShoulderMeshBuilderTests
         var innerClearance = HorizontalDistance(roadCenter, inner);
         var outerClearance = HorizontalDistance(roadCenter, outer);
 
-        Assert.LessOrEqual(outerClearance - innerClearance, 0.12f);
+        Assert.LessOrEqual(outerClearance - innerClearance, 0.01f);
         Assert.Less(inner.y, roadCenter.y + LoopRoadMeshBuilder.SurfaceYOffset);
         Assert.AreEqual(roadsideGround.y, outer.y, 0.012f);
     }

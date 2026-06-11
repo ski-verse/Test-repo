@@ -3,9 +3,9 @@ using UnityEngine;
 public static class RoadsideGroundMeshBuilder
 {
     public const int DefaultSampleCount = 384;
-    public const float InnerOffset = EnvironmentPlacement.RoadHalfWidth + 0.06f;
+    public const float InnerOffset = EnvironmentPlacement.RoadHalfWidth + 0.005f;
     public const float OuterOffset = 420f;
-    public const float InnerSurfaceYOffset = -0.035f;
+    public const float InnerSurfaceYOffset = -0.005f;
     public const float OuterSurfaceYOffset = -0.11f;
     public static readonly float[] CoverageOffsets =
     {

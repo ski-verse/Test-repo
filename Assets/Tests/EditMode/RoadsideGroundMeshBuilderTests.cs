@@ -19,13 +19,13 @@ public class RoadsideGroundMeshBuilderTests
     }
 
     [Test]
-    public void GroundOffsets_CoverRoadsideAreaBetweenShoulderAndTrees()
+    public void GroundOffsets_StartAtRoadEdgeAndCoverRoadsideArea()
     {
         Assert.Greater(RoadsideGroundMeshBuilder.InnerOffset, EnvironmentPlacement.RoadHalfWidth);
-        Assert.Less(RoadsideGroundMeshBuilder.InnerOffset, EnvironmentPlacement.ShoulderOuterOffset);
+        Assert.LessOrEqual(RoadsideGroundMeshBuilder.InnerOffset, EnvironmentPlacement.RoadHalfWidth + 0.01f);
         Assert.Less(
             RoadsideGroundMeshBuilder.InnerOffset - EnvironmentPlacement.RoadHalfWidth,
-            EnvironmentPlacement.ShoulderInnerClearance + 0.05f);
+            0.01f);
         Assert.AreEqual(RoadsideGroundMeshBuilder.InnerOffset, RoadsideGroundMeshBuilder.CoverageOffsets[0]);
         Assert.AreEqual(RoadsideGroundMeshBuilder.OuterOffset, RoadsideGroundMeshBuilder.CoverageOffsets[RoadsideGroundMeshBuilder.CoverageOffsets.Length - 1]);
         Assert.Greater(RoadsideGroundMeshBuilder.CoverageOffsets.Length, 6);

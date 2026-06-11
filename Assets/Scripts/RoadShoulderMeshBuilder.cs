@@ -3,9 +3,9 @@ using UnityEngine;
 public static class RoadShoulderMeshBuilder
 {
     public const int DefaultSampleCount = 192;
-    public const float InnerOffset = EnvironmentPlacement.RoadHalfWidth + 0.015f;
+    public const float InnerOffset = EnvironmentPlacement.RoadHalfWidth + 0.001f;
     public const float OuterOffset = RoadsideGroundMeshBuilder.InnerOffset;
-    public const float InnerSurfaceYOffset = 0.005f;
+    public const float InnerSurfaceYOffset = 0.01f;
     public const float OuterSurfaceYOffset = RoadsideGroundMeshBuilder.InnerSurfaceYOffset;
 
     public static Mesh CreateShoulderMesh(float side, int sampleCount = DefaultSampleCount)
