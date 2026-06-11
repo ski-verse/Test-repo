@@ -92,6 +92,12 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         return settings != null && settings.useImportedDoublePolingAnimationTest;
     }
 
+    public static RuntimeAnimatorController GetImportedDoublePolingController()
+    {
+        var settings = SkierVisualSettings.FindActiveSettings();
+        return settings != null ? settings.importedDoublePolingController : null;
+    }
+
     public static bool ApplyAdventureCharacterSwap(bool importedAnimationTest)
     {
         if (!UseAdventureCharacterPrefabInGameplay)
@@ -136,7 +142,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         character.transform.localPosition = Vector3.zero;
         character.transform.localRotation = Quaternion.Euler(0f, CharacterYawDegrees, 0f);
         character.transform.localScale = new Vector3(CharacterWidthScale, 1f, 1f);
-        ConfigureImportedCharacterAnimationMode(character, importedAnimationTest);
+        ConfigureImportedCharacterAnimationMode(character, importedAnimationTest, importedAnimationTest ? GetImportedDoublePolingController() : null);
         if (AttachAdventureEquipmentToHumanoid)
         {
             AttachEquipmentToHumanoidBones(visualRoot, character, animator);
@@ -162,14 +168,49 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
 
     public static void ConfigureImportedCharacterAnimationMode(GameObject character, bool importedAnimationTest)
     {
+        ConfigureImportedCharacterAnimationMode(character, importedAnimationTest, null);
+    }
+
+    public static void ConfigureImportedCharacterAnimationMode(GameObject character, bool importedAnimationTest, RuntimeAnimatorController importedDoublePolingController)
+    {
         if (importedAnimationTest)
         {
+            EnableImportedCharacterAnimation(character, importedDoublePolingController);
             Debug.Log("[Ski-Verse] Imported animation test mode keeps the Adventure Character Animator and imported pose active.");
             return;
         }
 
         ApplyNeutralStandingPose(character);
         DisableImportedCharacterAnimation(character);
+    }
+
+    private static void EnableImportedCharacterAnimation(GameObject character, RuntimeAnimatorController importedDoublePolingController)
+    {
+        if (character == null)
+        {
+            return;
+        }
+
+        var animators = character.GetComponentsInChildren<Animator>(true);
+        if (animators.Length == 0)
+        {
+            Debug.LogWarning("[Ski-Verse] Imported animation test mode found no Animator on the runtime Adventure Character.");
+            return;
+        }
+
+        for (var i = 0; i < animators.Length; i++)
+        {
+            animators[i].enabled = true;
+            if (importedDoublePolingController != null)
+            {
+                animators[i].runtimeAnimatorController = importedDoublePolingController;
+            }
+        }
+
+        if (importedDoublePolingController == null)
+        {
+            Debug.LogWarning("[Ski-Verse] Imported animation test mode is enabled, but SkierVisualSettings.importedDoublePolingController is not assigned.");
+        }
     }
 
     public static void ConfigureProceduralAnimatorForAdventureMode(RollerSkierAnimator animator, bool importedAnimationTest)

@@ -9,6 +9,8 @@ public class SkierVisualSettings : MonoBehaviour
     [Header("Animation Test")]
     [Tooltip("Keeps the imported Adventure Character Animator enabled so imported double-poling clips such as Armature|ArmatureAction can drive the visible skier.")]
     public bool useImportedDoublePolingAnimationTest;
+    [Tooltip("Animator Controller assigned to the runtime Adventure Character Animator when imported double-poling animation test mode is enabled.")]
+    public RuntimeAnimatorController importedDoublePolingController;
 
     public static SkierVisualSettings GetOrCreateRuntimeSettings()
     {

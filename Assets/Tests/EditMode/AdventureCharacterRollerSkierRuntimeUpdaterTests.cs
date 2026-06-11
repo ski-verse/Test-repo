@@ -32,6 +32,7 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
             var settings = settingsObject.AddComponent<SkierVisualSettings>();
 
             Assert.IsFalse(settings.useImportedDoublePolingAnimationTest);
+            Assert.IsNull(settings.importedDoublePolingController);
         }
         finally
         {
@@ -54,6 +55,26 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
         finally
         {
             Object.DestroyImmediate(settingsObject);
+        }
+    }
+
+    [Test]
+    public void RuntimeUpdater_ReadsImportedDoublePolingControllerFromSkierVisualSettings()
+    {
+        var settingsObject = new GameObject("Skier Visual Settings");
+        var controller = new AnimatorOverrideController();
+
+        try
+        {
+            var settings = settingsObject.AddComponent<SkierVisualSettings>();
+            settings.importedDoublePolingController = controller;
+
+            Assert.AreSame(controller, AdventureCharacterRollerSkierRuntimeUpdater.GetImportedDoublePolingController());
+        }
+        finally
+        {
+            Object.DestroyImmediate(settingsObject);
+            Object.DestroyImmediate(controller);
         }
     }
 
@@ -128,6 +149,7 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
     {
         var character = new GameObject("Man_01");
         var armature = new GameObject("Armature");
+        var controller = new AnimatorOverrideController();
 
         try
         {
@@ -135,13 +157,15 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
             var importedAnimator = armature.AddComponent<Animator>();
             importedAnimator.enabled = true;
 
-            AdventureCharacterRollerSkierRuntimeUpdater.ConfigureImportedCharacterAnimationMode(character, true);
+            AdventureCharacterRollerSkierRuntimeUpdater.ConfigureImportedCharacterAnimationMode(character, true, controller);
 
             Assert.IsTrue(importedAnimator.enabled);
+            Assert.AreSame(controller, importedAnimator.runtimeAnimatorController);
         }
         finally
         {
             Object.DestroyImmediate(character);
+            Object.DestroyImmediate(controller);
         }
     }
 
