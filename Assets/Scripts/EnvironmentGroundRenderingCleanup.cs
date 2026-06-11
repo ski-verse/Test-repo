@@ -39,7 +39,6 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
             || HasSelfOrAncestorName(gameObject, "Continuous Green Roadside Ground")
             || HasSelfOrAncestorName(gameObject, "Continuous Grass Terrain")
             || HasSelfOrAncestorName(gameObject, "Full Course Green Ground Coverage")
-            || HasSelfOrAncestorName(gameObject, SafetyBaseGroundName)
             || HasSelfOrAncestorName(gameObject, "Open Grass Shoulders")
             || HasSelfOrAncestorName(gameObject, "Open Grass Segment")
             || HasSelfOrAncestorName(gameObject, "Road Edge Flow Cue");
@@ -128,11 +127,12 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
 
     public static EnvironmentCleanupStats CleanupSceneGroundWithStats()
     {
-        EnsureSafetyBaseGroundExists();
+        var removedSafetyBaseGround = RemoveSafetyBaseGroundIfPresent();
         EnsureContinuousGreenRoadsideGroundExists();
 
         var renderers = Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None);
         var stats = new EnvironmentCleanupStats(renderers.Length);
+        stats.DisabledObjects += removedSafetyBaseGround ? 1 : 0;
 
         for (var index = 0; index < renderers.Length; index++)
         {
@@ -142,7 +142,6 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
             if (IsGeneratedGrassSurface(target))
             {
                 var color = HasSelfOrAncestorName(target, "Open Grass")
-                    || HasSelfOrAncestorName(target, SafetyBaseGroundName)
                     || HasSelfOrAncestorName(target, "Full Course Green Ground Coverage")
                         ? OpenTerrainGrassColor
                         : RoadShoulderGrassColor;
@@ -176,20 +175,27 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
         return stats;
     }
 
-    public static GameObject EnsureSafetyBaseGroundExists()
+    public static bool RemoveSafetyBaseGroundIfPresent()
     {
         var existing = GameObject.Find(SafetyBaseGroundName);
 
         if (existing == null)
         {
-            existing = new GameObject(SafetyBaseGroundName);
+            return false;
         }
 
-        var meshFilter = existing.GetComponent<MeshFilter>() ?? existing.AddComponent<MeshFilter>();
-        meshFilter.mesh = CourseGroundCoverageMeshBuilder.CreateSafetyBaseGroundMesh();
-        var renderer = existing.GetComponent<MeshRenderer>() ?? existing.AddComponent<MeshRenderer>();
-        ApplyOpaqueGrassMaterial(renderer, OpenTerrainGrassColor);
-        return existing;
+        existing.SetActive(false);
+
+        if (Application.isPlaying)
+        {
+            Object.Destroy(existing);
+        }
+        else
+        {
+            Object.DestroyImmediate(existing);
+        }
+
+        return true;
     }
 
     public static GameObject EnsureContinuousGreenRoadsideGroundExists()

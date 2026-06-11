@@ -141,21 +141,32 @@ public class EnvironmentGroundRenderingCleanupTests
     }
 
     [Test]
-    public void EnsureSafetyBaseGroundExists_CreatesLargeGreenUnderlay()
+    public void RemoveSafetyBaseGroundIfPresent_RemovesOldUnderlay()
     {
-        var baseGround = EnvironmentGroundRenderingCleanup.EnsureSafetyBaseGroundExists();
+        var baseGround = new GameObject(EnvironmentGroundRenderingCleanup.SafetyBaseGroundName);
+        baseGround.AddComponent<MeshFilter>().mesh = new Mesh
+        {
+            vertices = new[] { Vector3.zero, Vector3.right, Vector3.forward },
+            triangles = new[] { 0, 1, 2 }
+        };
+        baseGround.AddComponent<MeshRenderer>();
 
+        Assert.IsTrue(EnvironmentGroundRenderingCleanup.RemoveSafetyBaseGroundIfPresent());
+        Assert.IsNull(GameObject.Find(EnvironmentGroundRenderingCleanup.SafetyBaseGroundName));
+    }
+
+    [Test]
+    public void CleanupSceneGroundWithStats_DoesNotCreateSafetyBaseGround()
+    {
         try
         {
-            Assert.AreEqual(EnvironmentGroundRenderingCleanup.SafetyBaseGroundName, baseGround.name);
-            Assert.IsNotNull(baseGround.GetComponent<MeshFilter>());
-            Assert.IsNotNull(baseGround.GetComponent<MeshRenderer>());
-            Assert.Greater(baseGround.GetComponent<MeshFilter>().sharedMesh.bounds.size.x, CourseGroundCoverageMeshBuilder.BoundsPaddingMeters * 2f);
-            Assert.Greater(baseGround.GetComponent<MeshRenderer>().material.color.g, baseGround.GetComponent<MeshRenderer>().material.color.r);
+            EnvironmentGroundRenderingCleanup.CleanupSceneGroundWithStats();
+
+            Assert.IsNull(GameObject.Find(EnvironmentGroundRenderingCleanup.SafetyBaseGroundName));
         }
         finally
         {
-            Object.DestroyImmediate(baseGround);
+            DestroyRuntimeGround();
         }
     }
 
