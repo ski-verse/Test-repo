@@ -7,8 +7,11 @@ using UnityEditor;
 public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
 {
     public const string AdventureCharacterPrefabPath = "Assets/Adventure_Character/Prefabs/Man_01.prefab";
+    public const string ImportedDoublePolingFbxPath = "Assets/skier doublepoling_03.fbx";
+    public const string ImportedDoublePolingFbxFallbackPath = "Assets/skier_doublepoling_03.fbx";
     public const string AdventureCharacterAppliedMarkerName = "Adventure Character Roller Skier Applied";
     public const string HumanoidRootName = "Adventure Character Roller Skier";
+    public const string ImportedDoublePolingTestRootName = "Imported Double Poling Test Skier";
     public const string BoneAttachedEquipmentRootName = "Adventure Stable Equipment Constraint Rig";
     public const string LeftAdventurePoleName = "Left Adventure Ski Pole";
     public const string RightAdventurePoleName = "Right Adventure Ski Pole";
@@ -128,6 +131,32 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         }
 
 #if UNITY_EDITOR
+        if (importedAnimationTest)
+        {
+            var importedDoublePolingAsset = LoadImportedDoublePolingFbxAsset();
+            if (importedDoublePolingAsset == null)
+            {
+                Debug.LogWarning("[Ski-Verse] Imported double-poling test mode is enabled, but skier_doublepoling_03 FBX could not be found.");
+                return false;
+            }
+
+            ClearChildren(visualRoot);
+
+            var importedSkier = Object.Instantiate(importedDoublePolingAsset);
+            importedSkier.name = ImportedDoublePolingTestRootName;
+            importedSkier.transform.SetParent(visualRoot, false);
+            importedSkier.transform.localPosition = Vector3.zero;
+            importedSkier.transform.localRotation = Quaternion.Euler(0f, CharacterYawDegrees, 0f);
+            importedSkier.transform.localScale = Vector3.one;
+            ConfigureImportedDoublePolingTestVisual(importedSkier, GetImportedDoublePolingController());
+
+            new GameObject(AdventureCharacterAppliedMarkerName).transform.SetParent(visualRoot, false);
+            ConfigureProceduralAnimatorForAdventureMode(animator, true);
+
+            Debug.Log("[Ski-Verse] Imported double-poling FBX test visual active; using skier_doublepoling_03 rig and controller directly.");
+            return true;
+        }
+
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(AdventureCharacterPrefabPath);
         if (prefab == null)
         {
@@ -166,6 +195,19 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
 #endif
     }
 
+#if UNITY_EDITOR
+    private static GameObject LoadImportedDoublePolingFbxAsset()
+    {
+        var asset = AssetDatabase.LoadAssetAtPath<GameObject>(ImportedDoublePolingFbxPath);
+        if (asset != null)
+        {
+            return asset;
+        }
+
+        return AssetDatabase.LoadAssetAtPath<GameObject>(ImportedDoublePolingFbxFallbackPath);
+    }
+#endif
+
     public static void ConfigureImportedCharacterAnimationMode(GameObject character, bool importedAnimationTest)
     {
         ConfigureImportedCharacterAnimationMode(character, importedAnimationTest, null);
@@ -175,7 +217,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     {
         if (importedAnimationTest)
         {
-            EnableImportedCharacterAnimation(character, importedDoublePolingController);
+            ConfigureImportedDoublePolingTestVisual(character, importedDoublePolingController);
             Debug.Log("[Ski-Verse] Imported animation test mode keeps the Adventure Character Animator and imported pose active.");
             return;
         }
@@ -184,7 +226,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         DisableImportedCharacterAnimation(character);
     }
 
-    private static void EnableImportedCharacterAnimation(GameObject character, RuntimeAnimatorController importedDoublePolingController)
+    public static void ConfigureImportedDoublePolingTestVisual(GameObject character, RuntimeAnimatorController importedDoublePolingController)
     {
         if (character == null)
         {

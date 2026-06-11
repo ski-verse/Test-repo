@@ -7,8 +7,11 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
     public void AdventureCharacterConfiguration_UsesImportedAdventureCharacterPrefab()
     {
         Assert.AreEqual("Assets/Adventure_Character/Prefabs/Man_01.prefab", AdventureCharacterRollerSkierRuntimeUpdater.AdventureCharacterPrefabPath);
+        Assert.AreEqual("Assets/skier doublepoling_03.fbx", AdventureCharacterRollerSkierRuntimeUpdater.ImportedDoublePolingFbxPath);
+        Assert.AreEqual("Assets/skier_doublepoling_03.fbx", AdventureCharacterRollerSkierRuntimeUpdater.ImportedDoublePolingFbxFallbackPath);
         Assert.AreEqual("Adventure Character Roller Skier Applied", AdventureCharacterRollerSkierRuntimeUpdater.AdventureCharacterAppliedMarkerName);
         Assert.AreEqual("Adventure Character Roller Skier", AdventureCharacterRollerSkierRuntimeUpdater.HumanoidRootName);
+        Assert.AreEqual("Imported Double Poling Test Skier", AdventureCharacterRollerSkierRuntimeUpdater.ImportedDoublePolingTestRootName);
         Assert.AreEqual("Adventure Stable Equipment Constraint Rig", AdventureCharacterRollerSkierRuntimeUpdater.BoneAttachedEquipmentRootName);
         Assert.IsTrue(AdventureCharacterRollerSkierRuntimeUpdater.DisableProceduralAnimationForAdventure);
         Assert.IsTrue(AdventureCharacterRollerSkierRuntimeUpdater.SkipGenericPoleVisibilityForAdventure);
@@ -147,7 +150,7 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
     [Test]
     public void ImportedAnimationTest_KeepsAdventureCharacterAnimatorEnabled()
     {
-        var character = new GameObject("Man_01");
+        var character = new GameObject("Imported Double Poling Test Skier");
         var armature = new GameObject("Armature");
         var controller = new AnimatorOverrideController();
 
@@ -157,7 +160,7 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
             var importedAnimator = armature.AddComponent<Animator>();
             importedAnimator.enabled = true;
 
-            AdventureCharacterRollerSkierRuntimeUpdater.ConfigureImportedCharacterAnimationMode(character, true, controller);
+            AdventureCharacterRollerSkierRuntimeUpdater.ConfigureImportedDoublePolingTestVisual(character, controller);
 
             Assert.IsTrue(importedAnimator.enabled);
             Assert.AreSame(controller, importedAnimator.runtimeAnimatorController);
