@@ -35,6 +35,8 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     private const float PoleRadius = 0.026f;
     private const float PoleLength = 0.82f;
 
+    public bool useImportedAnimationTest;
+
     private bool applied;
     private int attempts;
 
@@ -73,7 +75,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
 
     private void TryApplyOrWait()
     {
-        applied = ApplyAdventureCharacterSwap();
+        applied = ApplyAdventureCharacterSwap(useImportedAnimationTest);
         attempts++;
         if (!applied && (attempts == 1 || attempts % 60 == 0))
         {
@@ -82,6 +84,11 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     }
 
     public static bool ApplyAdventureCharacterSwap()
+    {
+        return ApplyAdventureCharacterSwap(false);
+    }
+
+    public static bool ApplyAdventureCharacterSwap(bool importedAnimationTest)
     {
         if (!UseAdventureCharacterPrefabInGameplay)
         {
@@ -125,8 +132,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
         character.transform.localPosition = Vector3.zero;
         character.transform.localRotation = Quaternion.Euler(0f, CharacterYawDegrees, 0f);
         character.transform.localScale = new Vector3(CharacterWidthScale, 1f, 1f);
-        ApplyNeutralStandingPose(character);
-        DisableImportedCharacterAnimation(character);
+        ConfigureImportedCharacterAnimationMode(character, importedAnimationTest);
         if (AttachAdventureEquipmentToHumanoid)
         {
             AttachEquipmentToHumanoidBones(visualRoot, character, animator);
@@ -134,23 +140,52 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
 
         new GameObject(AdventureCharacterAppliedMarkerName).transform.SetParent(visualRoot, false);
 
-        if (DisableProceduralAnimationForAdventure)
-        {
-            ClearAnimatorBodyReferences(animator);
-            animator.ResetBasePose();
-            animator.enabled = false;
-        }
+        ConfigureProceduralAnimatorForAdventureMode(animator, importedAnimationTest);
 
         if (!SkipGenericPoleVisibilityForAdventure)
         {
             PoleVisibilityRuntimeUpdater.ApplyPoleVisibilityPass();
         }
 
-        Debug.Log("[Ski-Verse] Adventure Character active skier body applied with reference roller skier stance, hand-held poles, foot-aligned roller skis, and no procedural animation.");
+        Debug.Log(importedAnimationTest
+            ? "[Ski-Verse] Adventure Character imported animation test mode active; Man_01 Animator remains enabled for Armature|ArmatureAction."
+            : "[Ski-Verse] Adventure Character active skier body applied with reference roller skier stance, hand-held poles, foot-aligned roller skis, and no procedural animation.");
         return true;
 #else
         return false;
 #endif
+    }
+
+    public static void ConfigureImportedCharacterAnimationMode(GameObject character, bool importedAnimationTest)
+    {
+        if (importedAnimationTest)
+        {
+            Debug.Log("[Ski-Verse] Imported animation test mode keeps the Adventure Character Animator and imported pose active.");
+            return;
+        }
+
+        ApplyNeutralStandingPose(character);
+        DisableImportedCharacterAnimation(character);
+    }
+
+    public static void ConfigureProceduralAnimatorForAdventureMode(RollerSkierAnimator animator, bool importedAnimationTest)
+    {
+        if (!DisableProceduralAnimationForAdventure || animator == null)
+        {
+            return;
+        }
+
+        if (!importedAnimationTest)
+        {
+            ClearAnimatorBodyReferences(animator);
+            animator.ResetBasePose();
+        }
+        else
+        {
+            Debug.Log("[Ski-Verse] Imported animation test mode disables only the procedural RollerSkierAnimator so the humanoid Animator can drive the visible body.");
+        }
+
+        animator.enabled = false;
     }
 
     private static void ApplyNeutralStandingPose(GameObject character)

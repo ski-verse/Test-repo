@@ -23,6 +23,23 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
     }
 
     [Test]
+    public void ImportedAnimationTestFlag_DefaultsOffForNormalGameplay()
+    {
+        var updaterObject = new GameObject("Adventure Character Roller Skier Runtime Updater");
+
+        try
+        {
+            var updater = updaterObject.AddComponent<AdventureCharacterRollerSkierRuntimeUpdater>();
+
+            Assert.IsFalse(updater.useImportedAnimationTest);
+        }
+        finally
+        {
+            Object.DestroyImmediate(updaterObject);
+        }
+    }
+
+    [Test]
     public void ApplyAdventureCharacterSwap_UsesAdventureCharacterOnlyAsStableBody()
     {
         var skier = new GameObject("Low Poly Roller Skier");
@@ -62,6 +79,74 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
             Assert.IsNull(animator.rightPole);
             Assert.IsNull(animator.leftSki);
             Assert.IsNull(animator.rightSki);
+        }
+        finally
+        {
+            Object.DestroyImmediate(skier);
+        }
+    }
+
+    [Test]
+    public void ImportedAnimationTest_KeepsAdventureCharacterAnimatorEnabled()
+    {
+        var character = new GameObject("Man_01");
+        var armature = new GameObject("Armature");
+
+        try
+        {
+            armature.transform.SetParent(character.transform, false);
+            var importedAnimator = armature.AddComponent<Animator>();
+            importedAnimator.enabled = true;
+
+            AdventureCharacterRollerSkierRuntimeUpdater.ConfigureImportedCharacterAnimationMode(character, true);
+
+            Assert.IsTrue(importedAnimator.enabled);
+        }
+        finally
+        {
+            Object.DestroyImmediate(character);
+        }
+    }
+
+    [Test]
+    public void DefaultAdventureMode_DisablesImportedAdventureCharacterAnimator()
+    {
+        var character = new GameObject("Man_01");
+        var armature = new GameObject("Armature");
+
+        try
+        {
+            armature.transform.SetParent(character.transform, false);
+            var importedAnimator = armature.AddComponent<Animator>();
+            importedAnimator.enabled = true;
+
+            AdventureCharacterRollerSkierRuntimeUpdater.ConfigureImportedCharacterAnimationMode(character, false);
+
+            Assert.IsFalse(importedAnimator.enabled);
+        }
+        finally
+        {
+            Object.DestroyImmediate(character);
+        }
+    }
+
+    [Test]
+    public void ImportedAnimationTest_DoesNotClearProceduralAnimatorBodyReferences()
+    {
+        var skier = new GameObject("Low Poly Roller Skier");
+        var torso = new GameObject("Torso Reference").transform;
+
+        try
+        {
+            torso.SetParent(skier.transform, false);
+            var animator = skier.AddComponent<RollerSkierAnimator>();
+            animator.torso = torso;
+            animator.enabled = true;
+
+            AdventureCharacterRollerSkierRuntimeUpdater.ConfigureProceduralAnimatorForAdventureMode(animator, true);
+
+            Assert.IsFalse(animator.enabled);
+            Assert.AreSame(torso, animator.torso);
         }
         finally
         {
