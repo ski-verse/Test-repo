@@ -9,8 +9,8 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
     private const float LargeSurfaceMinWidth = 1.8f;
     private const float LargeSurfaceMinLength = 2.8f;
     private const float LargeBrownGroundMinSpan = 8f;
-    public static readonly Color RoadShoulderGrassColor = new Color(0.18f, 0.48f, 0.17f, 1f);
     public static readonly Color OpenTerrainGrassColor = new Color(0.2f, 0.56f, 0.2f, 1f);
+    public static readonly Color RoadShoulderGrassColor = OpenTerrainGrassColor;
     public static readonly Color RoadsideStripGrassColor = new Color(0.17f, 0.52f, 0.18f, 1f);
 
     private bool cleanupApplied;

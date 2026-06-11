@@ -3,6 +3,10 @@ using UnityEngine;
 public static class RoadShoulderMeshBuilder
 {
     public const int DefaultSampleCount = 192;
+    public const float InnerOffset = EnvironmentPlacement.RoadHalfWidth + 0.015f;
+    public const float OuterOffset = RoadsideGroundMeshBuilder.InnerOffset;
+    public const float InnerSurfaceYOffset = 0.005f;
+    public const float OuterSurfaceYOffset = RoadsideGroundMeshBuilder.InnerSurfaceYOffset;
 
     public static Mesh CreateShoulderMesh(float side, int sampleCount = DefaultSampleCount)
     {
@@ -45,10 +49,10 @@ public static class RoadShoulderMeshBuilder
     {
         var sideSign = side < 0f ? -1f : 1f;
         var lateralOffset = innerEdge
-            ? sideSign * (EnvironmentPlacement.RoadHalfWidth + EnvironmentPlacement.ShoulderInnerClearance)
-            : sideSign * EnvironmentPlacement.ShoulderOuterOffset;
+            ? sideSign * InnerOffset
+            : sideSign * OuterOffset;
         var point = CoursePath.PointAtDistance(distanceMeters, lateralOffset);
-        point.y += innerEdge ? EnvironmentPlacement.ShoulderInnerYOffset : EnvironmentPlacement.ShoulderOuterYOffset;
+        point.y += innerEdge ? InnerSurfaceYOffset : OuterSurfaceYOffset;
         return point;
     }
 

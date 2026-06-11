@@ -46,6 +46,16 @@ public class RoadShoulderMeshBuilderTests
         }
     }
 
+    [Test]
+    public void CalculateShoulderPoint_BlendsIntoRoadsideGroundWithoutWideStrip()
+    {
+        for (var distance = 0f; distance < CoursePath.CourseLengthMeters; distance += 375f)
+        {
+            AssertSmoothShoulderBlend(distance, -1f);
+            AssertSmoothShoulderBlend(distance, 1f);
+        }
+    }
+
     private static void AssertShoulderSide(float distance, float side)
     {
         var roadCenter = CoursePath.CenterPointAtDistance(distance);
@@ -56,10 +66,24 @@ public class RoadShoulderMeshBuilderTests
 
         Assert.Greater(innerClearance, EnvironmentPlacement.RoadHalfWidth);
         Assert.LessOrEqual(innerClearance, EnvironmentPlacement.RoadHalfWidth + 0.5f);
-        Assert.AreEqual(EnvironmentPlacement.ShoulderOuterOffset, outerClearance, 0.05f);
+        Assert.LessOrEqual(outerClearance, RoadsideGroundMeshBuilder.InnerOffset + 0.02f);
         Assert.Greater(outerClearance, innerClearance);
         Assert.Greater(inner.y, outer.y);
         Assert.LessOrEqual(inner.y, roadCenter.y + 0.05f);
+    }
+
+    private static void AssertSmoothShoulderBlend(float distance, float side)
+    {
+        var roadCenter = CoursePath.CenterPointAtDistance(distance);
+        var inner = RoadShoulderMeshBuilder.CalculateShoulderPoint(distance, side, true);
+        var outer = RoadShoulderMeshBuilder.CalculateShoulderPoint(distance, side, false);
+        var roadsideGround = RoadsideGroundMeshBuilder.CalculateGroundPoint(distance, side * RoadsideGroundMeshBuilder.InnerOffset);
+        var innerClearance = HorizontalDistance(roadCenter, inner);
+        var outerClearance = HorizontalDistance(roadCenter, outer);
+
+        Assert.LessOrEqual(outerClearance - innerClearance, 0.12f);
+        Assert.Less(inner.y, roadCenter.y + LoopRoadMeshBuilder.SurfaceYOffset);
+        Assert.AreEqual(roadsideGround.y, outer.y, 0.012f);
     }
 
     private static float HorizontalDistance(Vector3 a, Vector3 b)

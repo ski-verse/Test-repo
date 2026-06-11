@@ -337,6 +337,12 @@ public class EnvironmentGroundRenderingCleanupTests
         AssertGrassColor(SpeedFeelingRuntimeUpdater.EdgeFlowGrassCueColorB);
     }
 
+    [Test]
+    public void RoadShoulderGrassColor_MatchesOpenTerrainGrass()
+    {
+        Assert.AreEqual(EnvironmentGroundRenderingCleanup.OpenTerrainGrassColor, EnvironmentGroundRenderingCleanup.RoadShoulderGrassColor);
+    }
+
     private static void AssertGrassColor(Color color)
     {
         Assert.AreEqual(1f, color.a, 0.001f);
