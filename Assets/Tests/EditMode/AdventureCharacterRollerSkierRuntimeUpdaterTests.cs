@@ -25,17 +25,54 @@ public sealed class AdventureCharacterRollerSkierRuntimeUpdaterTests
     [Test]
     public void ImportedAnimationTestFlag_DefaultsOffForNormalGameplay()
     {
-        var updaterObject = new GameObject("Adventure Character Roller Skier Runtime Updater");
+        var settingsObject = new GameObject("Skier Visual Settings");
 
         try
         {
-            var updater = updaterObject.AddComponent<AdventureCharacterRollerSkierRuntimeUpdater>();
+            var settings = settingsObject.AddComponent<SkierVisualSettings>();
 
-            Assert.IsFalse(updater.useImportedAnimationTest);
+            Assert.IsFalse(settings.useImportedDoublePolingAnimationTest);
         }
         finally
         {
-            Object.DestroyImmediate(updaterObject);
+            Object.DestroyImmediate(settingsObject);
+        }
+    }
+
+    [Test]
+    public void RuntimeUpdater_ReadsImportedAnimationTestFromSkierVisualSettings()
+    {
+        var settingsObject = new GameObject("Skier Visual Settings");
+
+        try
+        {
+            var settings = settingsObject.AddComponent<SkierVisualSettings>();
+            settings.useImportedDoublePolingAnimationTest = true;
+
+            Assert.IsTrue(AdventureCharacterRollerSkierRuntimeUpdater.ShouldUseImportedAnimationTest());
+        }
+        finally
+        {
+            Object.DestroyImmediate(settingsObject);
+        }
+    }
+
+    [Test]
+    public void SkierVisualSettings_AttachesToExistingNordicEnvironmentSettingsObject()
+    {
+        var environmentSettingsObject = new GameObject(NordicEnvironmentSettings.RuntimeSettingsName);
+
+        try
+        {
+            environmentSettingsObject.AddComponent<NordicEnvironmentSettings>();
+
+            var settings = SkierVisualSettings.GetOrCreateRuntimeSettings();
+
+            Assert.AreSame(environmentSettingsObject, settings.gameObject);
+        }
+        finally
+        {
+            Object.DestroyImmediate(environmentSettingsObject);
         }
     }
 

@@ -35,8 +35,6 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
     private const float PoleRadius = 0.026f;
     private const float PoleLength = 0.82f;
 
-    public bool useImportedAnimationTest;
-
     private bool applied;
     private int attempts;
 
@@ -75,7 +73,7 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
 
     private void TryApplyOrWait()
     {
-        applied = ApplyAdventureCharacterSwap(useImportedAnimationTest);
+        applied = ApplyAdventureCharacterSwap(ShouldUseImportedAnimationTest());
         attempts++;
         if (!applied && (attempts == 1 || attempts % 60 == 0))
         {
@@ -85,7 +83,13 @@ public class AdventureCharacterRollerSkierRuntimeUpdater : MonoBehaviour
 
     public static bool ApplyAdventureCharacterSwap()
     {
-        return ApplyAdventureCharacterSwap(false);
+        return ApplyAdventureCharacterSwap(ShouldUseImportedAnimationTest());
+    }
+
+    public static bool ShouldUseImportedAnimationTest()
+    {
+        var settings = SkierVisualSettings.FindActiveSettings();
+        return settings != null && settings.useImportedDoublePolingAnimationTest;
     }
 
     public static bool ApplyAdventureCharacterSwap(bool importedAnimationTest)

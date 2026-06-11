@@ -23,6 +23,9 @@ public class SkiErgGameBootstrap : MonoBehaviour
     {
         using (StartupPerformanceProfiler.Measure("SkiErgGameBootstrap.BuildPrototypeScene"))
         {
+            NordicEnvironmentSettings.GetOrCreateRuntimeSettings();
+            SkierVisualSettings.GetOrCreateRuntimeSettings();
+
             if (Object.FindObjectOfType<PlayerSpeedController>() != null)
             {
                 StartupPerformanceProfiler.Log("SkiErgGameBootstrap skipped because player already exists");
