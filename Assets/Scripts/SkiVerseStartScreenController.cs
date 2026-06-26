@@ -1,4 +1,5 @@
 using TMPro;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -16,15 +17,22 @@ public class SkiVerseStartScreenController : MonoBehaviour
     public const string TitleText = "Ski-Verse";
     public const string ThreeKmCourseLabel = "3 km Circuit";
     public const string FortyKmCourseLabel = "40 km Long Course";
-    public const string JamtlandTourLabel = "Jamtland Ski Tour";
-    public const string Pm5NotConnectedText = "PM5: Not connected";
-    public const string Pm5ConnectedText = "PM5: Connected";
+    public const string JamtlandTourLabel = "Jämtland Ski Tour";
+    public const string Pm5NotConnectedText = Pm5BleRuntimeConnector.NotConnectedStatusText;
+    public const string Pm5SearchingText = Pm5BleRuntimeConnector.SearchingStatusText;
+    public const string Pm5FoundText = Pm5BleRuntimeConnector.Pm5FoundStatusText;
+    public const string Pm5ConnectingText = Pm5BleRuntimeConnector.ConnectingStatusText;
+    public const string Pm5ConnectedText = Pm5BleRuntimeConnector.ConnectedStatusText;
+    public const string Pm5ConnectionFailedText = Pm5BleRuntimeConnector.ConnectionFailedStatusText;
 
     public GameObject startScreenPanel;
     public Button startSessionButton;
     public Button connectPm5Button;
     public TMP_Text selectedCourseText;
     public TMP_Text pm5StatusText;
+    public TMP_Text pm5DeviceListText;
+    public RectTransform pm5DeviceButtonContainer;
+    public Pm5BleRuntimeConnector pm5Connector;
     public Toggle threeKmToggle;
     public Toggle fortyKmToggle;
     public Toggle jamtlandToggle;
@@ -32,6 +40,12 @@ public class SkiVerseStartScreenController : MonoBehaviour
     public CourseSelection SelectedCourse { get; private set; } = CourseSelection.ThreeKmCircuit;
     public bool HasStartedSession { get; private set; }
     public bool IsPm5Connected { get; private set; }
+
+    private readonly List<Button> pm5DeviceButtons = new List<Button>();
+    private int renderedPm5DeviceCount = -1;
+    private int renderedSelectedPm5DeviceIndex = -2;
+    private Pm5BleConnectionStatus renderedPm5Status = (Pm5BleConnectionStatus)(-1);
+    private bool pm5UiDirty;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void InstallStartScreen()
@@ -48,6 +62,7 @@ public class SkiVerseStartScreenController : MonoBehaviour
     private void Awake()
     {
         Time.timeScale = 0f;
+        EnsurePm5Connector();
     }
 
     private void Start()
@@ -55,6 +70,15 @@ public class SkiVerseStartScreenController : MonoBehaviour
         CreateRuntimeUiIfNeeded();
         SetCourseSelection(CourseSelection.ThreeKmCircuit);
         PauseGameplayBeforeStart();
+    }
+
+    private void Update()
+    {
+        if (startScreenPanel != null && startScreenPanel.activeSelf)
+        {
+            RefreshPm5Ui(pm5UiDirty);
+            pm5UiDirty = false;
+        }
     }
 
     private void OnDestroy()
@@ -67,6 +91,11 @@ public class SkiVerseStartScreenController : MonoBehaviour
         if (connectPm5Button != null)
         {
             connectPm5Button.onClick.RemoveListener(ConnectPm5);
+        }
+
+        if (pm5Connector != null)
+        {
+            pm5Connector.StateChanged -= MarkPm5UiDirty;
         }
     }
 
@@ -84,8 +113,25 @@ public class SkiVerseStartScreenController : MonoBehaviour
 
     public void ConnectPm5()
     {
-        IsPm5Connected = true;
-        UpdatePm5StatusText();
+        EnsurePm5Connector();
+
+        if (pm5Connector.SelectedDevice.HasValue)
+        {
+            pm5Connector.ConnectSelectedDevice();
+        }
+        else
+        {
+            pm5Connector.StartScan();
+        }
+
+        RefreshPm5Ui(true);
+    }
+
+    public void SelectPm5Device(int deviceIndex)
+    {
+        EnsurePm5Connector();
+        pm5Connector.SelectDevice(deviceIndex);
+        RefreshPm5Ui(true);
     }
 
     public void StartSelectedSession()
@@ -143,7 +189,7 @@ public class SkiVerseStartScreenController : MonoBehaviour
                 connectPm5Button.onClick.AddListener(ConnectPm5);
             }
 
-            UpdatePm5StatusText();
+            RefreshPm5Ui(true);
             return;
         }
 
@@ -258,16 +304,28 @@ public class SkiVerseStartScreenController : MonoBehaviour
         rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
         rectTransform.pivot = new Vector2(0.5f, 0.5f);
         rectTransform.anchoredPosition = new Vector2(0f, -160f);
-        rectTransform.sizeDelta = new Vector2(680f, 180f);
+        rectTransform.sizeDelta = new Vector2(680f, 240f);
 
-        var label = CreatePanelText(section.transform, "PM5 Section Title", new Vector2(0f, 56f), new Vector2(600f, 34f), 26f, FontStyles.Bold);
+        var label = CreatePanelText(section.transform, "PM5 Section Title", new Vector2(0f, 88f), new Vector2(600f, 34f), 26f, FontStyles.Bold);
         label.text = "Concept2 PM5";
 
-        pm5StatusText = CreatePanelText(section.transform, "PM5 Status Text", new Vector2(0f, 12f), new Vector2(600f, 34f), 26f, FontStyles.Normal);
-        UpdatePm5StatusText();
+        pm5StatusText = CreatePanelText(section.transform, "PM5 Status Text", new Vector2(0f, 50f), new Vector2(600f, 32f), 24f, FontStyles.Normal);
 
-        connectPm5Button = CreateButton(section.transform, "Connect PM5 Button", "Connect PM5", new Vector2(0f, -56f), new Vector2(340f, 58f), 28f);
+        pm5DeviceListText = CreatePanelText(section.transform, "PM5 Device List Text", new Vector2(0f, 16f), new Vector2(600f, 28f), 20f, FontStyles.Normal);
+        pm5DeviceListText.text = "No PM5 devices found";
+
+        var deviceListObject = new GameObject("PM5 Device Button Container");
+        deviceListObject.transform.SetParent(section.transform, false);
+        pm5DeviceButtonContainer = deviceListObject.AddComponent<RectTransform>();
+        pm5DeviceButtonContainer.anchorMin = new Vector2(0.5f, 0.5f);
+        pm5DeviceButtonContainer.anchorMax = new Vector2(0.5f, 0.5f);
+        pm5DeviceButtonContainer.pivot = new Vector2(0.5f, 0.5f);
+        pm5DeviceButtonContainer.anchoredPosition = new Vector2(0f, -26f);
+        pm5DeviceButtonContainer.sizeDelta = new Vector2(600f, 58f);
+
+        connectPm5Button = CreateButton(section.transform, "Connect PM5 Button", "Connect PM5", new Vector2(0f, -88f), new Vector2(340f, 54f), 26f);
         connectPm5Button.onClick.AddListener(ConnectPm5);
+        RefreshPm5Ui(true);
     }
 
     private static Button CreateButton(Transform parent, string name, string label, Vector2 anchoredPosition, Vector2? size = null, float fontSize = 32f)
@@ -295,11 +353,84 @@ public class SkiVerseStartScreenController : MonoBehaviour
         return button;
     }
 
-    private void UpdatePm5StatusText()
+    private void EnsurePm5Connector()
     {
+        if (pm5Connector == null)
+        {
+            pm5Connector = GetComponent<Pm5BleRuntimeConnector>();
+        }
+
+        if (pm5Connector == null)
+        {
+            pm5Connector = gameObject.AddComponent<Pm5BleRuntimeConnector>();
+        }
+
+        pm5Connector.StateChanged -= MarkPm5UiDirty;
+        pm5Connector.StateChanged += MarkPm5UiDirty;
+    }
+
+    private void MarkPm5UiDirty()
+    {
+        pm5UiDirty = true;
+    }
+
+    private void RefreshPm5Ui()
+    {
+        RefreshPm5Ui(false);
+    }
+
+    private void RefreshPm5Ui(bool force)
+    {
+        EnsurePm5Connector();
+        IsPm5Connected = pm5Connector.Status == Pm5BleConnectionStatus.Connected;
+
         if (pm5StatusText != null)
         {
-            pm5StatusText.text = IsPm5Connected ? Pm5ConnectedText : Pm5NotConnectedText;
+            pm5StatusText.text = pm5Connector.GetStatusText();
+        }
+
+        RebuildPm5DeviceListIfNeeded(force);
+    }
+
+    private void RebuildPm5DeviceListIfNeeded(bool force)
+    {
+        if (pm5DeviceButtonContainer == null || pm5Connector == null)
+        {
+            return;
+        }
+
+        var devices = pm5Connector.DiscoveredDevices;
+        if (!force && devices.Count == renderedPm5DeviceCount && pm5Connector.SelectedDeviceIndex == renderedSelectedPm5DeviceIndex && pm5Connector.Status == renderedPm5Status)
+        {
+            return;
+        }
+
+        renderedPm5DeviceCount = devices.Count;
+        renderedSelectedPm5DeviceIndex = pm5Connector.SelectedDeviceIndex;
+        renderedPm5Status = pm5Connector.Status;
+
+        for (var i = pm5DeviceButtonContainer.childCount - 1; i >= 0; i--)
+        {
+            DestroyUiObject(pm5DeviceButtonContainer.GetChild(i).gameObject);
+        }
+
+        pm5DeviceButtons.Clear();
+
+        if (pm5DeviceListText != null)
+        {
+            pm5DeviceListText.text = devices.Count == 0
+                ? (pm5Connector.Status == Pm5BleConnectionStatus.Searching ? "Scanning for PM5..." : "No PM5 devices found")
+                : "Select PM5";
+        }
+
+        var buttonCount = Mathf.Min(3, devices.Count);
+        for (var i = 0; i < buttonCount; i++)
+        {
+            var capturedIndex = i;
+            var label = pm5Connector.SelectedDeviceIndex == i ? $"> {devices[i].Name}" : devices[i].Name;
+            var button = CreateButton(pm5DeviceButtonContainer, $"PM5 Device {i + 1}", label, new Vector2(0f, 18f - i * 34f), new Vector2(560f, 30f), 18f);
+            button.onClick.AddListener(() => SelectPm5Device(capturedIndex));
+            pm5DeviceButtons.Add(button);
         }
     }
 
@@ -324,6 +455,18 @@ public class SkiVerseStartScreenController : MonoBehaviour
         rectTransform.sizeDelta = size;
 
         return text;
+    }
+
+    private static void DestroyUiObject(GameObject uiObject)
+    {
+        if (Application.isPlaying)
+        {
+            Destroy(uiObject);
+        }
+        else
+        {
+            DestroyImmediate(uiObject);
+        }
     }
 
     private static string FormatCourseLabel(CourseSelection selection)
