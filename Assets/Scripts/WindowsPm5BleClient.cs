@@ -384,6 +384,12 @@ function Test-Pm5Name($name) {
     if ([string]::IsNullOrWhiteSpace($name)) { return $false }
     return ($name -match 'PM5|CONCEPT\s?2')
 }
+function Get-BluetoothAddressFromPnpId($instanceId) {
+    if ([string]::IsNullOrWhiteSpace($instanceId)) { return '0' }
+    $match = [regex]::Match($instanceId, 'DEV_([0-9A-Fa-f]{12})')
+    if (-not $match.Success) { return '0' }
+    return [string][Convert]::ToUInt64($match.Groups[1].Value, 16)
+}
 function Report-Pm5($source, $deviceId, $address, $name) {
     if ([string]::IsNullOrWhiteSpace($name)) { $name = 'Concept2 PM5' }
     $key = ('{0}|{1}' -f $source, $deviceId)
@@ -419,6 +425,26 @@ $deviceHandler = [Windows.Foundation.TypedEventHandler[Windows.Devices.Enumerati
     if ($matches) {
         Report-Pm5 'DeviceWatcher' $deviceInfo.Id '0' $deviceInfo.Name
     }
+}
+try {
+    [Console]::WriteLine('LOG|Checking Windows PnP BTHLE devices for already-known PM5 devices.')
+    foreach ($pnpDevice in Get-PnpDevice -ErrorAction Stop) {
+        $name = [string]$pnpDevice.FriendlyName
+        $id = [string]$pnpDevice.InstanceId
+        $isBle = $id -like 'BTHLE*'
+        $matches = $isBle -and ((Test-Pm5Name $name) -or (Test-Pm5Name $id))
+        if ($isBle) {
+            [Console]::WriteLine(('LOG|PnP BTHLE device. Name=""{0}"", Id=""{1}"", MatchesPM5={2}' -f $name, $id, $matches))
+            [Console]::Out.Flush()
+        }
+        if ($matches) {
+            $address = Get-BluetoothAddressFromPnpId $id
+            Report-Pm5 'WindowsPnP' $id $address $name
+        }
+    }
+} catch {
+    [Console]::WriteLine(('ERROR|Windows PnP PM5 lookup failed: {0}' -f $_.Exception.Message))
+    [Console]::Out.Flush()
 }
 $advertisementToken = $advertisementWatcher.add_Received($advertisementHandler)
 $deviceToken = $deviceWatcher.add_Added($deviceHandler)
