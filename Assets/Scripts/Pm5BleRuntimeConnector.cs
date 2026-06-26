@@ -74,6 +74,7 @@ public class Pm5BleRuntimeConnector : MonoBehaviour
 
     public void StartScan()
     {
+        Debug.Log("[Ski-Verse PM5 BLE] Runtime connector starts scan.");
         selectedDeviceIndex = -1;
         Client.StartScan();
         NotifyStateChanged();
@@ -83,6 +84,17 @@ public class Pm5BleRuntimeConnector : MonoBehaviour
     {
         var devices = DiscoveredDevices;
         selectedDeviceIndex = deviceIndex >= 0 && deviceIndex < devices.Count ? deviceIndex : -1;
+
+        if (selectedDeviceIndex >= 0)
+        {
+            var device = devices[selectedDeviceIndex];
+            Debug.Log($"[Ski-Verse PM5 BLE] Selected PM5 device. Index={selectedDeviceIndex}, Name='{device.Name}', DeviceId='{device.DeviceId}', Address='{device.BluetoothAddress}'.");
+        }
+        else
+        {
+            Debug.LogWarning($"[Ski-Verse PM5 BLE] PM5 selection ignored. RequestedIndex={deviceIndex}, DeviceCount={devices.Count}.");
+        }
+
         NotifyStateChanged();
     }
 
@@ -91,10 +103,12 @@ public class Pm5BleRuntimeConnector : MonoBehaviour
         var selected = SelectedDevice;
         if (!selected.HasValue)
         {
+            Debug.LogWarning("[Ski-Verse PM5 BLE] Connect requested without selected PM5. Restarting scan.");
             StartScan();
             return;
         }
 
+        Debug.Log($"[Ski-Verse PM5 BLE] Runtime connector connects selected PM5 '{selected.Value.Name}'.");
         Client.Connect(selected.Value);
         NotifyStateChanged();
     }

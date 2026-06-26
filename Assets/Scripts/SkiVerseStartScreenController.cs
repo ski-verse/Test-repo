@@ -114,6 +114,7 @@ public class SkiVerseStartScreenController : MonoBehaviour
     public void ConnectPm5()
     {
         EnsurePm5Connector();
+        Debug.Log($"[Ski-Verse PM5 BLE] Connect PM5 button pressed. CurrentStatus={pm5Connector.Status}, SelectedDeviceIndex={pm5Connector.SelectedDeviceIndex}, DiscoveredDevices={pm5Connector.DiscoveredDevices.Count}.");
 
         if (pm5Connector.SelectedDevice.HasValue)
         {
@@ -130,6 +131,7 @@ public class SkiVerseStartScreenController : MonoBehaviour
     public void SelectPm5Device(int deviceIndex)
     {
         EnsurePm5Connector();
+        Debug.Log($"[Ski-Verse PM5 BLE] PM5 device button pressed. DeviceIndex={deviceIndex}.");
         pm5Connector.SelectDevice(deviceIndex);
         RefreshPm5Ui(true);
     }
@@ -428,6 +430,7 @@ public class SkiVerseStartScreenController : MonoBehaviour
         {
             var capturedIndex = i;
             var label = pm5Connector.SelectedDeviceIndex == i ? $"> {devices[i].Name}" : devices[i].Name;
+            Debug.Log($"[Ski-Verse PM5 BLE] Rendering PM5 device button. Index={i}, Label='{label}', DeviceId='{devices[i].DeviceId}', Address='{devices[i].BluetoothAddress}'.");
             var button = CreateButton(pm5DeviceButtonContainer, $"PM5 Device {i + 1}", label, new Vector2(0f, 18f - i * 34f), new Vector2(560f, 30f), 18f);
             button.onClick.AddListener(() => SelectPm5Device(capturedIndex));
             pm5DeviceButtons.Add(button);

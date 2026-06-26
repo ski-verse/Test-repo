@@ -12,6 +12,8 @@ public sealed class WindowsPm5BleClient : IPm5BleClient
 {
     public static readonly Guid Concept2ServiceUuid = new Guid("ce060000-43e5-11e4-916c-0800200c9a66");
 
+    private const string LogPrefix = "[Ski-Verse PM5 BLE] ";
+
     private readonly object gate = new object();
     private readonly List<Pm5BleDeviceInfo> discoveredDevices = new List<Pm5BleDeviceInfo>();
     private Pm5BleConnectionStatus status = Pm5BleConnectionStatus.NotConnected;
@@ -49,6 +51,8 @@ public sealed class WindowsPm5BleClient : IPm5BleClient
 
     public void StartScan()
     {
+        Log("Start scan requested. This is real Windows BLE scanning, not placeholder UI.");
+
         lock (gate)
         {
             discoveredDevices.Clear();
@@ -56,6 +60,7 @@ public sealed class WindowsPm5BleClient : IPm5BleClient
 
 #if ENABLE_WINMD_SUPPORT
         StopScan();
+        Log("Using Unity WinMD BluetoothLEAdvertisementWatcher.");
         watcher = new BluetoothLEAdvertisementWatcher
         {
             ScanningMode = BluetoothLEScanningMode.Active
@@ -67,10 +72,11 @@ public sealed class WindowsPm5BleClient : IPm5BleClient
 #elif UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
         StopScan();
         SetStatus(Pm5BleConnectionStatus.Searching);
+        Log("Using Windows PowerShell WinRT BLE helper with AdvertisementWatcher + DeviceWatcher.");
         StartPowerShellHelper(BuildScanScript(), HandlePowerShellLine);
 #else
         SetStatus(Pm5BleConnectionStatus.ConnectionFailed);
-        Debug.LogWarning("[Ski-Verse] BLE scanning requires Windows WinRT/WinMD support in this Unity build.");
+        LogWarning("BLE scanning requires Windows WinRT/WinMD support in this Unity build.");
 #endif
     }
 
@@ -118,8 +124,11 @@ public sealed class WindowsPm5BleClient : IPm5BleClient
 
     public void Connect(Pm5BleDeviceInfo device)
     {
+        Log($"Connection attempt started. Name='{device.Name}', DeviceId='{device.DeviceId}', Address='{device.BluetoothAddress}'.");
+
         if (!device.IsValid)
         {
+            LogWarning("Connection failed before start: selected PM5 device has no BLE id/address.");
             SetStatus(Pm5BleConnectionStatus.ConnectionFailed);
             return;
         }
@@ -129,10 +138,10 @@ public sealed class WindowsPm5BleClient : IPm5BleClient
 #elif UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
         StopScan();
         SetStatus(Pm5BleConnectionStatus.Connecting);
-        StartPowerShellHelper(BuildConnectScript(device.BluetoothAddress), HandlePowerShellLine);
+        StartPowerShellHelper(BuildConnectScript(device), HandlePowerShellLine);
 #else
         SetStatus(Pm5BleConnectionStatus.ConnectionFailed);
-        Debug.LogWarning("[Ski-Verse] BLE connection requires Windows WinRT/WinMD support in this Unity build.");
+        LogWarning("BLE connection requires Windows WinRT/WinMD support in this Unity build.");
 #endif
     }
 
@@ -176,11 +185,14 @@ public sealed class WindowsPm5BleClient : IPm5BleClient
                 ? await BluetoothLEDevice.FromBluetoothAddressAsync(device.BluetoothAddress)
                 : await BluetoothLEDevice.FromIdAsync(device.DeviceId);
 
+            Log(connectedDevice != null
+                ? $"Connection success. Runtime BLE device name='{connectedDevice.Name}'."
+                : "Connection failed: Windows returned null BluetoothLEDevice.");
             SetStatus(connectedDevice != null ? Pm5BleConnectionStatus.Connected : Pm5BleConnectionStatus.ConnectionFailed);
         }
         catch (Exception exception)
         {
-            Debug.LogWarning("[Ski-Verse] PM5 BLE connection failed: " + exception.Message);
+            LogWarning("PM5 BLE connection failed: " + exception.Message);
             SetStatus(Pm5BleConnectionStatus.ConnectionFailed);
         }
     }
@@ -188,7 +200,10 @@ public sealed class WindowsPm5BleClient : IPm5BleClient
     private void OnAdvertisementReceived(BluetoothLEAdvertisementWatcher sender, BluetoothLEAdvertisementReceivedEventArgs args)
     {
         var localName = args.Advertisement.LocalName;
-        if (!IsConcept2Pm5Advertisement(localName, args.Advertisement.ServiceUuids))
+        var isPm5 = IsConcept2Pm5Advertisement(localName, args.Advertisement.ServiceUuids);
+        Log($"Advertisement discovered. Name='{localName}', Address='{args.BluetoothAddress}', MatchesPM5='{isPm5}'.");
+
+        if (!isPm5)
         {
             return;
         }
@@ -207,6 +222,7 @@ public sealed class WindowsPm5BleClient : IPm5BleClient
 
         if (added)
         {
+            Log($"PM5 Found from advertisement. Name='{device.Name}', Address='{device.BluetoothAddress}'.");
             SetStatus(Pm5BleConnectionStatus.Pm5Found);
         }
     }
@@ -215,6 +231,7 @@ public sealed class WindowsPm5BleClient : IPm5BleClient
     {
         if (Status == Pm5BleConnectionStatus.Searching)
         {
+            LogWarning("Advertisement watcher stopped while still searching.");
             SetStatus(Pm5BleConnectionStatus.ConnectionFailed);
         }
     }
@@ -248,7 +265,10 @@ public sealed class WindowsPm5BleClient : IPm5BleClient
         };
         helperProcess.ErrorDataReceived += (sender, args) =>
         {
-            // Keep helper stderr quiet here: this callback runs off Unity's main thread.
+            if (!string.IsNullOrWhiteSpace(args.Data))
+            {
+                LogWarning("Windows BLE helper stderr: " + args.Data);
+            }
         };
         helperProcess.Exited += (sender, args) =>
         {
@@ -260,46 +280,70 @@ public sealed class WindowsPm5BleClient : IPm5BleClient
 
         try
         {
+            Log("Starting Windows BLE helper process.");
             helperProcess.Start();
             helperProcess.BeginOutputReadLine();
             helperProcess.BeginErrorReadLine();
         }
         catch (Exception exception)
         {
-            Debug.LogWarning("[Ski-Verse] Could not start Windows PM5 BLE helper: " + exception.Message);
+            LogWarning("Could not start Windows PM5 BLE helper: " + exception.Message);
             SetStatus(Pm5BleConnectionStatus.ConnectionFailed);
         }
     }
 
     private void HandlePowerShellLine(string line)
     {
+        if (line.StartsWith("LOG|", StringComparison.OrdinalIgnoreCase))
+        {
+            Log(line.Substring(4));
+            return;
+        }
+
+        if (line.StartsWith("ERROR|", StringComparison.OrdinalIgnoreCase))
+        {
+            LogWarning(line.Substring(6));
+            return;
+        }
+
         if (line.StartsWith("FOUND|", StringComparison.OrdinalIgnoreCase))
         {
             HandlePowerShellDeviceFound(line);
             return;
         }
 
-        if (line.Equals("CONNECTED", StringComparison.OrdinalIgnoreCase))
+        if (line.StartsWith("CONNECTED|", StringComparison.OrdinalIgnoreCase) || line.Equals("CONNECTED", StringComparison.OrdinalIgnoreCase))
         {
+            Log("Connection success reported by Windows BLE helper: " + line);
             SetStatus(Pm5BleConnectionStatus.Connected);
             return;
         }
 
-        if (line.Equals("FAILED", StringComparison.OrdinalIgnoreCase))
+        if (line.StartsWith("FAILED|", StringComparison.OrdinalIgnoreCase) || line.Equals("FAILED", StringComparison.OrdinalIgnoreCase))
         {
+            LogWarning("Connection failed reported by Windows BLE helper: " + line);
             SetStatus(Pm5BleConnectionStatus.ConnectionFailed);
+            return;
         }
+
+        Log("Windows BLE helper output: " + line);
     }
 
     private void HandlePowerShellDeviceFound(string line)
     {
-        var parts = line.Split(new[] { '|' }, 3);
-        if (parts.Length < 3 || !ulong.TryParse(parts[1], out var bluetoothAddress))
+        var parts = line.Split('|');
+        if (parts.Length < 5)
         {
+            LogWarning("Could not parse PM5 found line: " + line);
             return;
         }
 
-        var device = new Pm5BleDeviceInfo(parts[1], parts[2], bluetoothAddress);
+        var source = parts[1];
+        var deviceId = parts[2];
+        var bluetoothAddress = ulong.TryParse(parts[3], out var parsedAddress) ? parsedAddress : 0;
+        var name = parts[4];
+
+        var device = new Pm5BleDeviceInfo(deviceId, name, bluetoothAddress);
         var added = false;
 
         lock (gate)
@@ -310,6 +354,8 @@ public sealed class WindowsPm5BleClient : IPm5BleClient
                 added = true;
             }
         }
+
+        Log($"PM5 Found from {source}. Name='{device.Name}', DeviceId='{device.DeviceId}', Address='{device.BluetoothAddress}', Added='{added}'.");
 
         if (added)
         {
@@ -322,45 +368,95 @@ public sealed class WindowsPm5BleClient : IPm5BleClient
         return @"
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
+trap {
+    [Console]::WriteLine(('ERROR|Windows BLE scan helper error: {0}' -f $_.Exception.Message))
+    [Console]::Out.Flush()
+    exit 1
+}
 [Windows.Devices.Bluetooth.Advertisement.BluetoothLEAdvertisementWatcher,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
+[Windows.Devices.Bluetooth.BluetoothLEDevice,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
+[Windows.Devices.Enumeration.DeviceInformation,Windows.Devices.Enumeration,ContentType=WindowsRuntime] | Out-Null
 [Windows.Foundation.TypedEventHandler`2,Windows.Foundation,ContentType=WindowsRuntime] | Out-Null
-$watcher = [Windows.Devices.Bluetooth.Advertisement.BluetoothLEAdvertisementWatcher]::new()
-$watcher.ScanningMode = [Windows.Devices.Bluetooth.Advertisement.BluetoothLEScanningMode]::Active
+[Console]::WriteLine('LOG|Windows BLE scan helper started. Scanning advertisements and BLE device list for 20 seconds.')
 $service = [Guid]'ce060000-43e5-11e4-916c-0800200c9a66'
 $seen = [hashtable]::Synchronized(@{})
-$handler = [Windows.Foundation.TypedEventHandler[Windows.Devices.Bluetooth.Advertisement.BluetoothLEAdvertisementWatcher,Windows.Devices.Bluetooth.Advertisement.BluetoothLEAdvertisementReceivedEventArgs]] {
+function Test-Pm5Name($name) {
+    if ([string]::IsNullOrWhiteSpace($name)) { return $false }
+    return ($name -match 'PM5|CONCEPT\s?2')
+}
+function Report-Pm5($source, $deviceId, $address, $name) {
+    if ([string]::IsNullOrWhiteSpace($name)) { $name = 'Concept2 PM5' }
+    $key = ('{0}|{1}' -f $source, $deviceId)
+    if (-not $seen.ContainsKey($key)) {
+        $seen[$key] = $true
+        [Console]::WriteLine(('FOUND|{0}|{1}|{2}|{3}' -f $source, $deviceId, $address, $name))
+        [Console]::Out.Flush()
+    }
+}
+$advertisementWatcher = [Windows.Devices.Bluetooth.Advertisement.BluetoothLEAdvertisementWatcher]::new()
+$advertisementWatcher.ScanningMode = [Windows.Devices.Bluetooth.Advertisement.BluetoothLEScanningMode]::Active
+$advertisementHandler = [Windows.Foundation.TypedEventHandler[Windows.Devices.Bluetooth.Advertisement.BluetoothLEAdvertisementWatcher,Windows.Devices.Bluetooth.Advertisement.BluetoothLEAdvertisementReceivedEventArgs]] {
     param($sender, $args)
     $name = $args.Advertisement.LocalName
     $hasService = $false
     foreach ($uuid in $args.Advertisement.ServiceUuids) {
         if ($uuid -eq $service) { $hasService = $true }
     }
-    if (($name -match 'PM5|CONCEPT\s?2') -or $hasService) {
-        $address = [string]$args.BluetoothAddress
-        if (-not $seen.ContainsKey($address)) {
-            $seen[$address] = $true
-            if ([string]::IsNullOrWhiteSpace($name)) { $name = 'Concept2 PM5' }
-            [Console]::WriteLine(('FOUND|{0}|{1}' -f $address, $name))
-            [Console]::Out.Flush()
-        }
+    $matches = (Test-Pm5Name $name) -or $hasService
+    [Console]::WriteLine(('LOG|Advertisement discovered. Name=""{0}"", Address={1}, HasConcept2Service={2}, MatchesPM5={3}' -f $name, $args.BluetoothAddress, $hasService, $matches))
+    [Console]::Out.Flush()
+    if ($matches) {
+        Report-Pm5 'Advertisement' ([string]$args.BluetoothAddress) ([string]$args.BluetoothAddress) $name
     }
 }
-$token = $watcher.add_Received($handler)
-$watcher.Start()
+$selector = [Windows.Devices.Bluetooth.BluetoothLEDevice]::GetDeviceSelector()
+$deviceWatcher = [Windows.Devices.Enumeration.DeviceInformation]::CreateWatcher($selector)
+$deviceHandler = [Windows.Foundation.TypedEventHandler[Windows.Devices.Enumeration.DeviceWatcher,Windows.Devices.Enumeration.DeviceInformation]] {
+    param($sender, $deviceInfo)
+    $matches = Test-Pm5Name $deviceInfo.Name
+    [Console]::WriteLine(('LOG|BLE DeviceWatcher discovered. Name=""{0}"", Id=""{1}"", MatchesPM5={2}' -f $deviceInfo.Name, $deviceInfo.Id, $matches))
+    [Console]::Out.Flush()
+    if ($matches) {
+        Report-Pm5 'DeviceWatcher' $deviceInfo.Id '0' $deviceInfo.Name
+    }
+}
+$advertisementToken = $advertisementWatcher.add_Received($advertisementHandler)
+$deviceToken = $deviceWatcher.add_Added($deviceHandler)
+$advertisementWatcher.Start()
+$deviceWatcher.Start()
 Start-Sleep -Seconds 20
-$watcher.Stop()
-$watcher.remove_Received($token)
+$advertisementWatcher.Stop()
+$deviceWatcher.Stop()
+$advertisementWatcher.remove_Received($advertisementToken)
+$deviceWatcher.remove_Added($deviceToken)
+[Console]::WriteLine('LOG|Windows BLE scan helper finished.')
 ";
     }
 
-    private static string BuildConnectScript(ulong bluetoothAddress)
+    private static string BuildConnectScript(Pm5BleDeviceInfo device)
     {
+        var encodedDeviceId = Convert.ToBase64String(Encoding.UTF8.GetBytes(device.DeviceId ?? string.Empty));
+
         return @"
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
+trap {
+    [Console]::WriteLine(('ERROR|Windows BLE connect helper error: {0}' -f $_.Exception.Message))
+    [Console]::Out.Flush()
+    exit 1
+}
 [Windows.Devices.Bluetooth.BluetoothLEDevice,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
 [Windows.Foundation.AsyncStatus,Windows.Foundation,ContentType=WindowsRuntime] | Out-Null
-$operation = [Windows.Devices.Bluetooth.BluetoothLEDevice]::FromBluetoothAddressAsync([UInt64]" + bluetoothAddress + @")
+$deviceId = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('" + encodedDeviceId + @"'))
+$address = [UInt64]" + device.BluetoothAddress + @"
+[Console]::WriteLine(('LOG|Windows BLE connect helper started. DeviceId=""{0}"", Address={1}' -f $deviceId, $address))
+if (-not [string]::IsNullOrWhiteSpace($deviceId) -and $address -eq 0) {
+    [Console]::WriteLine('LOG|Connecting with BluetoothLEDevice.FromIdAsync.')
+    $operation = [Windows.Devices.Bluetooth.BluetoothLEDevice]::FromIdAsync($deviceId)
+} else {
+    [Console]::WriteLine('LOG|Connecting with BluetoothLEDevice.FromBluetoothAddressAsync.')
+    $operation = [Windows.Devices.Bluetooth.BluetoothLEDevice]::FromBluetoothAddressAsync($address)
+}
 $end = (Get-Date).AddSeconds(12)
 while ($operation.Status -eq [Windows.Foundation.AsyncStatus]::Started -and (Get-Date) -lt $end) {
     Start-Sleep -Milliseconds 100
@@ -368,12 +464,12 @@ while ($operation.Status -eq [Windows.Foundation.AsyncStatus]::Started -and (Get
 if ($operation.Status -eq [Windows.Foundation.AsyncStatus]::Completed) {
     $device = $operation.GetResults()
     if ($null -ne $device) {
-        [Console]::WriteLine('CONNECTED')
+        [Console]::WriteLine(('CONNECTED|Name=""{0}"", DeviceId=""{1}""' -f $device.Name, $device.DeviceId))
         [Console]::Out.Flush()
         while ($true) { Start-Sleep -Seconds 1 }
     }
 }
-[Console]::WriteLine('FAILED')
+[Console]::WriteLine(('FAILED|AsyncStatus={0}' -f $operation.Status))
 [Console]::Out.Flush()
 exit 1
 ";
@@ -405,6 +501,17 @@ exit 1
             status = newStatus;
         }
 
+        Log("Status changed: " + newStatus);
         StateChanged?.Invoke();
+    }
+
+    private static void Log(string message)
+    {
+        Debug.Log(LogPrefix + message);
+    }
+
+    private static void LogWarning(string message)
+    {
+        Debug.LogWarning(LogPrefix + message);
     }
 }
