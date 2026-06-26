@@ -23,6 +23,7 @@ public class SkiVerseStartScreenController : MonoBehaviour
     public const string Pm5FoundText = Pm5BleRuntimeConnector.Pm5FoundStatusText;
     public const string Pm5ConnectingText = Pm5BleRuntimeConnector.ConnectingStatusText;
     public const string Pm5ConnectedText = Pm5BleRuntimeConnector.ConnectedStatusText;
+    public const string Pm5FoundConnectionNotImplementedText = Pm5BleRuntimeConnector.Pm5FoundConnectionNotImplementedStatusText;
     public const string Pm5ConnectionFailedText = Pm5BleRuntimeConnector.ConnectionFailedStatusText;
 
     public GameObject startScreenPanel;

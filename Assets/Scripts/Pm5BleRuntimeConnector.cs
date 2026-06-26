@@ -10,6 +10,7 @@ public class Pm5BleRuntimeConnector : MonoBehaviour
     public const string Pm5FoundStatusText = "PM5 Found";
     public const string ConnectingStatusText = "Connecting...";
     public const string ConnectedStatusText = "Connected";
+    public const string Pm5FoundConnectionNotImplementedStatusText = "PM5 Found - connection not implemented";
     public const string ConnectionFailedStatusText = "Connection Failed";
 
     private IPm5BleClient client;
@@ -130,6 +131,8 @@ public class Pm5BleRuntimeConnector : MonoBehaviour
                 return ConnectingStatusText;
             case Pm5BleConnectionStatus.Connected:
                 return ConnectedStatusText;
+            case Pm5BleConnectionStatus.Pm5FoundConnectionNotImplemented:
+                return Pm5FoundConnectionNotImplementedStatusText;
             case Pm5BleConnectionStatus.ConnectionFailed:
                 return ConnectionFailedStatusText;
             default:

@@ -37,6 +37,7 @@ public class SkiVerseStartScreenControllerTests
         Assert.AreEqual("PM5 Found", SkiVerseStartScreenController.Pm5FoundText);
         Assert.AreEqual("Connecting...", SkiVerseStartScreenController.Pm5ConnectingText);
         Assert.AreEqual("Connected", SkiVerseStartScreenController.Pm5ConnectedText);
+        Assert.AreEqual("PM5 Found - connection not implemented", SkiVerseStartScreenController.Pm5FoundConnectionNotImplementedText);
         Assert.AreEqual("Connection Failed", SkiVerseStartScreenController.Pm5ConnectionFailedText);
         Assert.AreEqual("Jämtland Ski Tour", SkiVerseStartScreenController.JamtlandTourLabel);
     }
@@ -104,6 +105,21 @@ public class SkiVerseStartScreenControllerTests
         Assert.AreEqual("pm5-1", fakeClient.ConnectedDevice.DeviceId);
         Assert.IsTrue(controller.IsPm5Connected);
         Assert.AreEqual(SkiVerseStartScreenController.Pm5ConnectedText, controller.pm5StatusText.text);
+    }
+
+    [Test]
+    public void FoundPm5_DoesNotMarkUiAsConnected()
+    {
+        var controller = new GameObject("Start Screen").AddComponent<SkiVerseStartScreenController>();
+        var fakeClient = new FakePm5BleClient();
+
+        controller.SendMessage("Start");
+        controller.pm5Connector.Client = fakeClient;
+        fakeClient.AddDevice(new Pm5BleDeviceInfo("pm5-1", "PM5 12345", 12345));
+        controller.SendMessage("Update");
+
+        Assert.IsFalse(controller.IsPm5Connected);
+        Assert.AreEqual(SkiVerseStartScreenController.Pm5FoundText, controller.pm5StatusText.text);
     }
 
     [Test]

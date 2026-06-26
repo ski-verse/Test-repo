@@ -11,6 +11,7 @@ public class Pm5BleRuntimeConnectorTests
         Assert.AreEqual("PM5 Found", Pm5BleRuntimeConnector.StatusToText(Pm5BleConnectionStatus.Pm5Found));
         Assert.AreEqual("Connecting...", Pm5BleRuntimeConnector.StatusToText(Pm5BleConnectionStatus.Connecting));
         Assert.AreEqual("Connected", Pm5BleRuntimeConnector.StatusToText(Pm5BleConnectionStatus.Connected));
+        Assert.AreEqual("PM5 Found - connection not implemented", Pm5BleRuntimeConnector.StatusToText(Pm5BleConnectionStatus.Pm5FoundConnectionNotImplemented));
         Assert.AreEqual("Connection Failed", Pm5BleRuntimeConnector.StatusToText(Pm5BleConnectionStatus.ConnectionFailed));
     }
 

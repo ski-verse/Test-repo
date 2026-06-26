@@ -6,6 +6,7 @@ using UnityEngine;
 using System.Threading.Tasks;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.Advertisement;
+using Windows.Devices.Bluetooth.GenericAttributeProfile;
 #endif
 
 public sealed class WindowsPm5BleClient : IPm5BleClient
@@ -185,14 +186,28 @@ public sealed class WindowsPm5BleClient : IPm5BleClient
                 ? await BluetoothLEDevice.FromBluetoothAddressAsync(device.BluetoothAddress)
                 : await BluetoothLEDevice.FromIdAsync(device.DeviceId);
 
-            Log(connectedDevice != null
-                ? $"Connection success. Runtime BLE device name='{connectedDevice.Name}'."
-                : "Connection failed: Windows returned null BluetoothLEDevice.");
-            SetStatus(connectedDevice != null ? Pm5BleConnectionStatus.Connected : Pm5BleConnectionStatus.ConnectionFailed);
+            if (connectedDevice == null)
+            {
+                LogWarning("GATT connection failure: Windows returned null BluetoothLEDevice.");
+                SetStatus(Pm5BleConnectionStatus.ConnectionFailed);
+                return;
+            }
+
+            Log($"BluetoothLEDevice resolved. Name='{connectedDevice.Name}'. Verifying Concept2 PM5 GATT service...");
+            var services = await connectedDevice.GetGattServicesForUuidAsync(Concept2ServiceUuid, BluetoothCacheMode.Uncached);
+            if (services.Status == GattCommunicationStatus.Success && services.Services.Count > 0)
+            {
+                Log($"GATT connection success. Found Concept2 PM5 service count={services.Services.Count}.");
+                SetStatus(Pm5BleConnectionStatus.Connected);
+                return;
+            }
+
+            LogWarning($"GATT connection failure. Status={services.Status}, ServiceCount={services.Services.Count}.");
+            SetStatus(Pm5BleConnectionStatus.ConnectionFailed);
         }
         catch (Exception exception)
         {
-            LogWarning("PM5 BLE connection failed: " + exception.Message);
+            LogWarning("GATT connection exception: " + exception.Message);
             SetStatus(Pm5BleConnectionStatus.ConnectionFailed);
         }
     }
@@ -466,36 +481,49 @@ $deviceWatcher.remove_Added($deviceToken)
         return @"
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
+Add-Type -AssemblyName System.Runtime.WindowsRuntime
 trap {
     [Console]::WriteLine(('ERROR|Windows BLE connect helper error: {0}' -f $_.Exception.Message))
     [Console]::Out.Flush()
     exit 1
 }
 [Windows.Devices.Bluetooth.BluetoothLEDevice,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
-[Windows.Foundation.AsyncStatus,Windows.Foundation,ContentType=WindowsRuntime] | Out-Null
+[Windows.Devices.Bluetooth.GenericAttributeProfile.GattDeviceServicesResult,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
+[Windows.Devices.Bluetooth.GenericAttributeProfile.GattCommunicationStatus,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
+function Await-WinRtOperation($operation, [Type]$resultType, [int]$timeoutMs) {
+    $method = [System.WindowsRuntimeSystemExtensions].GetMethods() | Where-Object { $_.Name -eq 'AsTask' -and $_.IsGenericMethodDefinition -and $_.GetGenericArguments().Length -eq 1 -and $_.GetParameters().Length -eq 1 } | Select-Object -First 1
+    $task = $method.MakeGenericMethod($resultType).Invoke($null, @($operation))
+    if (-not $task.Wait($timeoutMs)) { throw 'Timed out waiting for Windows BLE operation.' }
+    if ($task.IsFaulted) { throw $task.Exception.GetBaseException().Message }
+    return $task.Result
+}
 $deviceId = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('" + encodedDeviceId + @"'))
 $address = [UInt64]" + device.BluetoothAddress + @"
+$service = [Guid]'ce060000-43e5-11e4-916c-0800200c9a66'
 [Console]::WriteLine(('LOG|Windows BLE connect helper started. DeviceId=""{0}"", Address={1}' -f $deviceId, $address))
 if (-not [string]::IsNullOrWhiteSpace($deviceId) -and $address -eq 0) {
     [Console]::WriteLine('LOG|Connecting with BluetoothLEDevice.FromIdAsync.')
-    $operation = [Windows.Devices.Bluetooth.BluetoothLEDevice]::FromIdAsync($deviceId)
+    $device = Await-WinRtOperation ([Windows.Devices.Bluetooth.BluetoothLEDevice]::FromIdAsync($deviceId)) ([Windows.Devices.Bluetooth.BluetoothLEDevice]) 12000
 } else {
     [Console]::WriteLine('LOG|Connecting with BluetoothLEDevice.FromBluetoothAddressAsync.')
-    $operation = [Windows.Devices.Bluetooth.BluetoothLEDevice]::FromBluetoothAddressAsync($address)
+    $device = Await-WinRtOperation ([Windows.Devices.Bluetooth.BluetoothLEDevice]::FromBluetoothAddressAsync($address)) ([Windows.Devices.Bluetooth.BluetoothLEDevice]) 12000
 }
-$end = (Get-Date).AddSeconds(12)
-while ($operation.Status -eq [Windows.Foundation.AsyncStatus]::Started -and (Get-Date) -lt $end) {
-    Start-Sleep -Milliseconds 100
+if ($null -eq $device) {
+    [Console]::WriteLine('FAILED|BluetoothLEDevice resolve returned null.')
+    [Console]::Out.Flush()
+    exit 1
 }
-if ($operation.Status -eq [Windows.Foundation.AsyncStatus]::Completed) {
-    $device = $operation.GetResults()
-    if ($null -ne $device) {
-        [Console]::WriteLine(('CONNECTED|Name=""{0}"", DeviceId=""{1}""' -f $device.Name, $device.DeviceId))
-        [Console]::Out.Flush()
-        while ($true) { Start-Sleep -Seconds 1 }
-    }
+[Console]::WriteLine(('LOG|BluetoothLEDevice resolved. Name=""{0}"", DeviceId=""{1}"". Verifying Concept2 PM5 GATT service.' -f $device.Name, $device.DeviceId))
+[Console]::Out.Flush()
+$servicesResult = Await-WinRtOperation ($device.GetGattServicesForUuidAsync($service, [Windows.Devices.Bluetooth.BluetoothCacheMode]::Uncached)) ([Windows.Devices.Bluetooth.GenericAttributeProfile.GattDeviceServicesResult]) 12000
+$serviceCount = 0
+if ($null -ne $servicesResult.Services) { $serviceCount = $servicesResult.Services.Count }
+if ($servicesResult.Status -eq [Windows.Devices.Bluetooth.GenericAttributeProfile.GattCommunicationStatus]::Success -and $serviceCount -gt 0) {
+    [Console]::WriteLine(('CONNECTED|GATT Concept2 PM5 service verified. ServiceCount={0}, DeviceName=""{1}""' -f $serviceCount, $device.Name))
+    [Console]::Out.Flush()
+    while ($true) { Start-Sleep -Seconds 1 }
 }
-[Console]::WriteLine(('FAILED|AsyncStatus={0}' -f $operation.Status))
+[Console]::WriteLine(('FAILED|GATT service verification failed. GattStatus={0}, ServiceCount={1}' -f $servicesResult.Status, $serviceCount))
 [Console]::Out.Flush()
 exit 1
 ";

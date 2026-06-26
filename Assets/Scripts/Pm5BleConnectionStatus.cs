@@ -5,5 +5,6 @@ public enum Pm5BleConnectionStatus
     Pm5Found,
     Connecting,
     Connected,
+    Pm5FoundConnectionNotImplemented,
     ConnectionFailed
 }
