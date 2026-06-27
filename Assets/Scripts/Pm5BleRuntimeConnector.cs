@@ -48,6 +48,8 @@ public class Pm5BleRuntimeConnector : MonoBehaviour
 
     public IReadOnlyList<Pm5BleDeviceInfo> DiscoveredDevices => Client.DiscoveredDevices;
 
+    public IPm5WorkoutDataClient WorkoutDataClient => Client as IPm5WorkoutDataClient;
+
     public int SelectedDeviceIndex => selectedDeviceIndex;
 
     public Pm5BleDeviceInfo? SelectedDevice

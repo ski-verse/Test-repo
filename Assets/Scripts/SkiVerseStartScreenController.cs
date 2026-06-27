@@ -34,6 +34,7 @@ public class SkiVerseStartScreenController : MonoBehaviour
     public TMP_Text pm5DeviceListText;
     public RectTransform pm5DeviceButtonContainer;
     public Pm5BleRuntimeConnector pm5Connector;
+    public Pm5WorkoutDataSource pm5WorkoutDataSource;
     public Toggle threeKmToggle;
     public Toggle fortyKmToggle;
     public Toggle jamtlandToggle;
@@ -371,6 +372,17 @@ public class SkiVerseStartScreenController : MonoBehaviour
             pm5Connector = gameObject.AddComponent<Pm5BleRuntimeConnector>();
         }
 
+        if (pm5WorkoutDataSource == null)
+        {
+            pm5WorkoutDataSource = GetComponent<Pm5WorkoutDataSource>();
+        }
+
+        if (pm5WorkoutDataSource == null)
+        {
+            pm5WorkoutDataSource = gameObject.AddComponent<Pm5WorkoutDataSource>();
+        }
+
+        pm5WorkoutDataSource.pm5Connector = pm5Connector;
         pm5Connector.StateChanged -= MarkPm5UiDirty;
         pm5Connector.StateChanged += MarkPm5UiDirty;
     }

@@ -9,7 +9,7 @@ using Windows.Devices.Bluetooth.Advertisement;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
 #endif
 
-public sealed class WindowsPm5BleClient : IPm5BleClient
+public sealed class WindowsPm5BleClient : IPm5BleClient, IPm5WorkoutDataClient
 {
     public static readonly Guid Concept2ServiceUuid = new Guid("ce060000-43e5-11e4-916c-0800200c9a66");
 
@@ -18,6 +18,7 @@ public sealed class WindowsPm5BleClient : IPm5BleClient
     private readonly object gate = new object();
     private readonly List<Pm5BleDeviceInfo> discoveredDevices = new List<Pm5BleDeviceInfo>();
     private Pm5BleConnectionStatus status = Pm5BleConnectionStatus.NotConnected;
+    private Pm5WorkoutMetrics latestWorkoutMetrics;
 
 #if ENABLE_WINMD_SUPPORT
     private BluetoothLEAdvertisementWatcher watcher;
@@ -27,6 +28,7 @@ public sealed class WindowsPm5BleClient : IPm5BleClient
 #endif
 
     public event Action StateChanged;
+    public event Action WorkoutDataChanged;
 
     public Pm5BleConnectionStatus Status
     {
@@ -46,6 +48,28 @@ public sealed class WindowsPm5BleClient : IPm5BleClient
             lock (gate)
             {
                 return discoveredDevices.ToArray();
+            }
+        }
+    }
+
+    public bool HasWorkoutData
+    {
+        get
+        {
+            lock (gate)
+            {
+                return latestWorkoutMetrics.HasAnyMetrics;
+            }
+        }
+    }
+
+    public Pm5WorkoutMetrics LatestWorkoutMetrics
+    {
+        get
+        {
+            lock (gate)
+            {
+                return latestWorkoutMetrics;
             }
         }
     }
@@ -327,6 +351,12 @@ public sealed class WindowsPm5BleClient : IPm5BleClient
             return;
         }
 
+        if (line.StartsWith("METRIC_RAW|", StringComparison.OrdinalIgnoreCase))
+        {
+            HandlePowerShellWorkoutData(line);
+            return;
+        }
+
         if (line.StartsWith("CONNECTED|", StringComparison.OrdinalIgnoreCase) || line.Equals("CONNECTED", StringComparison.OrdinalIgnoreCase))
         {
             Log("Connection success reported by Windows BLE helper: " + line);
@@ -342,6 +372,51 @@ public sealed class WindowsPm5BleClient : IPm5BleClient
         }
 
         Log("Windows BLE helper output: " + line);
+    }
+
+    private void HandlePowerShellWorkoutData(string line)
+    {
+        var parts = line.Split('|');
+        if (parts.Length < 4)
+        {
+            LogWarning("Could not parse PM5 workout data line: " + line);
+            return;
+        }
+
+        var characteristicName = parts[1];
+        if (!Guid.TryParse(parts[2], out var characteristicUuid))
+        {
+            LogWarning("Could not parse PM5 workout characteristic UUID: " + line);
+            return;
+        }
+
+        if (!Pm5WorkoutDataParser.TryParseHexPayload(parts[3], out var payload))
+        {
+            LogWarning("Could not parse PM5 workout hex payload: " + line);
+            return;
+        }
+
+        Log($"Workout data received. Characteristic='{characteristicName}', Uuid='{characteristicUuid}', Bytes={payload.Length}, RawHex='{parts[3]}'.");
+
+        Pm5WorkoutMetrics updatedMetrics;
+        var changed = false;
+        lock (gate)
+        {
+            updatedMetrics = latestWorkoutMetrics;
+            changed = Pm5WorkoutDataParser.TryApplyCharacteristicUpdate(characteristicUuid, payload, ref updatedMetrics);
+            if (changed)
+            {
+                latestWorkoutMetrics = updatedMetrics;
+            }
+        }
+
+        if (!changed)
+        {
+            return;
+        }
+
+        Log($"Parsed workout metrics. Watts={(updatedMetrics.HasWatts ? updatedMetrics.Watts.ToString("0") : "-")}, HeartRate={(updatedMetrics.HasHeartRateBpm ? updatedMetrics.HeartRateBpm.ToString("0") : "-")}, StrokeRate={(updatedMetrics.HasStrokeRateSpm ? updatedMetrics.StrokeRateSpm.ToString("0") : "-")}, TotalStrokes={(updatedMetrics.HasTotalStrokes ? updatedMetrics.TotalStrokes.ToString() : "-")}.");
+        WorkoutDataChanged?.Invoke();
     }
 
     private void HandlePowerShellDeviceFound(string line)
@@ -489,13 +564,62 @@ trap {
 }
 [Windows.Devices.Bluetooth.BluetoothLEDevice,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
 [Windows.Devices.Bluetooth.GenericAttributeProfile.GattDeviceServicesResult,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
+[Windows.Devices.Bluetooth.GenericAttributeProfile.GattCharacteristicsResult,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
+[Windows.Devices.Bluetooth.GenericAttributeProfile.GattCharacteristic,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
+[Windows.Devices.Bluetooth.GenericAttributeProfile.GattValueChangedEventArgs,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
+[Windows.Devices.Bluetooth.GenericAttributeProfile.GattClientCharacteristicConfigurationDescriptorValue,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
 [Windows.Devices.Bluetooth.GenericAttributeProfile.GattCommunicationStatus,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
+[Windows.Storage.Streams.DataReader,Windows.Storage.Streams,ContentType=WindowsRuntime] | Out-Null
+[Windows.Foundation.TypedEventHandler`2,Windows.Foundation,ContentType=WindowsRuntime] | Out-Null
 function Await-WinRtOperation($operation, [Type]$resultType, [int]$timeoutMs) {
     $method = [System.WindowsRuntimeSystemExtensions].GetMethods() | Where-Object { $_.Name -eq 'AsTask' -and $_.IsGenericMethodDefinition -and $_.GetGenericArguments().Length -eq 1 -and $_.GetParameters().Length -eq 1 } | Select-Object -First 1
     $task = $method.MakeGenericMethod($resultType).Invoke($null, @($operation))
     if (-not $task.Wait($timeoutMs)) { throw 'Timed out waiting for Windows BLE operation.' }
     if ($task.IsFaulted) { throw $task.Exception.GetBaseException().Message }
     return $task.Result
+}
+function Convert-BufferToHex($buffer) {
+    if ($null -eq $buffer) { return '' }
+    $reader = [Windows.Storage.Streams.DataReader]::FromBuffer($buffer)
+    $bytes = New-Object byte[] $buffer.Length
+    $reader.ReadBytes($bytes)
+    return (($bytes | ForEach-Object { $_.ToString('X2') }) -join '')
+}
+function Subscribe-Pm5Characteristic($serviceObject, [string]$name, [Guid]$uuid) {
+    $result = Await-WinRtOperation ($serviceObject.GetCharacteristicsForUuidAsync($uuid, [Windows.Devices.Bluetooth.BluetoothCacheMode]::Uncached)) ([Windows.Devices.Bluetooth.GenericAttributeProfile.GattCharacteristicsResult]) 12000
+    $count = 0
+    if ($null -ne $result.Characteristics) { $count = $result.Characteristics.Count }
+    if ($result.Status -ne [Windows.Devices.Bluetooth.GenericAttributeProfile.GattCommunicationStatus]::Success -or $count -le 0) {
+        [Console]::WriteLine(('LOG|PM5 characteristic not available. Name={0}, Uuid={1}, Status={2}, Count={3}' -f $name, $uuid, $result.Status, $count))
+        [Console]::Out.Flush()
+        return $null
+    }
+
+    $characteristic = $result.Characteristics[0]
+    $localName = $name
+    $localUuid = $uuid
+    $handler = [Windows.Foundation.TypedEventHandler[Windows.Devices.Bluetooth.GenericAttributeProfile.GattCharacteristic,Windows.Devices.Bluetooth.GenericAttributeProfile.GattValueChangedEventArgs]] {
+        param($sender, $args)
+        try {
+            $hex = Convert-BufferToHex $args.CharacteristicValue
+            [Console]::WriteLine(('METRIC_RAW|{0}|{1}|{2}' -f $localName, $localUuid, $hex))
+            [Console]::Out.Flush()
+        } catch {
+            [Console]::WriteLine(('ERROR|PM5 workout notification parse failed for {0}: {1}' -f $localName, $_.Exception.Message))
+            [Console]::Out.Flush()
+        }
+    }
+    $token = $characteristic.add_ValueChanged($handler)
+    $status = Await-WinRtOperation ($characteristic.WriteClientCharacteristicConfigurationDescriptorAsync([Windows.Devices.Bluetooth.GenericAttributeProfile.GattClientCharacteristicConfigurationDescriptorValue]::Notify)) ([Windows.Devices.Bluetooth.GenericAttributeProfile.GattCommunicationStatus]) 12000
+    if ($status -ne [Windows.Devices.Bluetooth.GenericAttributeProfile.GattCommunicationStatus]::Success) {
+        [Console]::WriteLine(('ERROR|PM5 notification subscribe failed. Name={0}, Uuid={1}, Status={2}' -f $localName, $localUuid, $status))
+        [Console]::Out.Flush()
+        return $null
+    }
+
+    [Console]::WriteLine(('LOG|PM5 notification subscribed. Name={0}, Uuid={1}' -f $localName, $localUuid))
+    [Console]::Out.Flush()
+    return [pscustomobject]@{ Characteristic = $characteristic; Token = $token; Name = $localName }
 }
 $deviceId = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('" + encodedDeviceId + @"'))
 $address = [UInt64]" + device.BluetoothAddress + @"
@@ -520,6 +644,15 @@ $serviceCount = 0
 if ($null -ne $servicesResult.Services) { $serviceCount = $servicesResult.Services.Count }
 if ($servicesResult.Status -eq [Windows.Devices.Bluetooth.GenericAttributeProfile.GattCommunicationStatus]::Success -and $serviceCount -gt 0) {
     [Console]::WriteLine(('CONNECTED|GATT Concept2 PM5 service verified. ServiceCount={0}, DeviceName=""{1}""' -f $serviceCount, $device.Name))
+    [Console]::Out.Flush()
+    $pm5Service = $servicesResult.Services[0]
+    $subscriptions = @()
+    $subscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Status 1' ([Guid]'ce060032-43e5-11e4-916c-0800200c9a66')
+    $subscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Status 2' ([Guid]'ce060033-43e5-11e4-916c-0800200c9a66')
+    $subscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Stroke Data' ([Guid]'ce060035-43e5-11e4-916c-0800200c9a66')
+    $subscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Stroke Data' ([Guid]'ce060036-43e5-11e4-916c-0800200c9a66')
+    $activeSubscriptions = @($subscriptions | Where-Object { $null -ne $_ })
+    [Console]::WriteLine(('LOG|PM5 workout data subscriptions active. Count={0}' -f $activeSubscriptions.Count))
     [Console]::Out.Flush()
     while ($true) { Start-Sleep -Seconds 1 }
 }

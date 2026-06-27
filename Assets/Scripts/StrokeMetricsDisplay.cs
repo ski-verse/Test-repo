@@ -46,6 +46,11 @@ public class StrokeMetricsDisplay : MonoBehaviour
             player = Object.FindFirstObjectByType<PlayerSpeedController>();
         }
 
+        if (strokeMetricsSourceBehaviour == null)
+        {
+            strokeMetricsSourceBehaviour = Object.FindFirstObjectByType<Pm5WorkoutDataSource>();
+        }
+
         if (player != null)
         {
             if (TryReadExternalStrokeMetrics(out var externalStrokeRateSpm, out var externalTotalStrokes))

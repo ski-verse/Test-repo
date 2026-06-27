@@ -267,6 +267,11 @@ public class WorkoutMetricsHudDisplay : MonoBehaviour
         {
             strokeMetricsDisplay = Object.FindFirstObjectByType<StrokeMetricsDisplay>();
         }
+
+        if (workoutMetricsSourceBehaviour == null)
+        {
+            workoutMetricsSourceBehaviour = Object.FindFirstObjectByType<Pm5WorkoutDataSource>();
+        }
     }
 
     private bool TryReadExternalWorkoutMetrics(out int watts, out int heartRateBpm)

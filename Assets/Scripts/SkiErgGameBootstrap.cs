@@ -631,8 +631,29 @@ public class SkiErgGameBootstrap : MonoBehaviour
 
         using (StartupPerformanceProfiler.Measure("CourseMinimapDisplay.CreateRuntimeMinimap")) CourseMinimapDisplay.CreateRuntimeMinimap(canvasObject.transform, player);
         using (StartupPerformanceProfiler.Measure("CourseElevationProfileDisplay.CreateRuntimeProfile")) CourseElevationProfileDisplay.CreateRuntimeProfile(canvasObject.transform, player);
-        using (StartupPerformanceProfiler.Measure("StrokeMetricsDisplay.CreateRuntimeStrokeHud")) StrokeMetricsDisplay.CreateRuntimeStrokeHud(canvasObject.transform, player);
-        using (StartupPerformanceProfiler.Measure("WorkoutMetricsHudDisplay.CreateRuntimeHud")) WorkoutMetricsHudDisplay.CreateRuntimeHud(canvasObject.transform, player);
+        var pm5WorkoutDataSource = Object.FindFirstObjectByType<Pm5WorkoutDataSource>();
+
+        StrokeMetricsDisplay strokeMetricsDisplay;
+        using (StartupPerformanceProfiler.Measure("StrokeMetricsDisplay.CreateRuntimeStrokeHud"))
+        {
+            strokeMetricsDisplay = StrokeMetricsDisplay.CreateRuntimeStrokeHud(canvasObject.transform, player);
+        }
+
+        if (strokeMetricsDisplay != null)
+        {
+            strokeMetricsDisplay.strokeMetricsSourceBehaviour = pm5WorkoutDataSource;
+        }
+
+        WorkoutMetricsHudDisplay workoutMetricsHudDisplay;
+        using (StartupPerformanceProfiler.Measure("WorkoutMetricsHudDisplay.CreateRuntimeHud"))
+        {
+            workoutMetricsHudDisplay = WorkoutMetricsHudDisplay.CreateRuntimeHud(canvasObject.transform, player);
+        }
+
+        if (workoutMetricsHudDisplay != null)
+        {
+            workoutMetricsHudDisplay.workoutMetricsSourceBehaviour = pm5WorkoutDataSource;
+        }
     }
 
     private static TextMeshProUGUI CreateHudText(Transform parent, string name, Vector2 anchoredPosition)
