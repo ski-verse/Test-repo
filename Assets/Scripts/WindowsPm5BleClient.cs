@@ -752,6 +752,30 @@ function Subscribe-Pm5Characteristic($serviceObject, [string]$name, [Guid]$uuid)
 
     $localName = $name
     $localUuid = $uuid
+    $properties = $characteristic.CharacteristicProperties
+    $notifyFlag = [Windows.Devices.Bluetooth.GenericAttributeProfile.GattCharacteristicProperties]::Notify
+    $indicateFlag = [Windows.Devices.Bluetooth.GenericAttributeProfile.GattCharacteristicProperties]::Indicate
+    $descriptorValue = [Windows.Devices.Bluetooth.GenericAttributeProfile.GattClientCharacteristicConfigurationDescriptorValue]::Notify
+    if ((([int]$properties) -band ([int]$indicateFlag)) -ne 0 -and (([int]$properties) -band ([int]$notifyFlag)) -eq 0) {
+        $descriptorValue = [Windows.Devices.Bluetooth.GenericAttributeProfile.GattClientCharacteristicConfigurationDescriptorValue]::Indicate
+    }
+
+    [Console]::WriteLine(('LOG|PM5 notification subscribe started. Name={0}, Uuid={1}, Properties={2}, Descriptor={3}' -f $localName, $localUuid, $properties, $descriptorValue))
+    [Console]::Out.Flush()
+    try {
+        $status = Await-WinRtOperation ($characteristic.WriteClientCharacteristicConfigurationDescriptorAsync($descriptorValue)) ([Windows.Devices.Bluetooth.GenericAttributeProfile.GattCommunicationStatus]) 12000
+    } catch {
+        [Console]::WriteLine(('ERROR|PM5 notification subscribe timed out or failed. Name={0}, Uuid={1}, Error={2}' -f $localName, $localUuid, $_.Exception.Message))
+        [Console]::Out.Flush()
+        return $null
+    }
+
+    if ($status -ne [Windows.Devices.Bluetooth.GenericAttributeProfile.GattCommunicationStatus]::Success) {
+        [Console]::WriteLine(('ERROR|PM5 notification subscribe failed. Name={0}, Uuid={1}, Status={2}' -f $localName, $localUuid, $status))
+        [Console]::Out.Flush()
+        return $null
+    }
+
     $handler = [Windows.Foundation.TypedEventHandler[Windows.Devices.Bluetooth.GenericAttributeProfile.GattCharacteristic,Windows.Devices.Bluetooth.GenericAttributeProfile.GattValueChangedEventArgs]] {
         param($sender, $args)
         try {
@@ -764,23 +788,6 @@ function Subscribe-Pm5Characteristic($serviceObject, [string]$name, [Guid]$uuid)
         }
     }
     $token = $characteristic.add_ValueChanged($handler)
-    $properties = $characteristic.CharacteristicProperties
-    $notifyFlag = [Windows.Devices.Bluetooth.GenericAttributeProfile.GattCharacteristicProperties]::Notify
-    $indicateFlag = [Windows.Devices.Bluetooth.GenericAttributeProfile.GattCharacteristicProperties]::Indicate
-    $descriptorValue = [Windows.Devices.Bluetooth.GenericAttributeProfile.GattClientCharacteristicConfigurationDescriptorValue]::Notify
-    if ((([int]$properties) -band ([int]$indicateFlag)) -ne 0 -and (([int]$properties) -band ([int]$notifyFlag)) -eq 0) {
-        $descriptorValue = [Windows.Devices.Bluetooth.GenericAttributeProfile.GattClientCharacteristicConfigurationDescriptorValue]::Indicate
-    }
-
-    [Console]::WriteLine(('LOG|PM5 notification subscribe started. Name={0}, Uuid={1}, Properties={2}, Descriptor={3}' -f $localName, $localUuid, $properties, $descriptorValue))
-    [Console]::Out.Flush()
-    $status = Await-WinRtOperation ($characteristic.WriteClientCharacteristicConfigurationDescriptorAsync($descriptorValue)) ([Windows.Devices.Bluetooth.GenericAttributeProfile.GattCommunicationStatus]) 12000
-    if ($status -ne [Windows.Devices.Bluetooth.GenericAttributeProfile.GattCommunicationStatus]::Success) {
-        [Console]::WriteLine(('ERROR|PM5 notification subscribe failed. Name={0}, Uuid={1}, Status={2}' -f $localName, $localUuid, $status))
-        [Console]::Out.Flush()
-        return $null
-    }
-
     [Console]::WriteLine(('LOG|PM5 notification subscribed. Name={0}, Uuid={1}' -f $localName, $localUuid))
     [Console]::Out.Flush()
     return [pscustomobject]@{ Characteristic = $characteristic; Token = $token; Name = $localName }
