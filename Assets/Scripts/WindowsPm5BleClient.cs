@@ -475,6 +475,8 @@ trap {
 [Windows.Devices.Bluetooth.Advertisement.BluetoothLEAdvertisementWatcher,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
 [Windows.Devices.Bluetooth.BluetoothLEDevice,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
 [Windows.Devices.Enumeration.DeviceInformation,Windows.Devices.Enumeration,ContentType=WindowsRuntime] | Out-Null
+[Windows.Devices.Enumeration.DeviceInformationCollection,Windows.Devices.Enumeration,ContentType=WindowsRuntime] | Out-Null
+[Windows.Devices.Enumeration.DeviceAccessInformation,Windows.Devices.Enumeration,ContentType=WindowsRuntime] | Out-Null
 [Windows.Foundation.TypedEventHandler`2,Windows.Foundation,ContentType=WindowsRuntime] | Out-Null
 [Console]::WriteLine('LOG|Windows BLE scan helper started. Scanning advertisements and BLE device list for 20 seconds.')
 $services = @([Guid]'ce060000-43e5-11e4-916c-0800200c9a66', [Guid]'ce060030-43e5-11e4-916c-0800200c9a66', [Guid]'ce060020-43e5-11e4-916c-0800200c9a66', [Guid]'ce060010-43e5-11e4-916c-0800200c9a66')
@@ -599,9 +601,48 @@ function Convert-BufferToHex($buffer) {
     $reader.ReadBytes($bytes)
     return (($bytes | ForEach-Object { $_.ToString('X2') }) -join '')
 }
-function Find-Pm5WorkoutServiceDeviceId([UInt64]$address) {
+function Get-DeviceAccessStatus([string]$id) {
+    if ([string]::IsNullOrWhiteSpace($id)) { return 'Unknown' }
+    try {
+        $access = [Windows.Devices.Enumeration.DeviceAccessInformation]::CreateFromId($id)
+        if ($null -eq $access) { return 'Unknown' }
+        return [string]$access.CurrentStatus
+    } catch {
+        return ('Error: {0}' -f $_.Exception.Message)
+    }
+}
+function Find-Pm5WorkoutServiceDeviceId([Guid]$workoutServiceUuid, [UInt64]$address) {
     $addressHex = ''
     if ($address -ne 0) { $addressHex = ('{0:X12}' -f $address) }
+
+    try {
+        $selector = [Windows.Devices.Bluetooth.GenericAttributeProfile.GattDeviceService]::GetDeviceSelectorFromUuid($workoutServiceUuid)
+        [Console]::WriteLine(('LOG|Looking up PM5 workout service with WinRT selector: {0}' -f $selector))
+        [Console]::Out.Flush()
+        $serviceDevices = Await-WinRtOperation ([Windows.Devices.Enumeration.DeviceInformation]::FindAllAsync($selector)) ([Windows.Devices.Enumeration.DeviceInformationCollection]) 20000
+        $count = 0
+        if ($null -ne $serviceDevices) { $count = $serviceDevices.Count }
+        [Console]::WriteLine(('LOG|WinRT workout service lookup returned Count={0}' -f $count))
+        [Console]::Out.Flush()
+        foreach ($serviceDevice in $serviceDevices) {
+            $id = [string]$serviceDevice.Id
+            $name = [string]$serviceDevice.Name
+            $upperId = $id.ToUpperInvariant()
+            $matchesAddress = [string]::IsNullOrWhiteSpace($addressHex) -or $upperId.Contains($addressHex)
+            $accessStatus = Get-DeviceAccessStatus $id
+            [Console]::WriteLine(('LOG|WinRT workout service candidate. Name=""{0}"", Id=""{1}"", IsEnabled={2}, Access={3}, MatchesAddress={4}' -f $name, $id, $serviceDevice.IsEnabled, $accessStatus, $matchesAddress))
+            [Console]::Out.Flush()
+            if ($matchesAddress) {
+                [Console]::WriteLine(('LOG|Using PM5 workout service WinRT DeviceInformation.Id=""{0}""' -f $id))
+                [Console]::Out.Flush()
+                return $id
+            }
+        }
+    } catch {
+        [Console]::WriteLine(('ERROR|PM5 workout service WinRT lookup failed: {0}' -f $_.Exception.Message))
+        [Console]::Out.Flush()
+    }
+
     try {
         foreach ($pnpDevice in Get-PnpDevice -ErrorAction Stop) {
             $id = [string]$pnpDevice.InstanceId
@@ -610,7 +651,7 @@ function Find-Pm5WorkoutServiceDeviceId([UInt64]$address) {
             $isWorkoutService = $upperId.Contains('{CE060030-43E5-11E4-916C-0800200C9A66}')
             $matchesAddress = [string]::IsNullOrWhiteSpace($addressHex) -or $upperId.Contains($addressHex)
             if ($isWorkoutService -and $matchesAddress) {
-                [Console]::WriteLine(('LOG|Found PM5 workout service device id from Windows PnP. Id=""{0}""' -f $id))
+                [Console]::WriteLine(('LOG|Found PM5 workout service device id from Windows PnP fallback. Id=""{0}"", Access={1}' -f $id, (Get-DeviceAccessStatus $id)))
                 [Console]::Out.Flush()
                 return $id
             }
@@ -675,9 +716,9 @@ $deviceId = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('" + enc
 $address = [UInt64]" + device.BluetoothAddress + @"
 $workoutService = [Guid]'ce060030-43e5-11e4-916c-0800200c9a66'
 [Console]::WriteLine(('LOG|Windows BLE connect helper started. DeviceId=""{0}"", Address={1}' -f $deviceId, $address))
-$workoutServiceDeviceId = Find-Pm5WorkoutServiceDeviceId $address
+$workoutServiceDeviceId = Find-Pm5WorkoutServiceDeviceId $workoutService $address
 if (-not [string]::IsNullOrWhiteSpace($workoutServiceDeviceId)) {
-    [Console]::WriteLine('LOG|Connecting directly with GattDeviceService.FromIdAsync for PM5 workout service.')
+    [Console]::WriteLine(('LOG|Connecting directly with GattDeviceService.FromIdAsync for PM5 workout service. Access={0}' -f (Get-DeviceAccessStatus $workoutServiceDeviceId)))
     [Console]::Out.Flush()
     $directService = Await-WinRtOperation ([Windows.Devices.Bluetooth.GenericAttributeProfile.GattDeviceService]::FromIdAsync($workoutServiceDeviceId)) ([Windows.Devices.Bluetooth.GenericAttributeProfile.GattDeviceService]) 20000
     if ($null -ne $directService) {
