@@ -26,6 +26,7 @@ public sealed class WindowsPm5BleClient : IPm5BleClient, IPm5WorkoutDataClient
     private BluetoothLEDevice connectedDevice;
 #elif UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
     private System.Diagnostics.Process helperProcess;
+    private string helperScriptPath;
 #endif
 
     public event Action StateChanged;
@@ -144,6 +145,7 @@ public sealed class WindowsPm5BleClient : IPm5BleClient, IPm5WorkoutDataClient
         {
             helperProcess.Dispose();
             helperProcess = null;
+            DeleteHelperScriptFile();
         }
 #endif
     }
@@ -288,11 +290,26 @@ public sealed class WindowsPm5BleClient : IPm5BleClient, IPm5WorkoutDataClient
 #if !ENABLE_WINMD_SUPPORT && (UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN)
     private void StartPowerShellHelper(string script, Action<string> lineHandler)
     {
-        var encodedScript = Convert.ToBase64String(Encoding.Unicode.GetBytes(script));
+        DeleteHelperScriptFile();
+
+        try
+        {
+            helperScriptPath = System.IO.Path.Combine(
+                System.IO.Path.GetTempPath(),
+                "SkiVersePm5Ble-" + Guid.NewGuid().ToString("N") + ".ps1");
+            System.IO.File.WriteAllText(helperScriptPath, script, Encoding.UTF8);
+        }
+        catch (Exception exception)
+        {
+            LogWarning("Could not write Windows PM5 BLE helper script: " + exception.Message);
+            SetStatus(Pm5BleConnectionStatus.ConnectionFailed);
+            return;
+        }
+
         var startInfo = new System.Diagnostics.ProcessStartInfo
         {
             FileName = "powershell.exe",
-            Arguments = "-NoProfile -ExecutionPolicy Bypass -EncodedCommand " + encodedScript,
+            Arguments = "-NoProfile -ExecutionPolicy Bypass -File " + QuoteProcessArgument(helperScriptPath),
             CreateNoWindow = true,
             UseShellExecute = false,
             RedirectStandardOutput = true,
@@ -336,7 +353,37 @@ public sealed class WindowsPm5BleClient : IPm5BleClient, IPm5WorkoutDataClient
         catch (Exception exception)
         {
             LogWarning("Could not start Windows PM5 BLE helper: " + exception.Message);
+            DeleteHelperScriptFile();
             SetStatus(Pm5BleConnectionStatus.ConnectionFailed);
+        }
+    }
+
+    private static string QuoteProcessArgument(string argument)
+    {
+        return "\"" + argument.Replace("\"", "\\\"") + "\"";
+    }
+
+    private void DeleteHelperScriptFile()
+    {
+        if (string.IsNullOrWhiteSpace(helperScriptPath))
+        {
+            return;
+        }
+
+        try
+        {
+            if (System.IO.File.Exists(helperScriptPath))
+            {
+                System.IO.File.Delete(helperScriptPath);
+            }
+        }
+        catch (Exception exception)
+        {
+            Debug.LogWarning("[Ski-Verse] Could not delete PM5 BLE helper script: " + exception.Message);
+        }
+        finally
+        {
+            helperScriptPath = null;
         }
     }
 
