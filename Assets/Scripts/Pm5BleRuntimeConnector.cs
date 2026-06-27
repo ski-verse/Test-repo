@@ -7,7 +7,7 @@ public class Pm5BleRuntimeConnector : MonoBehaviour
 {
     public const string NotConnectedStatusText = "PM5: Not connected";
     public const string SearchingStatusText = "Searching...";
-    public const string Pm5FoundStatusText = "PM5 Found";
+    public const string Pm5FoundStatusText = "PM5 Found - not connected";
     public const string ConnectingStatusText = "Connecting...";
     public const string ConnectedStatusText = "Connected";
     public const string Pm5FoundConnectionNotImplementedStatusText = "PM5 Found - connection not implemented";

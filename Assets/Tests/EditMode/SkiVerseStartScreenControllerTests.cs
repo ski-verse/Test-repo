@@ -34,7 +34,7 @@ public class SkiVerseStartScreenControllerTests
         Assert.AreEqual("40 km Long Course", SkiVerseStartScreenController.FortyKmCourseLabel);
         Assert.AreEqual("PM5: Not connected", SkiVerseStartScreenController.Pm5NotConnectedText);
         Assert.AreEqual("Searching...", SkiVerseStartScreenController.Pm5SearchingText);
-        Assert.AreEqual("PM5 Found", SkiVerseStartScreenController.Pm5FoundText);
+        Assert.AreEqual("PM5 Found - not connected", SkiVerseStartScreenController.Pm5FoundText);
         Assert.AreEqual("Connecting...", SkiVerseStartScreenController.Pm5ConnectingText);
         Assert.AreEqual("Connected", SkiVerseStartScreenController.Pm5ConnectedText);
         Assert.AreEqual("PM5 Found - connection not implemented", SkiVerseStartScreenController.Pm5FoundConnectionNotImplementedText);
@@ -108,18 +108,22 @@ public class SkiVerseStartScreenControllerTests
     }
 
     [Test]
-    public void FoundPm5_DoesNotMarkUiAsConnected()
+    public void FoundPm5_AutoAttemptsConnectionAndFailureDoesNotMarkUiAsConnected()
     {
         var controller = new GameObject("Start Screen").AddComponent<SkiVerseStartScreenController>();
-        var fakeClient = new FakePm5BleClient();
+        var fakeClient = new FakePm5BleClient
+        {
+            ConnectResultStatus = Pm5BleConnectionStatus.ConnectionFailed
+        };
 
         controller.SendMessage("Start");
         controller.pm5Connector.Client = fakeClient;
         fakeClient.AddDevice(new Pm5BleDeviceInfo("pm5-1", "PM5 12345", 12345));
         controller.SendMessage("Update");
 
+        Assert.IsTrue(fakeClient.ConnectCalled);
         Assert.IsFalse(controller.IsPm5Connected);
-        Assert.AreEqual(SkiVerseStartScreenController.Pm5FoundText, controller.pm5StatusText.text);
+        Assert.AreEqual(SkiVerseStartScreenController.Pm5ConnectionFailedText, controller.pm5StatusText.text);
     }
 
     [Test]
@@ -161,6 +165,8 @@ public class SkiVerseStartScreenControllerTests
 
         public Pm5BleDeviceInfo ConnectedDevice { get; private set; }
 
+        public Pm5BleConnectionStatus ConnectResultStatus { get; set; } = Pm5BleConnectionStatus.Connected;
+
         public Pm5BleConnectionStatus Status { get; private set; } = Pm5BleConnectionStatus.NotConnected;
 
         public System.Collections.Generic.IReadOnlyList<Pm5BleDeviceInfo> DiscoveredDevices => devices;
@@ -187,7 +193,7 @@ public class SkiVerseStartScreenControllerTests
         {
             ConnectCalled = true;
             ConnectedDevice = device;
-            Status = Pm5BleConnectionStatus.Connected;
+            Status = ConnectResultStatus;
             StateChanged?.Invoke();
         }
     }
