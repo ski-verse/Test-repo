@@ -62,6 +62,18 @@ public class Pm5BleRuntimeConnectorTests
         StringAssert.Contains("Await-WinRtOperationByStatus ($characteristic.WriteClientCharacteristicConfigurationDescriptorAsync($descriptorValue))", script);
     }
 
+    [Test]
+    public void WindowsPm5BleClient_ConnectScriptAttachesNotificationHandlerBeforeNotifyWrite()
+    {
+        var script = BuildConnectScriptForTest();
+        var handlerIndex = script.IndexOf("$token = $characteristic.add_ValueChanged($handler)", StringComparison.Ordinal);
+        var notifyWriteIndex = script.IndexOf("WriteClientCharacteristicConfigurationDescriptorAsync($descriptorValue)", StringComparison.Ordinal);
+
+        Assert.GreaterOrEqual(handlerIndex, 0);
+        Assert.GreaterOrEqual(notifyWriteIndex, 0);
+        Assert.Less(handlerIndex, notifyWriteIndex);
+    }
+
     private static string BuildConnectScriptForTest()
     {
         var method = typeof(WindowsPm5BleClient).GetMethod("BuildConnectScript", BindingFlags.NonPublic | BindingFlags.Static);

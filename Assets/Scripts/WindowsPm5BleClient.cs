@@ -836,11 +836,36 @@ function Subscribe-Pm5Characteristic($serviceObject, [string]$name, [Guid]$uuid)
             $descriptorValue = [Windows.Devices.Bluetooth.GenericAttributeProfile.GattClientCharacteristicConfigurationDescriptorValue]::Indicate
         }
 
+        $handler = [Windows.Foundation.TypedEventHandler[Windows.Devices.Bluetooth.GenericAttributeProfile.GattCharacteristic,Windows.Devices.Bluetooth.GenericAttributeProfile.GattValueChangedEventArgs]] {
+            param($sender, $args)
+            try {
+                $hex = Convert-BufferToHex $args.CharacteristicValue
+                [Console]::WriteLine(('METRIC_RAW|{0}|{1}|{2}' -f $localName, $localUuid, $hex))
+                [Console]::Out.Flush()
+            } catch {
+                [Console]::WriteLine(('ERROR|PM5 workout notification parse failed for {0}: {1}' -f $localName, $_.Exception.Message))
+                [Console]::Out.Flush()
+            }
+        }
+        $token = $null
+        try {
+            $token = $characteristic.add_ValueChanged($handler)
+            [Console]::WriteLine(('LOG|PM5 notification handler attached before CCCD write. Name={0}, Uuid={1}, CacheMode={2}' -f $localName, $localUuid, $cacheMode))
+            [Console]::Out.Flush()
+        } catch {
+            [Console]::WriteLine(('ERROR|PM5 notification handler attach failed. Name={0}, Uuid={1}, CacheMode={2}, Error={3}' -f $localName, $localUuid, $cacheMode, $_.Exception.Message))
+            [Console]::Out.Flush()
+            continue
+        }
+
         [Console]::WriteLine(('LOG|PM5 notification subscribe started. Name={0}, Uuid={1}, CacheMode={2}, Properties={3}, Descriptor={4}' -f $localName, $localUuid, $cacheMode, $properties, $descriptorValue))
         [Console]::Out.Flush()
         try {
             $status = Await-WinRtOperationByStatus ($characteristic.WriteClientCharacteristicConfigurationDescriptorAsync($descriptorValue)) 12000 ('PM5 Notify {0}' -f $localName)
         } catch {
+            if ($null -ne $token) {
+                try { $characteristic.remove_ValueChanged($token) } catch {}
+            }
             $errorMessage = $_.Exception.Message
             if ($null -ne $_.Exception.InnerException) {
                 $errorMessage = ('{0} InnerException={1}' -f $errorMessage, $_.Exception.InnerException.Message)
@@ -854,23 +879,14 @@ function Subscribe-Pm5Characteristic($serviceObject, [string]$name, [Guid]$uuid)
         [Console]::Out.Flush()
 
         if ($status -ne [Windows.Devices.Bluetooth.GenericAttributeProfile.GattCommunicationStatus]::Success) {
+            if ($null -ne $token) {
+                try { $characteristic.remove_ValueChanged($token) } catch {}
+            }
             [Console]::WriteLine(('ERROR|PM5 notification subscribe failed. Name={0}, Uuid={1}, CacheMode={2}, Status={3}' -f $localName, $localUuid, $cacheMode, $status))
             [Console]::Out.Flush()
             continue
         }
 
-        $handler = [Windows.Foundation.TypedEventHandler[Windows.Devices.Bluetooth.GenericAttributeProfile.GattCharacteristic,Windows.Devices.Bluetooth.GenericAttributeProfile.GattValueChangedEventArgs]] {
-            param($sender, $args)
-            try {
-                $hex = Convert-BufferToHex $args.CharacteristicValue
-                [Console]::WriteLine(('METRIC_RAW|{0}|{1}|{2}' -f $localName, $localUuid, $hex))
-                [Console]::Out.Flush()
-            } catch {
-                [Console]::WriteLine(('ERROR|PM5 workout notification parse failed for {0}: {1}' -f $localName, $_.Exception.Message))
-                [Console]::Out.Flush()
-            }
-        }
-        $token = $characteristic.add_ValueChanged($handler)
         [Console]::WriteLine(('LOG|PM5 notification subscribed. Name={0}, Uuid={1}, CacheMode={2}' -f $localName, $localUuid, $cacheMode))
         [Console]::Out.Flush()
         return [pscustomobject]@{ Characteristic = $characteristic; Token = $token; Name = $localName }

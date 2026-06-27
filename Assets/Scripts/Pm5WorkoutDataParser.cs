@@ -94,7 +94,7 @@ public static class Pm5WorkoutDataParser
 
     private static bool TryParseStrokeData(byte[] payload, ref Pm5WorkoutMetrics metrics)
     {
-        if (!TryReadUInt16(payload, 17, out var totalStrokes))
+        if (!TryReadUInt16(payload, 18, out var totalStrokes))
         {
             return false;
         }

@@ -41,9 +41,11 @@ public class Pm5WorkoutDataParserTests
     public void StrokeData_ParsesTotalStrokes()
     {
         var metrics = new Pm5WorkoutMetrics();
-        var payload = new byte[19];
-        payload[17] = 123;
-        payload[18] = 0;
+        var payload = new byte[20];
+        payload[16] = 200;
+        payload[17] = 1;
+        payload[18] = 123;
+        payload[19] = 0;
 
         Assert.IsTrue(Pm5WorkoutDataParser.TryApplyCharacteristicUpdate(Pm5WorkoutDataParser.RowingStrokeDataUuid, payload, ref metrics));
 
