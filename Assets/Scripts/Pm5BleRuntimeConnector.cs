@@ -66,12 +66,17 @@ public class Pm5BleRuntimeConnector : MonoBehaviour
         }
     }
 
+    private void OnDisable()
+    {
+        StopClient();
+    }
+
     private void OnDestroy()
     {
         if (client != null)
         {
             client.StateChanged -= NotifyStateChanged;
-            client.StopScan();
+            StopClient();
         }
     }
 
@@ -155,5 +160,16 @@ public class Pm5BleRuntimeConnector : MonoBehaviour
     private void NotifyStateChanged()
     {
         StateChanged?.Invoke();
+    }
+
+    private void StopClient()
+    {
+        if (client == null)
+        {
+            return;
+        }
+
+        Debug.Log("[Ski-Verse PM5 BLE] Runtime connector stops PM5 BLE client.");
+        client.StopScan();
     }
 }

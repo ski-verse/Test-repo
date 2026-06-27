@@ -24,4 +24,45 @@ public class Pm5BleRuntimeConnectorTests
         Assert.IsTrue(WindowsPm5BleClient.IsConcept2Pm5Advertisement(string.Empty, new[] { WindowsPm5BleClient.Concept2WorkoutDataServiceUuid }));
         Assert.IsFalse(WindowsPm5BleClient.IsConcept2Pm5Advertisement("Bluetooth Headphones", new Guid[0]));
     }
+
+    [Test]
+    public void RuntimeConnector_StopsPm5ClientWhenDisabled()
+    {
+        var gameObject = new UnityEngine.GameObject("PM5 Runtime Connector");
+        var connector = gameObject.AddComponent<Pm5BleRuntimeConnector>();
+        var client = new FakePm5BleClient();
+
+        connector.Client = client;
+        gameObject.SetActive(false);
+
+        Assert.AreEqual(1, client.StopScanCount);
+
+        UnityEngine.Object.DestroyImmediate(gameObject);
+    }
+
+    private sealed class FakePm5BleClient : IPm5BleClient
+    {
+        public event Action StateChanged;
+
+        public Pm5BleConnectionStatus Status => Pm5BleConnectionStatus.NotConnected;
+
+        public System.Collections.Generic.IReadOnlyList<Pm5BleDeviceInfo> DiscoveredDevices => Array.Empty<Pm5BleDeviceInfo>();
+
+        public int StopScanCount { get; private set; }
+
+        public void StartScan()
+        {
+            StateChanged?.Invoke();
+        }
+
+        public void StopScan()
+        {
+            StopScanCount++;
+        }
+
+        public void Connect(Pm5BleDeviceInfo device)
+        {
+            StateChanged?.Invoke();
+        }
+    }
 }

@@ -726,14 +726,32 @@ function Start-Pm5WorkoutNotifications($pm5Service, [string]$deviceName) {
     }
 
     $subscriptions = @()
-    $subscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Status 1' ([Guid]'ce060032-43e5-11e4-916c-0800200c9a66')
-    $subscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Status 2' ([Guid]'ce060033-43e5-11e4-916c-0800200c9a66')
-    $subscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Stroke Data' ([Guid]'ce060035-43e5-11e4-916c-0800200c9a66')
-    $subscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Stroke Data' ([Guid]'ce060036-43e5-11e4-916c-0800200c9a66')
-    $activeSubscriptions = @($subscriptions | Where-Object { $null -ne $_ })
-    [Console]::WriteLine(('LOG|PM5 workout data subscriptions active. Count={0}' -f $activeSubscriptions.Count))
-    [Console]::Out.Flush()
-    while ($true) { Start-Sleep -Seconds 1 }
+    $subscriptionAttempt = 0
+    while ($true) {
+        $activeSubscriptions = @($subscriptions | Where-Object { $null -ne $_ })
+        if ($activeSubscriptions.Count -eq 0) {
+            $subscriptionAttempt++
+            [Console]::WriteLine(('LOG|PM5 workout data subscription attempt {0} started.' -f $subscriptionAttempt))
+            [Console]::Out.Flush()
+
+            $subscriptions = @()
+            $subscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Status 1' ([Guid]'ce060032-43e5-11e4-916c-0800200c9a66')
+            $subscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Status 2' ([Guid]'ce060033-43e5-11e4-916c-0800200c9a66')
+            $subscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Stroke Data' ([Guid]'ce060035-43e5-11e4-916c-0800200c9a66')
+            $subscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Stroke Data' ([Guid]'ce060036-43e5-11e4-916c-0800200c9a66')
+
+            $activeSubscriptions = @($subscriptions | Where-Object { $null -ne $_ })
+            [Console]::WriteLine(('LOG|PM5 workout data subscriptions active. Count={0}' -f $activeSubscriptions.Count))
+            if ($activeSubscriptions.Count -eq 0) {
+                [Console]::WriteLine('LOG|PM5 workout data subscriptions unavailable. Retrying while PM5 connection stays alive.')
+            }
+            [Console]::Out.Flush()
+        }
+
+        $sleepSeconds = 1
+        if ($activeSubscriptions.Count -eq 0) { $sleepSeconds = 3 }
+        Start-Sleep -Seconds $sleepSeconds
+    }
 }
 function Subscribe-Pm5Characteristic($serviceObject, [string]$name, [Guid]$uuid) {
     foreach ($cacheMode in @([Windows.Devices.Bluetooth.BluetoothCacheMode]::Uncached, [Windows.Devices.Bluetooth.BluetoothCacheMode]::Cached)) {
