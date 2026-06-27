@@ -735,10 +735,30 @@ function Start-Pm5WorkoutNotifications($pm5Service, [string]$deviceName) {
             [Console]::Out.Flush()
 
             $subscriptions = @()
-            $subscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Status 1' ([Guid]'ce060032-43e5-11e4-916c-0800200c9a66')
-            $subscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Status 2' ([Guid]'ce060033-43e5-11e4-916c-0800200c9a66')
-            $subscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Stroke Data' ([Guid]'ce060035-43e5-11e4-916c-0800200c9a66')
-            $subscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Stroke Data' ([Guid]'ce060036-43e5-11e4-916c-0800200c9a66')
+            $primarySubscription = Subscribe-Pm5Characteristic $pm5Service 'Rowing Stroke Data' ([Guid]'ce060035-43e5-11e4-916c-0800200c9a66')
+            if ($null -ne $primarySubscription) {
+                $subscriptions += $primarySubscription
+                [Console]::WriteLine('LOG|PM5 primary workout data subscription active. Name=Rowing Stroke Data')
+                [Console]::Out.Flush()
+
+                Start-Sleep -Milliseconds 500
+                $optionalSubscriptions = @()
+                $optionalSubscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Stroke Data' ([Guid]'ce060036-43e5-11e4-916c-0800200c9a66')
+                Start-Sleep -Milliseconds 500
+                $optionalSubscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Status 1' ([Guid]'ce060032-43e5-11e4-916c-0800200c9a66')
+                Start-Sleep -Milliseconds 500
+                $optionalSubscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Status 2' ([Guid]'ce060033-43e5-11e4-916c-0800200c9a66')
+
+                $optionalActiveSubscriptions = @($optionalSubscriptions | Where-Object { $null -ne $_ })
+                if ($optionalActiveSubscriptions.Count -gt 0) {
+                    $subscriptions += $optionalActiveSubscriptions
+                }
+                [Console]::WriteLine(('LOG|PM5 optional workout data subscriptions active. Count={0}' -f $optionalActiveSubscriptions.Count))
+                [Console]::Out.Flush()
+            } else {
+                [Console]::WriteLine('LOG|PM5 primary workout data subscription unavailable. Optional subscriptions deferred.')
+                [Console]::Out.Flush()
+            }
 
             $activeSubscriptions = @($subscriptions | Where-Object { $null -ne $_ })
             [Console]::WriteLine(('LOG|PM5 workout data subscriptions active. Count={0}' -f $activeSubscriptions.Count))
@@ -791,10 +811,17 @@ function Subscribe-Pm5Characteristic($serviceObject, [string]$name, [Guid]$uuid)
         try {
             $status = Await-WinRtOperation ($characteristic.WriteClientCharacteristicConfigurationDescriptorAsync($descriptorValue)) ([Windows.Devices.Bluetooth.GenericAttributeProfile.GattCommunicationStatus]) 12000
         } catch {
-            [Console]::WriteLine(('ERROR|PM5 notification subscribe timed out or failed. Name={0}, Uuid={1}, CacheMode={2}, Error={3}' -f $localName, $localUuid, $cacheMode, $_.Exception.Message))
+            $errorMessage = $_.Exception.Message
+            if ($null -ne $_.Exception.InnerException) {
+                $errorMessage = ('{0} InnerException={1}' -f $errorMessage, $_.Exception.InnerException.Message)
+            }
+            [Console]::WriteLine(('ERROR|PM5 notification subscribe timed out or failed. Name={0}, Uuid={1}, CacheMode={2}, Descriptor={3}, Error={4}' -f $localName, $localUuid, $cacheMode, $descriptorValue, $errorMessage))
             [Console]::Out.Flush()
             continue
         }
+
+        [Console]::WriteLine(('LOG|PM5 notification subscribe completed. Name={0}, Uuid={1}, CacheMode={2}, Descriptor={3}, Status={4}' -f $localName, $localUuid, $cacheMode, $descriptorValue, $status))
+        [Console]::Out.Flush()
 
         if ($status -ne [Windows.Devices.Bluetooth.GenericAttributeProfile.GattCommunicationStatus]::Success) {
             [Console]::WriteLine(('ERROR|PM5 notification subscribe failed. Name={0}, Uuid={1}, CacheMode={2}, Status={3}' -f $localName, $localUuid, $cacheMode, $status))

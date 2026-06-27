@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using NUnit.Framework;
 
 public class Pm5BleRuntimeConnectorTests
@@ -38,6 +39,25 @@ public class Pm5BleRuntimeConnectorTests
         Assert.AreEqual(1, client.StopScanCount);
 
         UnityEngine.Object.DestroyImmediate(gameObject);
+    }
+
+    [Test]
+    public void WindowsPm5BleClient_ConnectScriptSubscribesPrimaryStrokeDataBeforeOptionalMetrics()
+    {
+        var script = BuildConnectScriptForTest();
+        var primaryStrokeSubscribe = "$primarySubscription = Subscribe-Pm5Characteristic $pm5Service 'Rowing Stroke Data'";
+        var optionalStatusSubscribe = "$optionalSubscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Status 1'";
+
+        StringAssert.Contains(primaryStrokeSubscribe, script);
+        StringAssert.Contains(optionalStatusSubscribe, script);
+        Assert.Less(script.IndexOf(primaryStrokeSubscribe, StringComparison.Ordinal), script.IndexOf(optionalStatusSubscribe, StringComparison.Ordinal));
+    }
+
+    private static string BuildConnectScriptForTest()
+    {
+        var method = typeof(WindowsPm5BleClient).GetMethod("BuildConnectScript", BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.IsNotNull(method);
+        return (string)method.Invoke(null, new object[] { new Pm5BleDeviceInfo("pm5-1", "PM5 12345", 12345) });
     }
 
     private sealed class FakePm5BleClient : IPm5BleClient
