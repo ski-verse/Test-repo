@@ -835,13 +835,29 @@ if ($null -eq $device) {
 }
 [Console]::WriteLine(('LOG|BluetoothLEDevice resolved. Name=""{0}"", DeviceId=""{1}"". Verifying Concept2 PM5 workout GATT service {2}.' -f $device.Name, $device.DeviceId, $workoutService))
 [Console]::Out.Flush()
-$servicesResult = Await-WinRtOperation ($device.GetGattServicesForUuidAsync($workoutService, [Windows.Devices.Bluetooth.BluetoothCacheMode]::Uncached)) ([Windows.Devices.Bluetooth.GenericAttributeProfile.GattDeviceServicesResult]) 20000
-$serviceCount = 0
-if ($null -ne $servicesResult.Services) { $serviceCount = $servicesResult.Services.Count }
-if ($servicesResult.Status -eq [Windows.Devices.Bluetooth.GenericAttributeProfile.GattCommunicationStatus]::Success -and $serviceCount -gt 0) {
-    Start-Pm5WorkoutNotifications $servicesResult.Services[0] $device.Name
+$lastServiceStatus = 'NotAttempted'
+$lastServiceCount = 0
+foreach ($serviceCacheMode in @([Windows.Devices.Bluetooth.BluetoothCacheMode]::Cached, [Windows.Devices.Bluetooth.BluetoothCacheMode]::Uncached)) {
+    try {
+        [Console]::WriteLine(('LOG|PM5 workout service lookup started. CacheMode={0}' -f $serviceCacheMode))
+        [Console]::Out.Flush()
+        $servicesResult = Await-WinRtOperation ($device.GetGattServicesForUuidAsync($workoutService, $serviceCacheMode)) ([Windows.Devices.Bluetooth.GenericAttributeProfile.GattDeviceServicesResult]) 20000
+        $serviceCount = 0
+        if ($null -ne $servicesResult.Services) { $serviceCount = $servicesResult.Services.Count }
+        $lastServiceStatus = [string]$servicesResult.Status
+        $lastServiceCount = $serviceCount
+        [Console]::WriteLine(('LOG|PM5 workout service lookup result. CacheMode={0}, GattStatus={1}, ServiceCount={2}' -f $serviceCacheMode, $servicesResult.Status, $serviceCount))
+        [Console]::Out.Flush()
+        if ($servicesResult.Status -eq [Windows.Devices.Bluetooth.GenericAttributeProfile.GattCommunicationStatus]::Success -and $serviceCount -gt 0) {
+            Start-Pm5WorkoutNotifications $servicesResult.Services[0] $device.Name
+        }
+    } catch {
+        $lastServiceStatus = $_.Exception.Message
+        [Console]::WriteLine(('ERROR|PM5 workout service lookup failed. CacheMode={0}, Error={1}' -f $serviceCacheMode, $_.Exception.Message))
+        [Console]::Out.Flush()
+    }
 }
-[Console]::WriteLine(('FAILED|GATT workout service verification failed. GattStatus={0}, ServiceCount={1}' -f $servicesResult.Status, $serviceCount))
+[Console]::WriteLine(('FAILED|GATT workout service verification failed. LastStatus={0}, LastServiceCount={1}' -f $lastServiceStatus, $lastServiceCount))
 [Console]::Out.Flush()
 exit 1
 ";
