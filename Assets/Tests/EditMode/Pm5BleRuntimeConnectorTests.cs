@@ -53,6 +53,15 @@ public class Pm5BleRuntimeConnectorTests
         Assert.Less(script.IndexOf(primaryStrokeSubscribe, StringComparison.Ordinal), script.IndexOf(optionalStatusSubscribe, StringComparison.Ordinal));
     }
 
+    [Test]
+    public void WindowsPm5BleClient_ConnectScriptUsesNativeStatusPollingForPm5NotifyWrite()
+    {
+        var script = BuildConnectScriptForTest();
+
+        StringAssert.Contains("function Await-WinRtOperationByStatus", script);
+        StringAssert.Contains("Await-WinRtOperationByStatus ($characteristic.WriteClientCharacteristicConfigurationDescriptorAsync($descriptorValue))", script);
+    }
+
     private static string BuildConnectScriptForTest()
     {
         var method = typeof(WindowsPm5BleClient).GetMethod("BuildConnectScript", BindingFlags.NonPublic | BindingFlags.Static);

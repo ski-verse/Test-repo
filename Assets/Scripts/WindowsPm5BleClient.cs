@@ -641,6 +641,36 @@ function Await-WinRtOperation($operation, [Type]$resultType, [int]$timeoutMs) {
     if ($task.IsFaulted) { throw $task.Exception.GetBaseException().Message }
     return $task.Result
 }
+function Await-WinRtOperationByStatus($operation, [int]$timeoutMs, [string]$label) {
+    $deadline = [DateTime]::UtcNow.AddMilliseconds($timeoutMs)
+    $lastStatus = ''
+    while ([DateTime]::UtcNow -lt $deadline) {
+        $status = [string]$operation.Status
+        if ($status -ne $lastStatus) {
+            [Console]::WriteLine(('LOG|WinRT operation status. Label={0}, Status={1}' -f $label, $status))
+            [Console]::Out.Flush()
+            $lastStatus = $status
+        }
+
+        if ($status -eq 'Completed') {
+            return $operation.GetResults()
+        }
+
+        if ($status -eq 'Error') {
+            $errorCode = $operation.ErrorCode
+            throw ('WinRT operation failed. Label={0}, Status={1}, ErrorCode={2}' -f $label, $status, $errorCode)
+        }
+
+        if ($status -eq 'Canceled') {
+            throw ('WinRT operation canceled. Label={0}' -f $label)
+        }
+
+        Start-Sleep -Milliseconds 100
+    }
+
+    $finalStatus = [string]$operation.Status
+    throw ('Timed out waiting for Windows BLE operation. Label={0}, FinalStatus={1}' -f $label, $finalStatus)
+}
 function Convert-BufferToHex($buffer) {
     if ($null -eq $buffer) { return '' }
     $reader = [Windows.Storage.Streams.DataReader]::FromBuffer($buffer)
@@ -809,7 +839,7 @@ function Subscribe-Pm5Characteristic($serviceObject, [string]$name, [Guid]$uuid)
         [Console]::WriteLine(('LOG|PM5 notification subscribe started. Name={0}, Uuid={1}, CacheMode={2}, Properties={3}, Descriptor={4}' -f $localName, $localUuid, $cacheMode, $properties, $descriptorValue))
         [Console]::Out.Flush()
         try {
-            $status = Await-WinRtOperation ($characteristic.WriteClientCharacteristicConfigurationDescriptorAsync($descriptorValue)) ([Windows.Devices.Bluetooth.GenericAttributeProfile.GattCommunicationStatus]) 12000
+            $status = Await-WinRtOperationByStatus ($characteristic.WriteClientCharacteristicConfigurationDescriptorAsync($descriptorValue)) 12000 ('PM5 Notify {0}' -f $localName)
         } catch {
             $errorMessage = $_.Exception.Message
             if ($null -ne $_.Exception.InnerException) {
