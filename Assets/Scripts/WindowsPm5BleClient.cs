@@ -12,6 +12,7 @@ using Windows.Devices.Bluetooth.GenericAttributeProfile;
 public sealed class WindowsPm5BleClient : IPm5BleClient, IPm5WorkoutDataClient
 {
     public static readonly Guid Concept2ServiceUuid = new Guid("ce060000-43e5-11e4-916c-0800200c9a66");
+    public static readonly Guid Concept2WorkoutDataServiceUuid = new Guid("ce060030-43e5-11e4-916c-0800200c9a66");
 
     private const string LogPrefix = "[Ski-Verse PM5 BLE] ";
 
@@ -188,13 +189,21 @@ public sealed class WindowsPm5BleClient : IPm5BleClient, IPm5WorkoutDataClient
 
         foreach (var serviceUuid in serviceUuids)
         {
-            if (serviceUuid == Concept2ServiceUuid)
+            if (IsKnownConcept2ServiceUuid(serviceUuid))
             {
                 return true;
             }
         }
 
         return false;
+    }
+
+    private static bool IsKnownConcept2ServiceUuid(Guid serviceUuid)
+    {
+        return serviceUuid == Concept2ServiceUuid ||
+               serviceUuid == Concept2WorkoutDataServiceUuid ||
+               serviceUuid == new Guid("ce060020-43e5-11e4-916c-0800200c9a66") ||
+               serviceUuid == new Guid("ce060010-43e5-11e4-916c-0800200c9a66");
     }
 
 #if ENABLE_WINMD_SUPPORT
@@ -217,11 +226,11 @@ public sealed class WindowsPm5BleClient : IPm5BleClient, IPm5WorkoutDataClient
                 return;
             }
 
-            Log($"BluetoothLEDevice resolved. Name='{connectedDevice.Name}'. Verifying Concept2 PM5 GATT service...");
-            var services = await connectedDevice.GetGattServicesForUuidAsync(Concept2ServiceUuid, BluetoothCacheMode.Uncached);
+            Log($"BluetoothLEDevice resolved. Name='{connectedDevice.Name}'. Verifying Concept2 PM5 workout GATT service...");
+            var services = await connectedDevice.GetGattServicesForUuidAsync(Concept2WorkoutDataServiceUuid, BluetoothCacheMode.Uncached);
             if (services.Status == GattCommunicationStatus.Success && services.Services.Count > 0)
             {
-                Log($"GATT connection success. Found Concept2 PM5 service count={services.Services.Count}.");
+                Log($"GATT connection success. Found Concept2 PM5 workout service count={services.Services.Count}.");
                 SetStatus(Pm5BleConnectionStatus.Connected);
                 return;
             }
@@ -468,11 +477,15 @@ trap {
 [Windows.Devices.Enumeration.DeviceInformation,Windows.Devices.Enumeration,ContentType=WindowsRuntime] | Out-Null
 [Windows.Foundation.TypedEventHandler`2,Windows.Foundation,ContentType=WindowsRuntime] | Out-Null
 [Console]::WriteLine('LOG|Windows BLE scan helper started. Scanning advertisements and BLE device list for 20 seconds.')
-$service = [Guid]'ce060000-43e5-11e4-916c-0800200c9a66'
+$services = @([Guid]'ce060000-43e5-11e4-916c-0800200c9a66', [Guid]'ce060030-43e5-11e4-916c-0800200c9a66', [Guid]'ce060020-43e5-11e4-916c-0800200c9a66', [Guid]'ce060010-43e5-11e4-916c-0800200c9a66')
 $seen = [hashtable]::Synchronized(@{})
 function Test-Pm5Name($name) {
     if ([string]::IsNullOrWhiteSpace($name)) { return $false }
     return ($name -match 'PM5|CONCEPT\s?2')
+}
+function Test-Concept2Service($uuid) {
+    foreach ($knownService in $services) { if ($uuid -eq $knownService) { return $true } }
+    return $false
 }
 function Get-BluetoothAddressFromPnpId($instanceId) {
     if ([string]::IsNullOrWhiteSpace($instanceId)) { return '0' }
@@ -496,7 +509,7 @@ $advertisementHandler = [Windows.Foundation.TypedEventHandler[Windows.Devices.Bl
     $name = $args.Advertisement.LocalName
     $hasService = $false
     foreach ($uuid in $args.Advertisement.ServiceUuids) {
-        if ($uuid -eq $service) { $hasService = $true }
+        if (Test-Concept2Service $uuid) { $hasService = $true }
     }
     $matches = (Test-Pm5Name $name) -or $hasService
     [Console]::WriteLine(('LOG|Advertisement discovered. Name=""{0}"", Address={1}, HasConcept2Service={2}, MatchesPM5={3}' -f $name, $args.BluetoothAddress, $hasService, $matches))
@@ -623,7 +636,7 @@ function Subscribe-Pm5Characteristic($serviceObject, [string]$name, [Guid]$uuid)
 }
 $deviceId = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('" + encodedDeviceId + @"'))
 $address = [UInt64]" + device.BluetoothAddress + @"
-$service = [Guid]'ce060000-43e5-11e4-916c-0800200c9a66'
+$workoutService = [Guid]'ce060030-43e5-11e4-916c-0800200c9a66'
 [Console]::WriteLine(('LOG|Windows BLE connect helper started. DeviceId=""{0}"", Address={1}' -f $deviceId, $address))
 if (-not [string]::IsNullOrWhiteSpace($deviceId) -and $address -eq 0) {
     [Console]::WriteLine('LOG|Connecting with BluetoothLEDevice.FromIdAsync.')
@@ -637,13 +650,13 @@ if ($null -eq $device) {
     [Console]::Out.Flush()
     exit 1
 }
-[Console]::WriteLine(('LOG|BluetoothLEDevice resolved. Name=""{0}"", DeviceId=""{1}"". Verifying Concept2 PM5 GATT service.' -f $device.Name, $device.DeviceId))
+[Console]::WriteLine(('LOG|BluetoothLEDevice resolved. Name=""{0}"", DeviceId=""{1}"". Verifying Concept2 PM5 workout GATT service {2}.' -f $device.Name, $device.DeviceId, $workoutService))
 [Console]::Out.Flush()
-$servicesResult = Await-WinRtOperation ($device.GetGattServicesForUuidAsync($service, [Windows.Devices.Bluetooth.BluetoothCacheMode]::Uncached)) ([Windows.Devices.Bluetooth.GenericAttributeProfile.GattDeviceServicesResult]) 12000
+$servicesResult = Await-WinRtOperation ($device.GetGattServicesForUuidAsync($workoutService, [Windows.Devices.Bluetooth.BluetoothCacheMode]::Uncached)) ([Windows.Devices.Bluetooth.GenericAttributeProfile.GattDeviceServicesResult]) 20000
 $serviceCount = 0
 if ($null -ne $servicesResult.Services) { $serviceCount = $servicesResult.Services.Count }
 if ($servicesResult.Status -eq [Windows.Devices.Bluetooth.GenericAttributeProfile.GattCommunicationStatus]::Success -and $serviceCount -gt 0) {
-    [Console]::WriteLine(('CONNECTED|GATT Concept2 PM5 service verified. ServiceCount={0}, DeviceName=""{1}""' -f $serviceCount, $device.Name))
+    [Console]::WriteLine(('CONNECTED|GATT Concept2 PM5 workout service verified. ServiceCount={0}, DeviceName=""{1}""' -f $serviceCount, $device.Name))
     [Console]::Out.Flush()
     $pm5Service = $servicesResult.Services[0]
     $subscriptions = @()
@@ -656,7 +669,7 @@ if ($servicesResult.Status -eq [Windows.Devices.Bluetooth.GenericAttributeProfil
     [Console]::Out.Flush()
     while ($true) { Start-Sleep -Seconds 1 }
 }
-[Console]::WriteLine(('FAILED|GATT service verification failed. GattStatus={0}, ServiceCount={1}' -f $servicesResult.Status, $serviceCount))
+[Console]::WriteLine(('FAILED|GATT workout service verification failed. GattStatus={0}, ServiceCount={1}' -f $servicesResult.Status, $serviceCount))
 [Console]::Out.Flush()
 exit 1
 ";
