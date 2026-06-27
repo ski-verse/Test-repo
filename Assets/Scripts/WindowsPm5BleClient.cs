@@ -765,25 +765,37 @@ function Start-Pm5WorkoutNotifications($pm5Service, [string]$deviceName) {
             [Console]::Out.Flush()
 
             $subscriptions = @()
-            $primarySubscription = Subscribe-Pm5Characteristic $pm5Service 'Rowing Stroke Data' ([Guid]'ce060035-43e5-11e4-916c-0800200c9a66')
+            $primaryName = 'Multiplexed Information'
+            $primarySubscription = Subscribe-Pm5Characteristic $pm5Service 'Multiplexed Information' ([Guid]'ce060080-43e5-11e4-916c-0800200c9a66')
+            if ($null -eq $primarySubscription) {
+                [Console]::WriteLine('LOG|PM5 multiplexed workout data subscription unavailable. Falling back to direct Rowing Stroke Data.')
+                [Console]::Out.Flush()
+                $primaryName = 'Rowing Stroke Data'
+                $primarySubscription = Subscribe-Pm5Characteristic $pm5Service 'Rowing Stroke Data' ([Guid]'ce060035-43e5-11e4-916c-0800200c9a66')
+            }
+
             if ($null -ne $primarySubscription) {
                 $subscriptions += $primarySubscription
-                [Console]::WriteLine('LOG|PM5 primary workout data subscription active. Name=Rowing Stroke Data')
+                [Console]::WriteLine(('LOG|PM5 primary workout data subscription active. Name={0}' -f $primaryName))
                 [Console]::Out.Flush()
 
-                Start-Sleep -Milliseconds 500
-                $optionalSubscriptions = @()
-                $optionalSubscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Stroke Data' ([Guid]'ce060036-43e5-11e4-916c-0800200c9a66')
-                Start-Sleep -Milliseconds 500
-                $optionalSubscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Status 1' ([Guid]'ce060032-43e5-11e4-916c-0800200c9a66')
-                Start-Sleep -Milliseconds 500
-                $optionalSubscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Status 2' ([Guid]'ce060033-43e5-11e4-916c-0800200c9a66')
+                if ($primaryName -eq 'Rowing Stroke Data') {
+                    Start-Sleep -Milliseconds 500
+                    $optionalSubscriptions = @()
+                    $optionalSubscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Stroke Data' ([Guid]'ce060036-43e5-11e4-916c-0800200c9a66')
+                    Start-Sleep -Milliseconds 500
+                    $optionalSubscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Status 1' ([Guid]'ce060032-43e5-11e4-916c-0800200c9a66')
+                    Start-Sleep -Milliseconds 500
+                    $optionalSubscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Status 2' ([Guid]'ce060033-43e5-11e4-916c-0800200c9a66')
 
-                $optionalActiveSubscriptions = @($optionalSubscriptions | Where-Object { $null -ne $_ })
-                if ($optionalActiveSubscriptions.Count -gt 0) {
-                    $subscriptions += $optionalActiveSubscriptions
+                    $optionalActiveSubscriptions = @($optionalSubscriptions | Where-Object { $null -ne $_ })
+                    if ($optionalActiveSubscriptions.Count -gt 0) {
+                        $subscriptions += $optionalActiveSubscriptions
+                    }
+                    [Console]::WriteLine(('LOG|PM5 optional workout data subscriptions active. Count={0}' -f $optionalActiveSubscriptions.Count))
+                } else {
+                    [Console]::WriteLine('LOG|PM5 multiplexed workout data subscription active. Direct characteristic subscriptions skipped per Concept2 multiplexing rules.')
                 }
-                [Console]::WriteLine(('LOG|PM5 optional workout data subscriptions active. Count={0}' -f $optionalActiveSubscriptions.Count))
                 [Console]::Out.Flush()
             } else {
                 [Console]::WriteLine('LOG|PM5 primary workout data subscription unavailable. Optional subscriptions deferred.')

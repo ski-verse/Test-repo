@@ -54,6 +54,40 @@ public class Pm5WorkoutDataParserTests
     }
 
     [Test]
+    public void MultiplexedAdditionalStrokeData_ParsesWattsAndTotalStrokes()
+    {
+        var metrics = new Pm5WorkoutMetrics();
+        var payload = new byte[18];
+        payload[0] = 0x36;
+        payload[4] = 210;
+        payload[5] = 0;
+        payload[8] = 17;
+        payload[9] = 0;
+
+        Assert.IsTrue(Pm5WorkoutDataParser.TryApplyCharacteristicUpdate(Pm5WorkoutDataParser.MultiplexedInformationUuid, payload, ref metrics));
+
+        Assert.IsTrue(metrics.HasWatts);
+        Assert.AreEqual(210f, metrics.Watts, 0.001f);
+        Assert.IsTrue(metrics.HasTotalStrokes);
+        Assert.AreEqual(17, metrics.TotalStrokes);
+    }
+
+    [Test]
+    public void MultiplexedStrokeData_ParsesTotalStrokesFromMultiplexedOffset()
+    {
+        var metrics = new Pm5WorkoutMetrics();
+        var payload = new byte[19];
+        payload[0] = 0x35;
+        payload[17] = 42;
+        payload[18] = 0;
+
+        Assert.IsTrue(Pm5WorkoutDataParser.TryApplyCharacteristicUpdate(Pm5WorkoutDataParser.MultiplexedInformationUuid, payload, ref metrics));
+
+        Assert.IsTrue(metrics.HasTotalStrokes);
+        Assert.AreEqual(42, metrics.TotalStrokes);
+    }
+
+    [Test]
     public void UnknownCharacteristic_DoesNotChangeMetrics()
     {
         var metrics = new Pm5WorkoutMetrics();

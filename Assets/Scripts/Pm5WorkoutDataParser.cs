@@ -6,6 +6,7 @@ public static class Pm5WorkoutDataParser
     public static readonly Guid RowingAdditionalStatus2Uuid = new Guid("ce060033-43e5-11e4-916c-0800200c9a66");
     public static readonly Guid RowingStrokeDataUuid = new Guid("ce060035-43e5-11e4-916c-0800200c9a66");
     public static readonly Guid RowingAdditionalStrokeDataUuid = new Guid("ce060036-43e5-11e4-916c-0800200c9a66");
+    public static readonly Guid MultiplexedInformationUuid = new Guid("ce060080-43e5-11e4-916c-0800200c9a66");
 
     public static bool TryApplyCharacteristicUpdate(Guid characteristicUuid, byte[] payload, ref Pm5WorkoutMetrics metrics)
     {
@@ -17,6 +18,11 @@ public static class Pm5WorkoutDataParser
         if (characteristicUuid == RowingAdditionalStatus1Uuid)
         {
             return TryParseAdditionalStatus1(payload, ref metrics);
+        }
+
+        if (characteristicUuid == MultiplexedInformationUuid)
+        {
+            return TryParseMultiplexedInformation(payload, ref metrics);
         }
 
         if (characteristicUuid == RowingAdditionalStrokeDataUuid)
@@ -35,6 +41,30 @@ public static class Pm5WorkoutDataParser
         }
 
         return false;
+    }
+
+    private static bool TryParseMultiplexedInformation(byte[] payload, ref Pm5WorkoutMetrics metrics)
+    {
+        if (payload.Length < 2)
+        {
+            return false;
+        }
+
+        var data = new byte[payload.Length - 1];
+        Array.Copy(payload, 1, data, 0, data.Length);
+
+        switch (payload[0])
+        {
+            case 0x32:
+                return TryParseAdditionalStatus1(data, ref metrics);
+            case 0x35:
+                return TryParseStrokeData(data, ref metrics, 16);
+            case 0x36:
+                return TryParseAdditionalStrokeData(data, ref metrics) |
+                       TryParseStrokeCount(data, ref metrics, 7);
+            default:
+                return false;
+        }
     }
 
     public static bool TryParseHexPayload(string hex, out byte[] payload)
@@ -92,9 +122,14 @@ public static class Pm5WorkoutDataParser
         return true;
     }
 
-    private static bool TryParseStrokeData(byte[] payload, ref Pm5WorkoutMetrics metrics)
+    private static bool TryParseStrokeData(byte[] payload, ref Pm5WorkoutMetrics metrics, int strokeCountOffset = 18)
     {
-        if (!TryReadUInt16(payload, 18, out var totalStrokes))
+        return TryParseStrokeCount(payload, ref metrics, strokeCountOffset);
+    }
+
+    private static bool TryParseStrokeCount(byte[] payload, ref Pm5WorkoutMetrics metrics, int offset)
+    {
+        if (!TryReadUInt16(payload, offset, out var totalStrokes))
         {
             return false;
         }

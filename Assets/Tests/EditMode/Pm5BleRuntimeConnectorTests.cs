@@ -42,15 +42,15 @@ public class Pm5BleRuntimeConnectorTests
     }
 
     [Test]
-    public void WindowsPm5BleClient_ConnectScriptSubscribesPrimaryStrokeDataBeforeOptionalMetrics()
+    public void WindowsPm5BleClient_ConnectScriptSubscribesMultiplexedDataBeforeDirectStrokeFallback()
     {
         var script = BuildConnectScriptForTest();
-        var primaryStrokeSubscribe = "$primarySubscription = Subscribe-Pm5Characteristic $pm5Service 'Rowing Stroke Data'";
-        var optionalStatusSubscribe = "$optionalSubscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Status 1'";
+        var multiplexedSubscribe = "$primarySubscription = Subscribe-Pm5Characteristic $pm5Service 'Multiplexed Information'";
+        var directStrokeFallbackSubscribe = "$primarySubscription = Subscribe-Pm5Characteristic $pm5Service 'Rowing Stroke Data'";
 
-        StringAssert.Contains(primaryStrokeSubscribe, script);
-        StringAssert.Contains(optionalStatusSubscribe, script);
-        Assert.Less(script.IndexOf(primaryStrokeSubscribe, StringComparison.Ordinal), script.IndexOf(optionalStatusSubscribe, StringComparison.Ordinal));
+        StringAssert.Contains(multiplexedSubscribe, script);
+        StringAssert.Contains(directStrokeFallbackSubscribe, script);
+        Assert.Less(script.IndexOf(multiplexedSubscribe, StringComparison.Ordinal), script.IndexOf(directStrokeFallbackSubscribe, StringComparison.Ordinal));
     }
 
     [Test]
