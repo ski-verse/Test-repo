@@ -577,6 +577,7 @@ trap {
 }
 [Windows.Devices.Bluetooth.BluetoothLEDevice,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
 [Windows.Devices.Bluetooth.GenericAttributeProfile.GattDeviceServicesResult,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
+[Windows.Devices.Bluetooth.GenericAttributeProfile.GattDeviceService,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
 [Windows.Devices.Bluetooth.GenericAttributeProfile.GattCharacteristicsResult,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
 [Windows.Devices.Bluetooth.GenericAttributeProfile.GattCharacteristic,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
 [Windows.Devices.Bluetooth.GenericAttributeProfile.GattValueChangedEventArgs,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
@@ -597,6 +598,42 @@ function Convert-BufferToHex($buffer) {
     $bytes = New-Object byte[] $buffer.Length
     $reader.ReadBytes($bytes)
     return (($bytes | ForEach-Object { $_.ToString('X2') }) -join '')
+}
+function Find-Pm5WorkoutServiceDeviceId([UInt64]$address) {
+    $addressHex = ''
+    if ($address -ne 0) { $addressHex = ('{0:X12}' -f $address) }
+    try {
+        foreach ($pnpDevice in Get-PnpDevice -ErrorAction Stop) {
+            $id = [string]$pnpDevice.InstanceId
+            if ([string]::IsNullOrWhiteSpace($id)) { continue }
+            $upperId = $id.ToUpperInvariant()
+            $isWorkoutService = $upperId.Contains('{CE060030-43E5-11E4-916C-0800200C9A66}')
+            $matchesAddress = [string]::IsNullOrWhiteSpace($addressHex) -or $upperId.Contains($addressHex)
+            if ($isWorkoutService -and $matchesAddress) {
+                [Console]::WriteLine(('LOG|Found PM5 workout service device id from Windows PnP. Id=""{0}""' -f $id))
+                [Console]::Out.Flush()
+                return $id
+            }
+        }
+    } catch {
+        [Console]::WriteLine(('ERROR|PM5 workout service PnP lookup failed: {0}' -f $_.Exception.Message))
+        [Console]::Out.Flush()
+    }
+
+    return $null
+}
+function Start-Pm5WorkoutNotifications($pm5Service, [string]$deviceName) {
+    [Console]::WriteLine(('CONNECTED|GATT Concept2 PM5 workout service verified. DeviceName=""{0}""' -f $deviceName))
+    [Console]::Out.Flush()
+    $subscriptions = @()
+    $subscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Status 1' ([Guid]'ce060032-43e5-11e4-916c-0800200c9a66')
+    $subscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Status 2' ([Guid]'ce060033-43e5-11e4-916c-0800200c9a66')
+    $subscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Stroke Data' ([Guid]'ce060035-43e5-11e4-916c-0800200c9a66')
+    $subscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Stroke Data' ([Guid]'ce060036-43e5-11e4-916c-0800200c9a66')
+    $activeSubscriptions = @($subscriptions | Where-Object { $null -ne $_ })
+    [Console]::WriteLine(('LOG|PM5 workout data subscriptions active. Count={0}' -f $activeSubscriptions.Count))
+    [Console]::Out.Flush()
+    while ($true) { Start-Sleep -Seconds 1 }
 }
 function Subscribe-Pm5Characteristic($serviceObject, [string]$name, [Guid]$uuid) {
     $result = Await-WinRtOperation ($serviceObject.GetCharacteristicsForUuidAsync($uuid, [Windows.Devices.Bluetooth.BluetoothCacheMode]::Uncached)) ([Windows.Devices.Bluetooth.GenericAttributeProfile.GattCharacteristicsResult]) 12000
@@ -638,6 +675,18 @@ $deviceId = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('" + enc
 $address = [UInt64]" + device.BluetoothAddress + @"
 $workoutService = [Guid]'ce060030-43e5-11e4-916c-0800200c9a66'
 [Console]::WriteLine(('LOG|Windows BLE connect helper started. DeviceId=""{0}"", Address={1}' -f $deviceId, $address))
+$workoutServiceDeviceId = Find-Pm5WorkoutServiceDeviceId $address
+if (-not [string]::IsNullOrWhiteSpace($workoutServiceDeviceId)) {
+    [Console]::WriteLine('LOG|Connecting directly with GattDeviceService.FromIdAsync for PM5 workout service.')
+    [Console]::Out.Flush()
+    $directService = Await-WinRtOperation ([Windows.Devices.Bluetooth.GenericAttributeProfile.GattDeviceService]::FromIdAsync($workoutServiceDeviceId)) ([Windows.Devices.Bluetooth.GenericAttributeProfile.GattDeviceService]) 20000
+    if ($null -ne $directService) {
+        Start-Pm5WorkoutNotifications $directService 'Concept2 PM5'
+    }
+
+    [Console]::WriteLine('ERROR|GattDeviceService.FromIdAsync returned null for PM5 workout service. Falling back to BluetoothLEDevice service lookup.')
+    [Console]::Out.Flush()
+}
 if (-not [string]::IsNullOrWhiteSpace($deviceId) -and $address -eq 0) {
     [Console]::WriteLine('LOG|Connecting with BluetoothLEDevice.FromIdAsync.')
     $device = Await-WinRtOperation ([Windows.Devices.Bluetooth.BluetoothLEDevice]::FromIdAsync($deviceId)) ([Windows.Devices.Bluetooth.BluetoothLEDevice]) 12000
@@ -656,18 +705,7 @@ $servicesResult = Await-WinRtOperation ($device.GetGattServicesForUuidAsync($wor
 $serviceCount = 0
 if ($null -ne $servicesResult.Services) { $serviceCount = $servicesResult.Services.Count }
 if ($servicesResult.Status -eq [Windows.Devices.Bluetooth.GenericAttributeProfile.GattCommunicationStatus]::Success -and $serviceCount -gt 0) {
-    [Console]::WriteLine(('CONNECTED|GATT Concept2 PM5 workout service verified. ServiceCount={0}, DeviceName=""{1}""' -f $serviceCount, $device.Name))
-    [Console]::Out.Flush()
-    $pm5Service = $servicesResult.Services[0]
-    $subscriptions = @()
-    $subscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Status 1' ([Guid]'ce060032-43e5-11e4-916c-0800200c9a66')
-    $subscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Status 2' ([Guid]'ce060033-43e5-11e4-916c-0800200c9a66')
-    $subscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Stroke Data' ([Guid]'ce060035-43e5-11e4-916c-0800200c9a66')
-    $subscriptions += Subscribe-Pm5Characteristic $pm5Service 'Rowing Additional Stroke Data' ([Guid]'ce060036-43e5-11e4-916c-0800200c9a66')
-    $activeSubscriptions = @($subscriptions | Where-Object { $null -ne $_ })
-    [Console]::WriteLine(('LOG|PM5 workout data subscriptions active. Count={0}' -f $activeSubscriptions.Count))
-    [Console]::Out.Flush()
-    while ($true) { Start-Sleep -Seconds 1 }
+    Start-Pm5WorkoutNotifications $servicesResult.Services[0] $device.Name
 }
 [Console]::WriteLine(('FAILED|GATT workout service verification failed. GattStatus={0}, ServiceCount={1}' -f $servicesResult.Status, $serviceCount))
 [Console]::Out.Flush()
