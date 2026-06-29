@@ -127,6 +127,18 @@ public class Pm5BleRuntimeConnectorTests
         Assert.Less(multiplexedIndex, strokeIndex);
     }
 
+    [Test]
+    public void WindowsPm5BleClient_CSharpConnectHelperUsesBluetoothDeviceServiceBeforeSelectorFallback()
+    {
+        var source = BuildCSharpConnectHelperSourceForTest();
+        var bluetoothDeviceResolveIndex = source.IndexOf("BluetoothLEDevice device;", StringComparison.Ordinal);
+        var selectorFallbackCallIndex = source.IndexOf("TryOpenWorkoutServiceFromSelector(address)", StringComparison.Ordinal);
+
+        Assert.GreaterOrEqual(bluetoothDeviceResolveIndex, 0);
+        Assert.GreaterOrEqual(selectorFallbackCallIndex, 0);
+        Assert.Less(bluetoothDeviceResolveIndex, selectorFallbackCallIndex);
+    }
+
     private static string BuildConnectScriptForTest()
     {
         var method = typeof(WindowsPm5BleClient).GetMethod("BuildConnectScript", BindingFlags.NonPublic | BindingFlags.Static);

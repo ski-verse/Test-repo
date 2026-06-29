@@ -566,13 +566,6 @@ internal static class SkiVersePm5BleConnectHelper
 
         Log(string.Format(""C# Windows BLE connect helper started. DeviceId=\""{0}\"", Address={1}"", deviceId, address));
 
-        var directService = await TryOpenWorkoutServiceFromSelector(address);
-        if (directService != null)
-        {
-            await StartWorkoutNotifications(directService, ""Concept2 PM5"");
-            return 0;
-        }
-
         BluetoothLEDevice device;
         if (!string.IsNullOrWhiteSpace(deviceId) && address == 0)
         {
@@ -617,6 +610,14 @@ internal static class SkiVersePm5BleConnectHelper
                 lastServiceStatus = exception.Message;
                 Error(string.Format(""PM5 workout service lookup failed. CacheMode={0}, Error={1}"", cacheMode, exception.Message));
             }
+        }
+
+        Log(""PM5 workout service lookup through BluetoothLEDevice did not produce a subscribable service. Trying WinRT service selector fallback."");
+        var directService = await TryOpenWorkoutServiceFromSelector(address);
+        if (directService != null)
+        {
+            await StartWorkoutNotifications(directService, ""Concept2 PM5"");
+            return 0;
         }
 
         Console.WriteLine(string.Format(""FAILED|GATT workout service verification failed. LastStatus={0}, LastServiceCount={1}"", lastServiceStatus, lastServiceCount));
