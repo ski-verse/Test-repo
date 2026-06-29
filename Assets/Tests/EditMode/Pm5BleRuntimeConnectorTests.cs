@@ -116,15 +116,14 @@ public class Pm5BleRuntimeConnectorTests
     }
 
     [Test]
-    public void WindowsPm5BleClient_CSharpConnectHelperTriesMultiplexedBeforeDirectStrokeFallback()
+    public void WindowsPm5BleClient_CSharpConnectHelperUsesSingleRowingStrokeDiagnosticSubscription()
     {
         var source = BuildCSharpConnectHelperSourceForTest();
-        var multiplexedIndex = source.IndexOf("Multiplexed Information", StringComparison.Ordinal);
-        var strokeIndex = source.IndexOf("Rowing Stroke Data", StringComparison.Ordinal);
 
-        Assert.GreaterOrEqual(multiplexedIndex, 0);
-        Assert.GreaterOrEqual(strokeIndex, 0);
-        Assert.Less(multiplexedIndex, strokeIndex);
+        StringAssert.Contains("PM5 single Rowing Stroke Data subscription diagnostic started.", source);
+        StringAssert.Contains("SubscribeCharacteristic(service, \"Rowing Stroke Data\", RowingStrokeDataUuid)", source);
+        StringAssert.DoesNotContain("SubscribeCharacteristic(service, \"Multiplexed Information\", MultiplexedInformationUuid)", source);
+        StringAssert.DoesNotContain("PM5 workout data subscription attempt", source);
     }
 
     [Test]

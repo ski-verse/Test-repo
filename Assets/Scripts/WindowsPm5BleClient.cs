@@ -685,61 +685,13 @@ internal static class SkiVersePm5BleConnectHelper
             Error(""PM5 GATT session setup failed: "" + exception.Message);
         }
 
-        var subscriptions = new List<Subscription>();
-        var subscriptionAttempt = 0;
+        Log(""PM5 single Rowing Stroke Data subscription diagnostic started."");
+        var subscription = await SubscribeCharacteristic(service, ""Rowing Stroke Data"", RowingStrokeDataUuid);
+        Log(""PM5 single Rowing Stroke Data subscription diagnostic completed. Active="" + (subscription != null));
+
         while (true)
         {
-            if (subscriptions.Count == 0)
-            {
-                subscriptionAttempt++;
-                Log(""PM5 workout data subscription attempt "" + subscriptionAttempt + "" started."");
-                var primaryName = ""Multiplexed Information"";
-                var primarySubscription = await SubscribeCharacteristic(service, ""Multiplexed Information"", MultiplexedInformationUuid);
-                if (primarySubscription == null)
-                {
-                    Log(""PM5 multiplexed workout data subscription unavailable. Falling back to direct Rowing Stroke Data."");
-                    primaryName = ""Rowing Stroke Data"";
-                    primarySubscription = await SubscribeCharacteristic(service, ""Rowing Stroke Data"", RowingStrokeDataUuid);
-                }
-
-                if (primarySubscription != null)
-                {
-                    subscriptions.Add(primarySubscription);
-                    Log(""PM5 primary workout data subscription active. Name="" + primaryName);
-                    if (primaryName == ""Rowing Stroke Data"")
-                    {
-                        await AddOptionalSubscription(subscriptions, service, ""Rowing Additional Stroke Data"", RowingAdditionalStrokeDataUuid);
-                        await AddOptionalSubscription(subscriptions, service, ""Rowing Additional Status 1"", RowingAdditionalStatus1Uuid);
-                        await AddOptionalSubscription(subscriptions, service, ""Rowing Additional Status 2"", RowingAdditionalStatus2Uuid);
-                    }
-                    else
-                    {
-                        Log(""PM5 multiplexed workout data subscription active. Direct characteristic subscriptions skipped per Concept2 multiplexing rules."");
-                    }
-                }
-                else
-                {
-                    Log(""PM5 primary workout data subscription unavailable. Optional subscriptions deferred."");
-                }
-
-                Log(""PM5 workout data subscriptions active. Count="" + subscriptions.Count);
-                if (subscriptions.Count == 0)
-                {
-                    Log(""PM5 workout data subscriptions unavailable. Retrying while PM5 connection stays alive."");
-                }
-            }
-
-            await Task.Delay(subscriptions.Count == 0 ? 3000 : 1000);
-        }
-    }
-
-    private static async Task AddOptionalSubscription(List<Subscription> subscriptions, GattDeviceService service, string name, Guid uuid)
-    {
-        await Task.Delay(500);
-        var subscription = await SubscribeCharacteristic(service, name, uuid);
-        if (subscription != null)
-        {
-            subscriptions.Add(subscription);
+            await Task.Delay(1000);
         }
     }
 
