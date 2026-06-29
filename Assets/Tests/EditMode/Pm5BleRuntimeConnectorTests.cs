@@ -94,11 +94,40 @@ public class Pm5BleRuntimeConnectorTests
         StringAssert.Contains("Diagnostics={5}", script);
     }
 
+    [Test]
+    public void WindowsPm5BleClient_CSharpConnectHelperUsesAwaitedCccdNotifyWrite()
+    {
+        var source = BuildCSharpConnectHelperSourceForTest();
+
+        StringAssert.Contains("WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue.Notify)", source);
+        StringAssert.Contains("await TimeoutAfter", source);
+        StringAssert.Contains("METRIC_RAW|{0}|{1}|{2}", source);
+    }
+
+    [Test]
+    public void WindowsPm5BleClient_CSharpConnectHelperTriesMultiplexedBeforeDirectStrokeFallback()
+    {
+        var source = BuildCSharpConnectHelperSourceForTest();
+        var multiplexedIndex = source.IndexOf("Multiplexed Information", StringComparison.Ordinal);
+        var strokeIndex = source.IndexOf("Rowing Stroke Data", StringComparison.Ordinal);
+
+        Assert.GreaterOrEqual(multiplexedIndex, 0);
+        Assert.GreaterOrEqual(strokeIndex, 0);
+        Assert.Less(multiplexedIndex, strokeIndex);
+    }
+
     private static string BuildConnectScriptForTest()
     {
         var method = typeof(WindowsPm5BleClient).GetMethod("BuildConnectScript", BindingFlags.NonPublic | BindingFlags.Static);
         Assert.IsNotNull(method);
         return (string)method.Invoke(null, new object[] { new Pm5BleDeviceInfo("pm5-1", "PM5 12345", 12345) });
+    }
+
+    private static string BuildCSharpConnectHelperSourceForTest()
+    {
+        var method = typeof(WindowsPm5BleClient).GetMethod("BuildCSharpConnectHelperSource", BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.IsNotNull(method);
+        return (string)method.Invoke(null, null);
     }
 
     private sealed class FakePm5BleClient : IPm5BleClient

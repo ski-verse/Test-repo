@@ -27,6 +27,7 @@ public sealed class WindowsPm5BleClient : IPm5BleClient, IPm5WorkoutDataClient
 #elif UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
     private System.Diagnostics.Process helperProcess;
     private string helperScriptPath;
+    private string helperSourcePath;
 #endif
 
     public event Action StateChanged;
@@ -166,7 +167,7 @@ public sealed class WindowsPm5BleClient : IPm5BleClient, IPm5WorkoutDataClient
 #elif UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
         StopScan();
         SetStatus(Pm5BleConnectionStatus.Connecting);
-        StartPowerShellHelper(BuildConnectScript(device), HandlePowerShellLine);
+        StartCSharpConnectHelper(device, HandlePowerShellLine);
 #else
         SetStatus(Pm5BleConnectionStatus.ConnectionFailed);
         LogWarning("BLE connection requires Windows WinRT/WinMD support in this Unity build.");
@@ -358,6 +359,559 @@ public sealed class WindowsPm5BleClient : IPm5BleClient, IPm5WorkoutDataClient
         }
     }
 
+    private void StartCSharpConnectHelper(Pm5BleDeviceInfo device, Action<string> lineHandler)
+    {
+        DeleteHelperScriptFile();
+
+        var helperId = Guid.NewGuid().ToString("N");
+        helperSourcePath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "SkiVersePm5Ble-" + helperId + ".cs");
+        helperScriptPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "SkiVersePm5Ble-" + helperId + ".exe");
+
+        try
+        {
+            System.IO.File.WriteAllText(helperSourcePath, BuildCSharpConnectHelperSource(), Encoding.UTF8);
+        }
+        catch (Exception exception)
+        {
+            LogWarning("Could not write C# PM5 BLE helper source: " + exception.Message + ". Falling back to PowerShell helper.");
+            StartPowerShellHelper(BuildConnectScript(device), lineHandler);
+            return;
+        }
+
+        var compilerPath = GetCSharpCompilerPath();
+        if (string.IsNullOrWhiteSpace(compilerPath))
+        {
+            LogWarning("Could not find csc.exe for C# PM5 BLE helper. Falling back to PowerShell helper.");
+            StartPowerShellHelper(BuildConnectScript(device), lineHandler);
+            return;
+        }
+
+        var compileArguments =
+            "/nologo " +
+            "/out:" + QuoteProcessArgument(helperScriptPath) + " " +
+            "/r:" + QuoteProcessArgument(@"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\System.Runtime.dll") + " " +
+            "/r:" + QuoteProcessArgument(@"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\System.Runtime.InteropServices.WindowsRuntime.dll") + " " +
+            "/r:" + QuoteProcessArgument(@"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\System.Runtime.WindowsRuntime.dll") + " " +
+            "/r:" + QuoteProcessArgument(@"C:\Windows\System32\WinMetadata\Windows.Foundation.winmd") + " " +
+            "/r:" + QuoteProcessArgument(@"C:\Windows\System32\WinMetadata\Windows.Devices.winmd") + " " +
+            "/r:" + QuoteProcessArgument(@"C:\Windows\System32\WinMetadata\Windows.Storage.winmd") + " " +
+            QuoteProcessArgument(helperSourcePath);
+
+        var compileStartInfo = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = compilerPath,
+            Arguments = compileArguments,
+            CreateNoWindow = true,
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        };
+
+        try
+        {
+            Log("Compiling C# Windows BLE connect helper.");
+            using (var compileProcess = System.Diagnostics.Process.Start(compileStartInfo))
+            {
+                var compileOutput = compileProcess.StandardOutput.ReadToEnd();
+                var compileError = compileProcess.StandardError.ReadToEnd();
+                compileProcess.WaitForExit(20000);
+                if (!compileProcess.HasExited || compileProcess.ExitCode != 0)
+                {
+                    LogWarning("C# PM5 BLE helper compile failed. Output='" + compileOutput + "' Error='" + compileError + "'. Falling back to PowerShell helper.");
+                    StartPowerShellHelper(BuildConnectScript(device), lineHandler);
+                    return;
+                }
+            }
+        }
+        catch (Exception exception)
+        {
+            LogWarning("Could not compile C# PM5 BLE helper: " + exception.Message + ". Falling back to PowerShell helper.");
+            StartPowerShellHelper(BuildConnectScript(device), lineHandler);
+            return;
+        }
+
+        var encodedDeviceId = Convert.ToBase64String(Encoding.UTF8.GetBytes(device.DeviceId ?? string.Empty));
+        var helperArguments = QuoteProcessArgument(encodedDeviceId) + " " + device.BluetoothAddress;
+        var startInfo = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = helperScriptPath,
+            Arguments = helperArguments,
+            CreateNoWindow = true,
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        };
+
+        helperProcess = new System.Diagnostics.Process
+        {
+            StartInfo = startInfo,
+            EnableRaisingEvents = true
+        };
+        helperProcess.OutputDataReceived += (sender, args) =>
+        {
+            if (!string.IsNullOrWhiteSpace(args.Data))
+            {
+                lineHandler(args.Data);
+            }
+        };
+        helperProcess.ErrorDataReceived += (sender, args) =>
+        {
+            if (!string.IsNullOrWhiteSpace(args.Data))
+            {
+                LogWarning("C# Windows BLE helper stderr: " + args.Data);
+            }
+        };
+        helperProcess.Exited += (sender, args) =>
+        {
+            if (Status == Pm5BleConnectionStatus.Searching || Status == Pm5BleConnectionStatus.Connecting)
+            {
+                SetStatus(Pm5BleConnectionStatus.ConnectionFailed);
+            }
+        };
+
+        try
+        {
+            Log("Starting C# Windows BLE connect helper process.");
+            helperProcess.Start();
+            helperProcess.BeginOutputReadLine();
+            helperProcess.BeginErrorReadLine();
+        }
+        catch (Exception exception)
+        {
+            LogWarning("Could not start C# PM5 BLE helper: " + exception.Message + ". Falling back to PowerShell helper.");
+            DeleteHelperScriptFile();
+            StartPowerShellHelper(BuildConnectScript(device), lineHandler);
+        }
+    }
+
+    private static string GetCSharpCompilerPath()
+    {
+        var compilerPath = @"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe";
+        if (System.IO.File.Exists(compilerPath))
+        {
+            return compilerPath;
+        }
+
+        compilerPath = @"C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe";
+        return System.IO.File.Exists(compilerPath) ? compilerPath : null;
+    }
+
+    private static string BuildCSharpConnectHelperSource()
+    {
+        return @"
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices.WindowsRuntime;
+using System.Text;
+using System.Threading.Tasks;
+using Windows.Devices.Bluetooth;
+using Windows.Devices.Bluetooth.GenericAttributeProfile;
+using Windows.Devices.Enumeration;
+using Windows.Foundation;
+using Windows.Storage.Streams;
+
+internal static class SkiVersePm5BleConnectHelper
+{
+    private static readonly Guid WorkoutServiceUuid = new Guid(""ce060030-43e5-11e4-916c-0800200c9a66"");
+    private static readonly Guid MultiplexedInformationUuid = new Guid(""ce060080-43e5-11e4-916c-0800200c9a66"");
+    private static readonly Guid RowingStrokeDataUuid = new Guid(""ce060035-43e5-11e4-916c-0800200c9a66"");
+    private static readonly Guid RowingAdditionalStrokeDataUuid = new Guid(""ce060036-43e5-11e4-916c-0800200c9a66"");
+    private static readonly Guid RowingAdditionalStatus1Uuid = new Guid(""ce060032-43e5-11e4-916c-0800200c9a66"");
+    private static readonly Guid RowingAdditionalStatus2Uuid = new Guid(""ce060033-43e5-11e4-916c-0800200c9a66"");
+
+    private sealed class Subscription
+    {
+        public GattCharacteristic Characteristic;
+        public TypedEventHandler<GattCharacteristic, GattValueChangedEventArgs> Handler;
+        public string Name;
+    }
+
+    public static int Main(string[] args)
+    {
+        try
+        {
+            return MainAsync(args).GetAwaiter().GetResult();
+        }
+        catch (Exception exception)
+        {
+            Error(""C# Windows BLE connect helper fatal error: "" + exception);
+            return 1;
+        }
+    }
+
+    private static async Task<int> MainAsync(string[] args)
+    {
+        var encodedDeviceId = args.Length > 0 ? args[0] : string.Empty;
+        var deviceId = string.Empty;
+        if (!string.IsNullOrWhiteSpace(encodedDeviceId))
+        {
+            deviceId = Encoding.UTF8.GetString(Convert.FromBase64String(encodedDeviceId));
+        }
+
+        ulong address = 0;
+        if (args.Length > 1)
+        {
+            ulong.TryParse(args[1], out address);
+        }
+
+        Log(string.Format(""C# Windows BLE connect helper started. DeviceId=\""{0}\"", Address={1}"", deviceId, address));
+
+        var directService = await TryOpenWorkoutServiceFromSelector(address);
+        if (directService != null)
+        {
+            await StartWorkoutNotifications(directService, ""Concept2 PM5"");
+            return 0;
+        }
+
+        BluetoothLEDevice device;
+        if (!string.IsNullOrWhiteSpace(deviceId) && address == 0)
+        {
+            Log(""Connecting with BluetoothLEDevice.FromIdAsync."");
+            device = await TimeoutAfter(BluetoothLEDevice.FromIdAsync(deviceId), 12000, ""BluetoothLEDevice.FromIdAsync"");
+        }
+        else
+        {
+            Log(""Connecting with BluetoothLEDevice.FromBluetoothAddressAsync."");
+            device = await TimeoutAfter(BluetoothLEDevice.FromBluetoothAddressAsync(address), 12000, ""BluetoothLEDevice.FromBluetoothAddressAsync"");
+        }
+
+        if (device == null)
+        {
+            Console.WriteLine(""FAILED|BluetoothLEDevice resolve returned null."");
+            Flush();
+            return 1;
+        }
+
+        Log(string.Format(""BluetoothLEDevice resolved. Name=\""{0}\"", DeviceId=\""{1}\"". Verifying Concept2 PM5 workout GATT service {2}."", device.Name, device.DeviceId, WorkoutServiceUuid));
+
+        var lastServiceStatus = ""NotAttempted"";
+        var lastServiceCount = 0;
+        foreach (var cacheMode in new[] { BluetoothCacheMode.Cached, BluetoothCacheMode.Uncached })
+        {
+            try
+            {
+                Log(string.Format(""PM5 workout service lookup started. CacheMode={0}"", cacheMode));
+                var servicesResult = await TimeoutAfter(device.GetGattServicesForUuidAsync(WorkoutServiceUuid, cacheMode), 20000, ""PM5 workout service lookup"");
+                var serviceCount = servicesResult.Services == null ? 0 : servicesResult.Services.Count;
+                lastServiceStatus = servicesResult.Status.ToString();
+                lastServiceCount = serviceCount;
+                Log(string.Format(""PM5 workout service lookup result. CacheMode={0}, GattStatus={1}, ServiceCount={2}"", cacheMode, servicesResult.Status, serviceCount));
+                if (servicesResult.Status == GattCommunicationStatus.Success && serviceCount > 0)
+                {
+                    await StartWorkoutNotifications(servicesResult.Services[0], device.Name);
+                    return 0;
+                }
+            }
+            catch (Exception exception)
+            {
+                lastServiceStatus = exception.Message;
+                Error(string.Format(""PM5 workout service lookup failed. CacheMode={0}, Error={1}"", cacheMode, exception.Message));
+            }
+        }
+
+        Console.WriteLine(string.Format(""FAILED|GATT workout service verification failed. LastStatus={0}, LastServiceCount={1}"", lastServiceStatus, lastServiceCount));
+        Flush();
+        return 1;
+    }
+
+    private static async Task<GattDeviceService> TryOpenWorkoutServiceFromSelector(ulong address)
+    {
+        var addressHex = address == 0 ? string.Empty : address.ToString(""X12"");
+        try
+        {
+            var selector = GattDeviceService.GetDeviceSelectorFromUuid(WorkoutServiceUuid);
+            Log(""Looking up PM5 workout service with WinRT selector: "" + selector);
+            var serviceDevices = await TimeoutAfter(DeviceInformation.FindAllAsync(selector), 20000, ""PM5 workout service selector lookup"");
+            var count = serviceDevices == null ? 0 : serviceDevices.Count;
+            Log(""WinRT workout service lookup returned Count="" + count);
+            if (serviceDevices == null)
+            {
+                return null;
+            }
+
+            foreach (var serviceDevice in serviceDevices)
+            {
+                var id = serviceDevice.Id ?? string.Empty;
+                var matchesAddress = string.IsNullOrWhiteSpace(addressHex) || id.ToUpperInvariant().Contains(addressHex);
+                Log(string.Format(""WinRT workout service candidate. Name=\""{0}\"", Id=\""{1}\"", IsEnabled={2}, Access={3}, MatchesAddress={4}"", serviceDevice.Name, id, serviceDevice.IsEnabled, GetDeviceAccessStatus(id), matchesAddress));
+                if (!matchesAddress)
+                {
+                    continue;
+                }
+
+                Log(string.Format(""Connecting directly with GattDeviceService.FromIdAsync for PM5 workout service. Access={0}"", GetDeviceAccessStatus(id)));
+                var service = await TimeoutAfter(GattDeviceService.FromIdAsync(id), 20000, ""GattDeviceService.FromIdAsync"");
+                if (service != null)
+                {
+                    return service;
+                }
+            }
+        }
+        catch (Exception exception)
+        {
+            Error(""PM5 workout service WinRT lookup failed: "" + exception.Message);
+        }
+
+        return null;
+    }
+
+    private static async Task StartWorkoutNotifications(GattDeviceService service, string deviceName)
+    {
+        Console.WriteLine(string.Format(""CONNECTED|GATT Concept2 PM5 workout service verified. DeviceName=\""{0}\"""", deviceName));
+        Flush();
+
+        try
+        {
+            var session = service.Session;
+            if (session != null)
+            {
+                session.MaintainConnection = true;
+                Log(""PM5 GATT session maintain connection enabled. MaxPduSize="" + session.MaxPduSize);
+            }
+        }
+        catch (Exception exception)
+        {
+            Error(""PM5 GATT session setup failed: "" + exception.Message);
+        }
+
+        var subscriptions = new List<Subscription>();
+        var subscriptionAttempt = 0;
+        while (true)
+        {
+            if (subscriptions.Count == 0)
+            {
+                subscriptionAttempt++;
+                Log(""PM5 workout data subscription attempt "" + subscriptionAttempt + "" started."");
+                var primaryName = ""Multiplexed Information"";
+                var primarySubscription = await SubscribeCharacteristic(service, ""Multiplexed Information"", MultiplexedInformationUuid);
+                if (primarySubscription == null)
+                {
+                    Log(""PM5 multiplexed workout data subscription unavailable. Falling back to direct Rowing Stroke Data."");
+                    primaryName = ""Rowing Stroke Data"";
+                    primarySubscription = await SubscribeCharacteristic(service, ""Rowing Stroke Data"", RowingStrokeDataUuid);
+                }
+
+                if (primarySubscription != null)
+                {
+                    subscriptions.Add(primarySubscription);
+                    Log(""PM5 primary workout data subscription active. Name="" + primaryName);
+                    if (primaryName == ""Rowing Stroke Data"")
+                    {
+                        await AddOptionalSubscription(subscriptions, service, ""Rowing Additional Stroke Data"", RowingAdditionalStrokeDataUuid);
+                        await AddOptionalSubscription(subscriptions, service, ""Rowing Additional Status 1"", RowingAdditionalStatus1Uuid);
+                        await AddOptionalSubscription(subscriptions, service, ""Rowing Additional Status 2"", RowingAdditionalStatus2Uuid);
+                    }
+                    else
+                    {
+                        Log(""PM5 multiplexed workout data subscription active. Direct characteristic subscriptions skipped per Concept2 multiplexing rules."");
+                    }
+                }
+                else
+                {
+                    Log(""PM5 primary workout data subscription unavailable. Optional subscriptions deferred."");
+                }
+
+                Log(""PM5 workout data subscriptions active. Count="" + subscriptions.Count);
+                if (subscriptions.Count == 0)
+                {
+                    Log(""PM5 workout data subscriptions unavailable. Retrying while PM5 connection stays alive."");
+                }
+            }
+
+            await Task.Delay(subscriptions.Count == 0 ? 3000 : 1000);
+        }
+    }
+
+    private static async Task AddOptionalSubscription(List<Subscription> subscriptions, GattDeviceService service, string name, Guid uuid)
+    {
+        await Task.Delay(500);
+        var subscription = await SubscribeCharacteristic(service, name, uuid);
+        if (subscription != null)
+        {
+            subscriptions.Add(subscription);
+        }
+    }
+
+    private static async Task<Subscription> SubscribeCharacteristic(GattDeviceService service, string name, Guid uuid)
+    {
+        foreach (var cacheMode in new[] { BluetoothCacheMode.Uncached, BluetoothCacheMode.Cached })
+        {
+            GattCharacteristic characteristic = null;
+            try
+            {
+                Log(string.Format(""PM5 characteristic lookup started. Name={0}, Uuid={1}, CacheMode={2}"", name, uuid, cacheMode));
+                var result = await TimeoutAfter(service.GetCharacteristicsForUuidAsync(uuid, cacheMode), 8000, ""PM5 characteristic lookup "" + name);
+                var count = result.Characteristics == null ? 0 : result.Characteristics.Count;
+                Log(string.Format(""PM5 characteristic lookup result. Name={0}, Uuid={1}, CacheMode={2}, Status={3}, Count={4}"", name, uuid, cacheMode, result.Status, count));
+                if (result.Status == GattCommunicationStatus.Success && count > 0)
+                {
+                    characteristic = result.Characteristics[0];
+                }
+            }
+            catch (Exception exception)
+            {
+                Error(string.Format(""PM5 characteristic lookup failed. Name={0}, Uuid={1}, CacheMode={2}, Error={3}"", name, uuid, cacheMode, exception.Message));
+            }
+
+            if (characteristic == null)
+            {
+                continue;
+            }
+
+            TypedEventHandler<GattCharacteristic, GattValueChangedEventArgs> handler = delegate(GattCharacteristic sender, GattValueChangedEventArgs args)
+            {
+                try
+                {
+                    Console.WriteLine(string.Format(""METRIC_RAW|{0}|{1}|{2}"", name, uuid, ConvertBufferToHex(args.CharacteristicValue)));
+                    Flush();
+                }
+                catch (Exception exception)
+                {
+                    Error(""PM5 workout notification parse failed for "" + name + "": "" + exception.Message);
+                }
+            };
+
+            var handlerAttached = false;
+            Exception subscribeException = null;
+            try
+            {
+                characteristic.ValueChanged += handler;
+                handlerAttached = true;
+                Log(string.Format(""PM5 notification handler attached before CCCD write. Name={0}, Uuid={1}, CacheMode={2}"", name, uuid, cacheMode));
+                await ReadCccd(characteristic, name, uuid, cacheMode, ""BeforeNotifyWrite"");
+                Log(string.Format(""PM5 notification subscribe started. Name={0}, Uuid={1}, CacheMode={2}, Properties={3}, Descriptor=Notify"", name, uuid, cacheMode, characteristic.CharacteristicProperties));
+                var status = await TimeoutAfter(characteristic.WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue.Notify), 12000, ""PM5 Notify "" + name);
+                Log(string.Format(""PM5 notification subscribe completed. Name={0}, Uuid={1}, CacheMode={2}, Descriptor=Notify, Status={3}"", name, uuid, cacheMode, status));
+                await ReadCccd(characteristic, name, uuid, cacheMode, ""AfterNotifyWrite"");
+                if (status == GattCommunicationStatus.Success)
+                {
+                    Log(string.Format(""PM5 notification subscribed. Name={0}, Uuid={1}, CacheMode={2}"", name, uuid, cacheMode));
+                    return new Subscription { Characteristic = characteristic, Handler = handler, Name = name };
+                }
+
+                if (handlerAttached)
+                {
+                    characteristic.ValueChanged -= handler;
+                }
+                Error(string.Format(""PM5 notification subscribe failed. Name={0}, Uuid={1}, CacheMode={2}, Status={3}"", name, uuid, cacheMode, status));
+            }
+            catch (Exception exception)
+            {
+                subscribeException = exception;
+            }
+
+            if (subscribeException != null)
+            {
+                try
+                {
+                    if (handlerAttached)
+                    {
+                        characteristic.ValueChanged -= handler;
+                    }
+                }
+                catch {}
+
+                Error(string.Format(""PM5 notification subscribe timed out or failed. Name={0}, Uuid={1}, CacheMode={2}, Descriptor=Notify, Error={3}"", name, uuid, cacheMode, subscribeException.Message));
+                await ReadCccd(characteristic, name, uuid, cacheMode, ""AfterNotifyWriteFailure"");
+            }
+        }
+
+        Log(string.Format(""PM5 characteristic could not be subscribed after uncached/cached attempts. Name={0}, Uuid={1}"", name, uuid));
+        return null;
+    }
+
+    private static async Task ReadCccd(GattCharacteristic characteristic, string name, Guid uuid, BluetoothCacheMode cacheMode, string phase)
+    {
+        try
+        {
+            var result = await TimeoutAfter(characteristic.ReadClientCharacteristicConfigurationDescriptorAsync(), 8000, ""PM5 CCCD read "" + phase + "" "" + name);
+            Log(string.Format(""PM5 CCCD read. Phase={0}, Name={1}, Uuid={2}, CacheMode={3}, Status={4}, Descriptor={5}"", phase, name, uuid, cacheMode, result.Status, result.ClientCharacteristicConfigurationDescriptor));
+        }
+        catch (Exception exception)
+        {
+            Error(string.Format(""PM5 CCCD read failed. Phase={0}, Name={1}, Uuid={2}, CacheMode={3}, Error={4}"", phase, name, uuid, cacheMode, exception.Message));
+        }
+    }
+
+    private static async Task<T> TimeoutAfter<T>(IAsyncOperation<T> operation, int timeoutMs, string label)
+    {
+        var task = ConvertToTask(operation);
+        var completed = await Task.WhenAny(task, Task.Delay(timeoutMs));
+        if (completed != task)
+        {
+            throw new TimeoutException(""Timed out waiting for Windows BLE operation. Label="" + label);
+        }
+
+        return await task;
+    }
+
+    private static Task<T> ConvertToTask<T>(IAsyncOperation<T> operation)
+    {
+        foreach (var method in typeof(System.WindowsRuntimeSystemExtensions).GetMethods())
+        {
+            if (method.Name == ""AsTask"" &&
+                method.IsGenericMethodDefinition &&
+                method.GetGenericArguments().Length == 1 &&
+                method.GetParameters().Length == 1)
+            {
+                return (Task<T>)method.MakeGenericMethod(typeof(T)).Invoke(null, new object[] { operation });
+            }
+        }
+
+        throw new InvalidOperationException(""Could not find generic WindowsRuntimeSystemExtensions.AsTask overload."");
+    }
+
+    private static string ConvertBufferToHex(IBuffer buffer)
+    {
+        if (buffer == null)
+        {
+            return string.Empty;
+        }
+
+        var reader = DataReader.FromBuffer(buffer);
+        var bytes = new byte[buffer.Length];
+        reader.ReadBytes(bytes);
+        return BitConverter.ToString(bytes).Replace(""-"", string.Empty);
+    }
+
+    private static string GetDeviceAccessStatus(string id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            return ""Unknown"";
+        }
+
+        try
+        {
+            var access = DeviceAccessInformation.CreateFromId(id);
+            return access == null ? ""Unknown"" : access.CurrentStatus.ToString();
+        }
+        catch (Exception exception)
+        {
+            return ""Error: "" + exception.Message;
+        }
+    }
+
+    private static void Log(string message)
+    {
+        Console.WriteLine(""LOG|"" + message);
+        Flush();
+    }
+
+    private static void Error(string message)
+    {
+        Console.WriteLine(""ERROR|"" + message);
+        Flush();
+    }
+
+    private static void Flush()
+    {
+        Console.Out.Flush();
+    }
+}
+";
+    }
+
     private static string QuoteProcessArgument(string argument)
     {
         return "\"" + argument.Replace("\"", "\\\"") + "\"";
@@ -365,25 +919,26 @@ public sealed class WindowsPm5BleClient : IPm5BleClient, IPm5WorkoutDataClient
 
     private void DeleteHelperScriptFile()
     {
-        if (string.IsNullOrWhiteSpace(helperScriptPath))
-        {
-            return;
-        }
-
         try
         {
-            if (System.IO.File.Exists(helperScriptPath))
+            if (!string.IsNullOrWhiteSpace(helperScriptPath) && System.IO.File.Exists(helperScriptPath))
             {
                 System.IO.File.Delete(helperScriptPath);
+            }
+
+            if (!string.IsNullOrWhiteSpace(helperSourcePath) && System.IO.File.Exists(helperSourcePath))
+            {
+                System.IO.File.Delete(helperSourcePath);
             }
         }
         catch (Exception exception)
         {
-            Debug.LogWarning("[Ski-Verse] Could not delete PM5 BLE helper script: " + exception.Message);
+            Debug.LogWarning("[Ski-Verse] Could not delete PM5 BLE helper file: " + exception.Message);
         }
         finally
         {
             helperScriptPath = null;
+            helperSourcePath = null;
         }
     }
 
