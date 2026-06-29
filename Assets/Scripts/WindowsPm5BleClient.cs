@@ -632,8 +632,30 @@ trap {
 [Windows.Devices.Bluetooth.GenericAttributeProfile.GattValueChangedEventArgs,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
 [Windows.Devices.Bluetooth.GenericAttributeProfile.GattClientCharacteristicConfigurationDescriptorValue,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
 [Windows.Devices.Bluetooth.GenericAttributeProfile.GattCommunicationStatus,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
+[Windows.Devices.Bluetooth.GenericAttributeProfile.GattReadClientCharacteristicConfigurationDescriptorResult,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
 [Windows.Storage.Streams.DataReader,Windows.Storage.Streams,ContentType=WindowsRuntime] | Out-Null
 [Windows.Foundation.TypedEventHandler`2,Windows.Foundation,ContentType=WindowsRuntime] | Out-Null
+function Format-WinRtOperationDiagnostics($operation) {
+    if ($null -eq $operation) { return 'Operation=null' }
+
+    $typeName = ''
+    $status = ''
+    $errorText = ''
+    try { $typeName = $operation.GetType().FullName } catch { $typeName = ('TypeError={0}' -f $_.Exception.Message) }
+    try { $status = [string]$operation.Status } catch { $status = ('StatusError={0}' -f $_.Exception.Message) }
+    try {
+        $errorCode = $operation.ErrorCode
+        if ($null -ne $errorCode) {
+            $hresult = ''
+            try { $hresult = ('0x{0:X8}' -f ($errorCode.HResult -band 0xffffffff)) } catch {}
+            $errorText = ('ErrorCode={0}, HResult={1}, Message={2}' -f $errorCode.GetType().FullName, $hresult, $errorCode.Message)
+        }
+    } catch {
+        $errorText = ('ErrorCodeReadError={0}' -f $_.Exception.Message)
+    }
+
+    return ('Type={0}, Status={1}, {2}' -f $typeName, $status, $errorText)
+}
 function Await-WinRtOperation($operation, [Type]$resultType, [int]$timeoutMs) {
     $method = [System.WindowsRuntimeSystemExtensions].GetMethods() | Where-Object { $_.Name -eq 'AsTask' -and $_.IsGenericMethodDefinition -and $_.GetGenericArguments().Length -eq 1 -and $_.GetParameters().Length -eq 1 } | Select-Object -First 1
     $task = $method.MakeGenericMethod($resultType).Invoke($null, @($operation))
@@ -657,8 +679,7 @@ function Await-WinRtOperationByStatus($operation, [int]$timeoutMs, [string]$labe
         }
 
         if ($status -eq 'Error') {
-            $errorCode = $operation.ErrorCode
-            throw ('WinRT operation failed. Label={0}, Status={1}, ErrorCode={2}' -f $label, $status, $errorCode)
+            throw ('WinRT operation failed. Label={0}, Diagnostics={1}' -f $label, (Format-WinRtOperationDiagnostics $operation))
         }
 
         if ($status -eq 'Canceled') {
@@ -669,7 +690,7 @@ function Await-WinRtOperationByStatus($operation, [int]$timeoutMs, [string]$labe
     }
 
     $finalStatus = [string]$operation.Status
-    throw ('Timed out waiting for Windows BLE operation. Label={0}, FinalStatus={1}' -f $label, $finalStatus)
+    throw ('Timed out waiting for Windows BLE operation. Label={0}, FinalStatus={1}, Diagnostics={2}' -f $label, $finalStatus, (Format-WinRtOperationDiagnostics $operation))
 }
 function Convert-BufferToHex($buffer) {
     if ($null -eq $buffer) { return '' }
@@ -686,6 +707,16 @@ function Get-DeviceAccessStatus([string]$id) {
         return [string]$access.CurrentStatus
     } catch {
         return ('Error: {0}' -f $_.Exception.Message)
+    }
+}
+function Read-Pm5CccdValue($characteristic, [string]$name, [Guid]$uuid, $cacheMode, [string]$phase) {
+    try {
+        $result = Await-WinRtOperation ($characteristic.ReadClientCharacteristicConfigurationDescriptorAsync()) ([Windows.Devices.Bluetooth.GenericAttributeProfile.GattReadClientCharacteristicConfigurationDescriptorResult]) 8000
+        [Console]::WriteLine(('LOG|PM5 CCCD read. Phase={0}, Name={1}, Uuid={2}, CacheMode={3}, Status={4}, Descriptor={5}' -f $phase, $name, $uuid, $cacheMode, $result.Status, $result.ClientCharacteristicConfigurationDescriptor))
+        [Console]::Out.Flush()
+    } catch {
+        [Console]::WriteLine(('ERROR|PM5 CCCD read failed. Phase={0}, Name={1}, Uuid={2}, CacheMode={3}, Error={4}' -f $phase, $name, $uuid, $cacheMode, $_.Exception.Message))
+        [Console]::Out.Flush()
     }
 }
 function Find-Pm5WorkoutServiceDeviceId([Guid]$workoutServiceUuid, [UInt64]$address) {
@@ -872,8 +903,13 @@ function Subscribe-Pm5Characteristic($serviceObject, [string]$name, [Guid]$uuid)
 
         [Console]::WriteLine(('LOG|PM5 notification subscribe started. Name={0}, Uuid={1}, CacheMode={2}, Properties={3}, Descriptor={4}' -f $localName, $localUuid, $cacheMode, $properties, $descriptorValue))
         [Console]::Out.Flush()
+        Read-Pm5CccdValue $characteristic $localName $localUuid $cacheMode 'BeforeNotifyWrite'
+        $writeOperation = $null
         try {
-            $status = Await-WinRtOperationByStatus ($characteristic.WriteClientCharacteristicConfigurationDescriptorAsync($descriptorValue)) 12000 ('PM5 Notify {0}' -f $localName)
+            $writeOperation = $characteristic.WriteClientCharacteristicConfigurationDescriptorAsync($descriptorValue)
+            [Console]::WriteLine(('LOG|PM5 notification write operation created. Name={0}, Uuid={1}, CacheMode={2}, Diagnostics={3}' -f $localName, $localUuid, $cacheMode, (Format-WinRtOperationDiagnostics $writeOperation)))
+            [Console]::Out.Flush()
+            $status = Await-WinRtOperationByStatus $writeOperation 12000 ('PM5 Notify {0}' -f $localName)
         } catch {
             if ($null -ne $token) {
                 try { $characteristic.remove_ValueChanged($token) } catch {}
@@ -882,13 +918,15 @@ function Subscribe-Pm5Characteristic($serviceObject, [string]$name, [Guid]$uuid)
             if ($null -ne $_.Exception.InnerException) {
                 $errorMessage = ('{0} InnerException={1}' -f $errorMessage, $_.Exception.InnerException.Message)
             }
-            [Console]::WriteLine(('ERROR|PM5 notification subscribe timed out or failed. Name={0}, Uuid={1}, CacheMode={2}, Descriptor={3}, Error={4}' -f $localName, $localUuid, $cacheMode, $descriptorValue, $errorMessage))
+            [Console]::WriteLine(('ERROR|PM5 notification subscribe timed out or failed. Name={0}, Uuid={1}, CacheMode={2}, Descriptor={3}, Error={4}, Diagnostics={5}' -f $localName, $localUuid, $cacheMode, $descriptorValue, $errorMessage, (Format-WinRtOperationDiagnostics $writeOperation)))
             [Console]::Out.Flush()
+            Read-Pm5CccdValue $characteristic $localName $localUuid $cacheMode 'AfterNotifyWriteFailure'
             continue
         }
 
         [Console]::WriteLine(('LOG|PM5 notification subscribe completed. Name={0}, Uuid={1}, CacheMode={2}, Descriptor={3}, Status={4}' -f $localName, $localUuid, $cacheMode, $descriptorValue, $status))
         [Console]::Out.Flush()
+        Read-Pm5CccdValue $characteristic $localName $localUuid $cacheMode 'AfterNotifyWrite'
 
         if ($status -ne [Windows.Devices.Bluetooth.GenericAttributeProfile.GattCommunicationStatus]::Success) {
             if ($null -ne $token) {

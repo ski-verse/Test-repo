@@ -74,6 +74,26 @@ public class Pm5BleRuntimeConnectorTests
         Assert.Less(handlerIndex, notifyWriteIndex);
     }
 
+    [Test]
+    public void WindowsPm5BleClient_ConnectScriptReadsCccdBeforeAndAfterNotifyWrite()
+    {
+        var script = BuildConnectScriptForTest();
+
+        StringAssert.Contains("function Read-Pm5CccdValue", script);
+        StringAssert.Contains("Read-Pm5CccdValue $characteristic $localName $localUuid $cacheMode 'BeforeNotifyWrite'", script);
+        StringAssert.Contains("Read-Pm5CccdValue $characteristic $localName $localUuid $cacheMode 'AfterNotifyWrite'", script);
+    }
+
+    [Test]
+    public void WindowsPm5BleClient_ConnectScriptLogsWinRtNotifyOperationDiagnostics()
+    {
+        var script = BuildConnectScriptForTest();
+
+        StringAssert.Contains("function Format-WinRtOperationDiagnostics", script);
+        StringAssert.Contains("PM5 notification write operation created", script);
+        StringAssert.Contains("Diagnostics={5}", script);
+    }
+
     private static string BuildConnectScriptForTest()
     {
         var method = typeof(WindowsPm5BleClient).GetMethod("BuildConnectScript", BindingFlags.NonPublic | BindingFlags.Static);
