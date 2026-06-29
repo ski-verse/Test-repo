@@ -33,6 +33,13 @@ public sealed class WindowsPm5BleClient : IPm5BleClient, IPm5WorkoutDataClient
     public event Action StateChanged;
     public event Action WorkoutDataChanged;
 
+    public WindowsPm5BleClient()
+    {
+#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
+        KillStaleHelperProcesses("client startup");
+#endif
+    }
+
     public Pm5BleConnectionStatus Status
     {
         get
@@ -128,6 +135,7 @@ public sealed class WindowsPm5BleClient : IPm5BleClient, IPm5WorkoutDataClient
 #elif UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
         if (helperProcess == null)
         {
+            KillStaleHelperProcesses("stop scan without tracked helper");
             return;
         }
 
@@ -147,6 +155,7 @@ public sealed class WindowsPm5BleClient : IPm5BleClient, IPm5WorkoutDataClient
             helperProcess.Dispose();
             helperProcess = null;
             DeleteHelperScriptFile();
+            KillStaleHelperProcesses("stop scan cleanup");
         }
 #endif
     }
@@ -912,6 +921,53 @@ internal static class SkiVersePm5BleConnectHelper
 ";
     }
 
+
+    private static void KillStaleHelperProcesses(string reason)
+    {
+        var tempPath = System.IO.Path.GetTempPath().TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
+        foreach (var process in System.Diagnostics.Process.GetProcesses())
+        {
+            try
+            {
+                if (!process.ProcessName.StartsWith("SkiVersePm5Ble-", StringComparison.OrdinalIgnoreCase))
+                {
+                    process.Dispose();
+                    continue;
+                }
+
+                var processPath = string.Empty;
+                try
+                {
+                    processPath = process.MainModule != null ? process.MainModule.FileName : string.Empty;
+                }
+                catch
+                {
+                    processPath = string.Empty;
+                }
+
+                if (!string.IsNullOrWhiteSpace(processPath) &&
+                    !processPath.StartsWith(tempPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    process.Dispose();
+                    continue;
+                }
+
+                Log($"Stopping stale PM5 BLE helper process. Reason='{reason}', ProcessId={process.Id}, Path='{processPath}'.");
+                if (!process.HasExited)
+                {
+                    process.Kill();
+                }
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning("[Ski-Verse] Could not stop stale PM5 BLE helper process: " + exception.Message);
+            }
+            finally
+            {
+                process.Dispose();
+            }
+        }
+    }
     private static string QuoteProcessArgument(string argument)
     {
         return "\"" + argument.Replace("\"", "\\\"") + "\"";
