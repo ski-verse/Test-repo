@@ -99,9 +99,20 @@ public class Pm5BleRuntimeConnectorTests
     {
         var source = BuildCSharpConnectHelperSourceForTest();
 
+        StringAssert.Contains("[STAThread]", source);
         StringAssert.Contains("WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue.Notify)", source);
         StringAssert.Contains("await TimeoutAfter", source);
         StringAssert.Contains("METRIC_RAW|{0}|{1}|{2}", source);
+    }
+
+    [Test]
+    public void WindowsPm5BleClient_CSharpConnectHelperLogsCccdOperationDiagnostics()
+    {
+        var source = BuildCSharpConnectHelperSourceForTest();
+
+        StringAssert.Contains("PM5 notification write operation created", source);
+        StringAssert.Contains("FormatWinRtOperationDiagnostics(writeOperation)", source);
+        StringAssert.Contains("Diagnostics={4}", source);
     }
 
     [Test]

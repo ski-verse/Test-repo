@@ -535,6 +535,7 @@ internal static class SkiVersePm5BleConnectHelper
         public string Name;
     }
 
+    [STAThread]
     public static int Main(string[] args)
     {
         try
@@ -781,6 +782,7 @@ internal static class SkiVersePm5BleConnectHelper
             };
 
             var handlerAttached = false;
+            IAsyncOperation<GattCommunicationStatus> writeOperation = null;
             Exception subscribeException = null;
             try
             {
@@ -789,7 +791,9 @@ internal static class SkiVersePm5BleConnectHelper
                 Log(string.Format(""PM5 notification handler attached before CCCD write. Name={0}, Uuid={1}, CacheMode={2}"", name, uuid, cacheMode));
                 await ReadCccd(characteristic, name, uuid, cacheMode, ""BeforeNotifyWrite"");
                 Log(string.Format(""PM5 notification subscribe started. Name={0}, Uuid={1}, CacheMode={2}, Properties={3}, Descriptor=Notify"", name, uuid, cacheMode, characteristic.CharacteristicProperties));
-                var status = await TimeoutAfter(characteristic.WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue.Notify), 12000, ""PM5 Notify "" + name);
+                writeOperation = characteristic.WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue.Notify);
+                Log(string.Format(""PM5 notification write operation created. Name={0}, Uuid={1}, CacheMode={2}, Diagnostics={3}"", name, uuid, cacheMode, FormatWinRtOperationDiagnostics(writeOperation)));
+                var status = await TimeoutAfter(writeOperation, 12000, ""PM5 Notify "" + name);
                 Log(string.Format(""PM5 notification subscribe completed. Name={0}, Uuid={1}, CacheMode={2}, Descriptor=Notify, Status={3}"", name, uuid, cacheMode, status));
                 await ReadCccd(characteristic, name, uuid, cacheMode, ""AfterNotifyWrite"");
                 if (status == GattCommunicationStatus.Success)
@@ -820,7 +824,7 @@ internal static class SkiVersePm5BleConnectHelper
                 }
                 catch {}
 
-                Error(string.Format(""PM5 notification subscribe timed out or failed. Name={0}, Uuid={1}, CacheMode={2}, Descriptor=Notify, Error={3}"", name, uuid, cacheMode, subscribeException.Message));
+                Error(string.Format(""PM5 notification subscribe timed out or failed. Name={0}, Uuid={1}, CacheMode={2}, Descriptor=Notify, Error={3}, Diagnostics={4}"", name, uuid, cacheMode, subscribeException.Message, FormatWinRtOperationDiagnostics(writeOperation)));
                 await ReadCccd(characteristic, name, uuid, cacheMode, ""AfterNotifyWriteFailure"");
             }
         }
@@ -852,6 +856,36 @@ internal static class SkiVersePm5BleConnectHelper
         }
 
         return await task;
+    }
+
+    private static string FormatWinRtOperationDiagnostics<T>(IAsyncOperation<T> operation)
+    {
+        if (operation == null)
+        {
+            return ""null"";
+        }
+
+        try
+        {
+            var errorText = ""None"";
+            try
+            {
+                if (operation.ErrorCode != null)
+                {
+                    errorText = string.Format(""{0}: {1}"", operation.ErrorCode.HResult, operation.ErrorCode.Message);
+                }
+            }
+            catch (Exception exception)
+            {
+                errorText = ""ErrorCodeReadFailed: "" + exception.Message;
+            }
+
+            return string.Format(""Status={0}, ErrorCode={1}"", operation.Status, errorText);
+        }
+        catch (Exception exception)
+        {
+            return ""DiagnosticsFailed: "" + exception.Message;
+        }
     }
 
     private static Task<T> ConvertToTask<T>(IAsyncOperation<T> operation)
