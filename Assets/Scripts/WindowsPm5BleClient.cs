@@ -1398,11 +1398,15 @@ internal static class SkiVersePm5BleConnectHelper
         var developmentFallbackScript = discoveryMode == Pm5BleDiscoveryMode.DevelopmentWindowsKnownDevicesFallback
             ? @"
 [Console]::WriteLine('LOG|Development Windows known-device fallback enabled. This may find PM5 devices already known to Windows and is only for debugging GATT/Notify.')
+$developmentDeviceWatcherCount = 0
+$developmentDeviceWatcherPm5MatchCount = 0
 $selector = [Windows.Devices.Bluetooth.BluetoothLEDevice]::GetDeviceSelector()
 $deviceWatcher = [Windows.Devices.Enumeration.DeviceInformation]::CreateWatcher($selector)
 $deviceHandler = [Windows.Foundation.TypedEventHandler[Windows.Devices.Enumeration.DeviceWatcher,Windows.Devices.Enumeration.DeviceInformation]] {
     param($sender, $deviceInfo)
+    $script:developmentDeviceWatcherCount++
     $matches = Test-Pm5Name $deviceInfo.Name
+    if ($matches) { $script:developmentDeviceWatcherPm5MatchCount++ }
     [Console]::WriteLine(('LOG|Development fallback BLE DeviceWatcher discovered. Name=""{0}"", Id=""{1}"", MatchesPM5={2}' -f $deviceInfo.Name, $deviceInfo.Id, $matches))
     [Console]::Out.Flush()
     if ($matches) {
@@ -1414,6 +1418,8 @@ $deviceWatcher.Start()
 Start-Sleep -Seconds 5
 $deviceWatcher.Stop()
 $deviceWatcher.remove_Added($deviceToken)
+$developmentPnpCount = 0
+$developmentPnpPm5MatchCount = 0
 try {
     [Console]::WriteLine('LOG|Development fallback checking Windows PnP BTHLE devices for already-known PM5 devices.')
     foreach ($pnpDevice in Get-PnpDevice -ErrorAction Stop) {
@@ -1422,10 +1428,12 @@ try {
         $isBle = $id -like 'BTHLE*'
         $matches = $isBle -and ((Test-Pm5Name $name) -or (Test-Pm5Name $id))
         if ($isBle) {
+            $developmentPnpCount++
             [Console]::WriteLine(('LOG|Development fallback PnP BTHLE device. Name=""{0}"", Id=""{1}"", MatchesPM5={2}' -f $name, $id, $matches))
             [Console]::Out.Flush()
         }
         if ($matches) {
+            $developmentPnpPm5MatchCount++
             $address = Get-BluetoothAddressFromPnpId $id
             Report-Pm5 'DevelopmentWindowsPnP' $id $address $name
         }
@@ -1434,6 +1442,8 @@ try {
     [Console]::WriteLine(('ERROR|Development fallback Windows PnP PM5 lookup failed: {0}' -f $_.Exception.Message))
     [Console]::Out.Flush()
 }
+[Console]::WriteLine(('LOG|Development fallback scan summary. DeviceWatcherDevices={0}, DeviceWatcherPm5Matches={1}, PnPBleDevices={2}, PnPPm5Matches={3}' -f $developmentDeviceWatcherCount, $developmentDeviceWatcherPm5MatchCount, $developmentPnpCount, $developmentPnpPm5MatchCount))
+[Console]::Out.Flush()
 "
             : @"
 [Console]::WriteLine('LOG|Development Windows known-device fallback disabled. Windows paired/known/PnP devices will not be used for production discovery.')
@@ -1456,6 +1466,8 @@ trap {
 [Console]::WriteLine('LOG|Production BLE advertisement scan started. PM5 should be detected by name or Concept2 service UUID without Windows Bluetooth pairing.')
 $services = @([Guid]'ce060000-43e5-11e4-916c-0800200c9a66', [Guid]'ce060030-43e5-11e4-916c-0800200c9a66', [Guid]'ce060020-43e5-11e4-916c-0800200c9a66', [Guid]'ce060010-43e5-11e4-916c-0800200c9a66')
 $seen = [hashtable]::Synchronized(@{})
+$advertisementCount = 0
+$pm5AdvertisementMatchCount = 0
 function Test-Pm5Name($name) {
     if ([string]::IsNullOrWhiteSpace($name)) { return $false }
     return ($name -match 'PM5|CONCEPT\s?2')
@@ -1483,12 +1495,14 @@ $advertisementWatcher = [Windows.Devices.Bluetooth.Advertisement.BluetoothLEAdve
 $advertisementWatcher.ScanningMode = [Windows.Devices.Bluetooth.Advertisement.BluetoothLEScanningMode]::Active
 $advertisementHandler = [Windows.Foundation.TypedEventHandler[Windows.Devices.Bluetooth.Advertisement.BluetoothLEAdvertisementWatcher,Windows.Devices.Bluetooth.Advertisement.BluetoothLEAdvertisementReceivedEventArgs]] {
     param($sender, $args)
+    $script:advertisementCount++
     $name = $args.Advertisement.LocalName
     $hasService = $false
     foreach ($uuid in $args.Advertisement.ServiceUuids) {
         if (Test-Concept2Service $uuid) { $hasService = $true }
     }
     $matches = (Test-Pm5Name $name) -or $hasService
+    if ($matches) { $script:pm5AdvertisementMatchCount++ }
     [Console]::WriteLine(('LOG|Advertisement discovered. Name=""{0}"", Address={1}, HasConcept2Service={2}, MatchesPM5={3}' -f $name, $args.BluetoothAddress, $hasService, $matches))
     [Console]::Out.Flush()
     if ($matches) {
@@ -1500,6 +1514,7 @@ $advertisementWatcher.Start()
 Start-Sleep -Seconds 20
 $advertisementWatcher.Stop()
 $advertisementWatcher.remove_Received($advertisementToken)
+[Console]::WriteLine(('LOG|Production BLE advertisement scan summary. Advertisements={0}, Pm5Matches={1}' -f $advertisementCount, $pm5AdvertisementMatchCount))
 [Console]::WriteLine('LOG|Production BLE advertisement scan finished.')
 " + developmentFallbackScript + @"
 [Console]::WriteLine('LOG|Windows BLE scan helper finished.')

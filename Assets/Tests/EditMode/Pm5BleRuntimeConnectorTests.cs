@@ -61,6 +61,19 @@ public class Pm5BleRuntimeConnectorTests
     }
 
     [Test]
+    public void WindowsPm5BleClient_ScanScriptLogsDiscoveryCounters()
+    {
+        var script = BuildScanScriptForTest(Pm5BleDiscoveryMode.DevelopmentWindowsKnownDevicesFallback);
+
+        StringAssert.Contains("$advertisementCount = 0", script);
+        StringAssert.Contains("$pm5AdvertisementMatchCount = 0", script);
+        StringAssert.Contains("Production BLE advertisement scan summary", script);
+        StringAssert.Contains("$developmentDeviceWatcherCount = 0", script);
+        StringAssert.Contains("$developmentPnpCount = 0", script);
+        StringAssert.Contains("Development fallback scan summary", script);
+    }
+
+    [Test]
     public void RuntimeConnector_StopsPm5ClientWhenDisabled()
     {
         var gameObject = new UnityEngine.GameObject("PM5 Runtime Connector");
