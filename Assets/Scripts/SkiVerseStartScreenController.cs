@@ -48,7 +48,6 @@ public class SkiVerseStartScreenController : MonoBehaviour
     private int renderedSelectedPm5DeviceIndex = -2;
     private Pm5BleConnectionStatus renderedPm5Status = (Pm5BleConnectionStatus)(-1);
     private bool pm5UiDirty;
-    private bool pm5AutoConnectAttempted;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void InstallStartScreen()
@@ -81,7 +80,6 @@ public class SkiVerseStartScreenController : MonoBehaviour
         {
             RefreshPm5Ui(pm5UiDirty);
             pm5UiDirty = false;
-            AutoConnectSingleFoundPm5IfNeeded();
         }
     }
 
@@ -126,7 +124,6 @@ public class SkiVerseStartScreenController : MonoBehaviour
         }
         else
         {
-            pm5AutoConnectAttempted = false;
             pm5Connector.StartScan();
         }
 
@@ -138,6 +135,7 @@ public class SkiVerseStartScreenController : MonoBehaviour
         EnsurePm5Connector();
         Debug.Log($"[Ski-Verse PM5 BLE] PM5 device button pressed. DeviceIndex={deviceIndex}.");
         pm5Connector.SelectDevice(deviceIndex);
+        pm5Connector.ConnectSelectedDevice();
         RefreshPm5Ui(true);
     }
 
@@ -438,39 +436,19 @@ public class SkiVerseStartScreenController : MonoBehaviour
         {
             pm5DeviceListText.text = devices.Count == 0
                 ? (pm5Connector.Status == Pm5BleConnectionStatus.Searching ? "Scanning for PM5..." : "No PM5 devices found")
-                : "Select PM5";
+                : "Select PM5 device to connect";
         }
 
         var buttonCount = Mathf.Min(3, devices.Count);
         for (var i = 0; i < buttonCount; i++)
         {
             var capturedIndex = i;
-            var label = pm5Connector.SelectedDeviceIndex == i ? $"> {devices[i].Name}" : devices[i].Name;
+            var label = pm5Connector.SelectedDeviceIndex == i ? $"> Connect to {devices[i].Name}" : $"Connect to {devices[i].Name}";
             Debug.Log($"[Ski-Verse PM5 BLE] Rendering PM5 device button. Index={i}, Label='{label}', DeviceId='{devices[i].DeviceId}', Address='{devices[i].BluetoothAddress}'.");
             var button = CreateButton(pm5DeviceButtonContainer, $"PM5 Device {i + 1}", label, new Vector2(0f, 18f - i * 34f), new Vector2(560f, 30f), 18f);
             button.onClick.AddListener(() => SelectPm5Device(capturedIndex));
             pm5DeviceButtons.Add(button);
         }
-    }
-
-    private void AutoConnectSingleFoundPm5IfNeeded()
-    {
-        if (pm5Connector == null || pm5AutoConnectAttempted || pm5Connector.Status != Pm5BleConnectionStatus.Pm5Found)
-        {
-            return;
-        }
-
-        var devices = pm5Connector.DiscoveredDevices;
-        if (devices.Count != 1)
-        {
-            return;
-        }
-
-        pm5AutoConnectAttempted = true;
-        Debug.Log($"[Ski-Verse PM5 BLE] One PM5 found. Auto-selecting and attempting real GATT connection to '{devices[0].Name}'.");
-        pm5Connector.SelectDevice(0);
-        pm5Connector.ConnectSelectedDevice();
-        RefreshPm5Ui(true);
     }
 
     private static TextMeshProUGUI CreatePanelText(Transform parent, string name, Vector2 anchoredPosition, Vector2 size, float fontSize, FontStyles fontStyle)

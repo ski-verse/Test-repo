@@ -34,7 +34,7 @@ public class SkiVerseStartScreenControllerTests
         Assert.AreEqual("40 km Long Course", SkiVerseStartScreenController.FortyKmCourseLabel);
         Assert.AreEqual("PM5: Not connected", SkiVerseStartScreenController.Pm5NotConnectedText);
         Assert.AreEqual("Searching...", SkiVerseStartScreenController.Pm5SearchingText);
-        Assert.AreEqual("PM5 Found - not connected", SkiVerseStartScreenController.Pm5FoundText);
+        Assert.AreEqual("PM5 Found - select device", SkiVerseStartScreenController.Pm5FoundText);
         Assert.AreEqual("Connecting...", SkiVerseStartScreenController.Pm5ConnectingText);
         Assert.AreEqual("Connected", SkiVerseStartScreenController.Pm5ConnectedText);
         Assert.AreEqual("PM5 Found - connection not implemented", SkiVerseStartScreenController.Pm5FoundConnectionNotImplementedText);
@@ -89,7 +89,7 @@ public class SkiVerseStartScreenControllerTests
     }
 
     [Test]
-    public void SelectPm5AndConnect_ConnectsSelectedDevice()
+    public void SelectPm5Device_ConnectsSelectedDevice()
     {
         var controller = new GameObject("Start Screen").AddComponent<SkiVerseStartScreenController>();
         var fakeClient = new FakePm5BleClient();
@@ -99,7 +99,6 @@ public class SkiVerseStartScreenControllerTests
         controller.pm5Connector.Client = fakeClient;
         controller.SendMessage("Update");
         controller.SelectPm5Device(0);
-        controller.ConnectPm5();
 
         Assert.IsTrue(fakeClient.ConnectCalled);
         Assert.AreEqual("pm5-1", fakeClient.ConnectedDevice.DeviceId);
@@ -108,7 +107,7 @@ public class SkiVerseStartScreenControllerTests
     }
 
     [Test]
-    public void FoundPm5_AutoAttemptsConnectionAndFailureDoesNotMarkUiAsConnected()
+    public void FoundPm5_ShowsExplicitConnectDeviceButtonWithoutAutoConnecting()
     {
         var controller = new GameObject("Start Screen").AddComponent<SkiVerseStartScreenController>();
         var fakeClient = new FakePm5BleClient
@@ -121,9 +120,13 @@ public class SkiVerseStartScreenControllerTests
         fakeClient.AddDevice(new Pm5BleDeviceInfo("pm5-1", "PM5 12345", 12345));
         controller.SendMessage("Update");
 
-        Assert.IsTrue(fakeClient.ConnectCalled);
+        Assert.IsFalse(fakeClient.ConnectCalled);
         Assert.IsFalse(controller.IsPm5Connected);
-        Assert.AreEqual(SkiVerseStartScreenController.Pm5ConnectionFailedText, controller.pm5StatusText.text);
+        Assert.AreEqual(SkiVerseStartScreenController.Pm5FoundText, controller.pm5StatusText.text);
+        Assert.AreEqual("Select PM5 device to connect", controller.pm5DeviceListText.text);
+
+        var buttonText = controller.pm5DeviceButtonContainer.GetChild(0).GetComponentInChildren<TextMeshProUGUI>();
+        Assert.AreEqual("Connect to PM5 12345", buttonText.text);
     }
 
     [Test]
