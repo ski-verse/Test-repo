@@ -116,6 +116,19 @@ public class Pm5BleRuntimeConnectorTests
     }
 
     [Test]
+    public void WindowsPm5BleClient_CSharpConnectHelperLogsGattSessionAndCccdDescriptorDiagnostics()
+    {
+        var source = BuildCSharpConnectHelperSourceForTest();
+
+        StringAssert.Contains("PM5 Bluetooth device state. Phase=AfterResolve", source);
+        StringAssert.Contains("PM5 GATT session state. Phase=BeforeMaintainConnection", source);
+        StringAssert.Contains("CanMaintainConnection", source);
+        StringAssert.Contains("SessionStatus", source);
+        StringAssert.Contains("PM5 characteristic state before notify", source);
+        StringAssert.Contains("PM5 CCCD descriptor lookup result", source);
+    }
+
+    [Test]
     public void WindowsPm5BleClient_CSharpConnectHelperUsesSingleRowingStrokeDiagnosticSubscription()
     {
         var source = BuildCSharpConnectHelperSourceForTest();

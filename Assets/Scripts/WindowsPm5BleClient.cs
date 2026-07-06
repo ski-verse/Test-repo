@@ -527,6 +527,7 @@ internal static class SkiVersePm5BleConnectHelper
     private static readonly Guid RowingAdditionalStrokeDataUuid = new Guid(""ce060036-43e5-11e4-916c-0800200c9a66"");
     private static readonly Guid RowingAdditionalStatus1Uuid = new Guid(""ce060032-43e5-11e4-916c-0800200c9a66"");
     private static readonly Guid RowingAdditionalStatus2Uuid = new Guid(""ce060033-43e5-11e4-916c-0800200c9a66"");
+    private static readonly Guid ClientCharacteristicConfigurationDescriptorUuid = new Guid(""00002902-0000-1000-8000-00805f9b34fb"");
 
     private sealed class Subscription
     {
@@ -585,6 +586,7 @@ internal static class SkiVersePm5BleConnectHelper
             return 1;
         }
 
+        LogBluetoothDeviceState(device, ""AfterResolve"");
         Log(string.Format(""BluetoothLEDevice resolved. Name=\""{0}\"", DeviceId=\""{1}\"". Verifying Concept2 PM5 workout GATT service {2}."", device.Name, device.DeviceId, WorkoutServiceUuid));
 
         var lastServiceStatus = ""NotAttempted"";
@@ -676,7 +678,9 @@ internal static class SkiVersePm5BleConnectHelper
             var session = service.Session;
             if (session != null)
             {
+                LogGattSessionState(session, ""BeforeMaintainConnection"");
                 session.MaintainConnection = true;
+                LogGattSessionState(session, ""AfterMaintainConnection"");
                 Log(""PM5 GATT session maintain connection enabled. MaxPduSize="" + session.MaxPduSize);
             }
         }
@@ -732,6 +736,9 @@ internal static class SkiVersePm5BleConnectHelper
             {
                 continue;
             }
+
+            LogCharacteristicState(characteristic, name, uuid, cacheMode);
+            await LogCccdDescriptorLookup(characteristic, name, uuid, cacheMode);
 
             TypedEventHandler<GattCharacteristic, GattValueChangedEventArgs> handler = delegate(GattCharacteristic sender, GattValueChangedEventArgs args)
             {
@@ -796,6 +803,56 @@ internal static class SkiVersePm5BleConnectHelper
 
         Log(string.Format(""PM5 characteristic could not be subscribed after uncached/cached attempts. Name={0}, Uuid={1}"", name, uuid));
         return null;
+    }
+
+    private static void LogBluetoothDeviceState(BluetoothLEDevice device, string phase)
+    {
+        try
+        {
+            Log(string.Format(""PM5 Bluetooth device state. Phase={0}, Name=\""{1}\"", DeviceId=\""{2}\"", ConnectionStatus={3}"", phase, device.Name, device.DeviceId, device.ConnectionStatus));
+        }
+        catch (Exception exception)
+        {
+            Error(string.Format(""PM5 Bluetooth device state log failed. Phase={0}, Error={1}"", phase, exception.Message));
+        }
+    }
+
+    private static void LogGattSessionState(GattSession session, string phase)
+    {
+        try
+        {
+            Log(string.Format(""PM5 GATT session state. Phase={0}, CanMaintainConnection={1}, MaintainConnection={2}, MaxPduSize={3}, SessionStatus={4}"", phase, session.CanMaintainConnection, session.MaintainConnection, session.MaxPduSize, session.SessionStatus));
+        }
+        catch (Exception exception)
+        {
+            Error(string.Format(""PM5 GATT session state log failed. Phase={0}, Error={1}"", phase, exception.Message));
+        }
+    }
+
+    private static void LogCharacteristicState(GattCharacteristic characteristic, string name, Guid uuid, BluetoothCacheMode cacheMode)
+    {
+        try
+        {
+            Log(string.Format(""PM5 characteristic state before notify. Name={0}, Uuid={1}, CacheMode={2}, Properties={3}, ProtectionLevel={4}, AttributeHandle={5}"", name, uuid, cacheMode, characteristic.CharacteristicProperties, characteristic.ProtectionLevel, characteristic.AttributeHandle));
+        }
+        catch (Exception exception)
+        {
+            Error(string.Format(""PM5 characteristic state log failed. Name={0}, Uuid={1}, CacheMode={2}, Error={3}"", name, uuid, cacheMode, exception.Message));
+        }
+    }
+
+    private static async Task LogCccdDescriptorLookup(GattCharacteristic characteristic, string name, Guid uuid, BluetoothCacheMode cacheMode)
+    {
+        try
+        {
+            var result = await TimeoutAfter(characteristic.GetDescriptorsForUuidAsync(ClientCharacteristicConfigurationDescriptorUuid, cacheMode), 8000, ""PM5 CCCD descriptor lookup "" + name);
+            var count = result.Descriptors == null ? 0 : result.Descriptors.Count;
+            Log(string.Format(""PM5 CCCD descriptor lookup result. Name={0}, Uuid={1}, CacheMode={2}, Status={3}, Count={4}"", name, uuid, cacheMode, result.Status, count));
+        }
+        catch (Exception exception)
+        {
+            Error(string.Format(""PM5 CCCD descriptor lookup failed. Name={0}, Uuid={1}, CacheMode={2}, Error={3}"", name, uuid, cacheMode, exception.Message));
+        }
     }
 
     private static async Task ReadCccd(GattCharacteristic characteristic, string name, Guid uuid, BluetoothCacheMode cacheMode, string phase)
