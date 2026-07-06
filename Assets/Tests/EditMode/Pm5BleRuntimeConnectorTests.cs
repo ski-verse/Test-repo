@@ -142,6 +142,19 @@ public class Pm5BleRuntimeConnectorTests
     }
 
     [Test]
+    public void WindowsPm5BleClient_CSharpConnectHelperExitsWhenDiagnosticSubscriptionFails()
+    {
+        var source = BuildCSharpConnectHelperSourceForTest();
+        var failureIndex = source.IndexOf("FAILED|PM5 Rowing Stroke Data subscription failed.", StringComparison.Ordinal);
+        var returnIndex = source.IndexOf("return;", failureIndex, StringComparison.Ordinal);
+        var keepAliveIndex = source.IndexOf("while (true)", failureIndex, StringComparison.Ordinal);
+
+        Assert.That(failureIndex, Is.GreaterThanOrEqualTo(0));
+        Assert.That(returnIndex, Is.GreaterThan(failureIndex));
+        Assert.That(returnIndex, Is.LessThan(keepAliveIndex));
+    }
+
+    [Test]
     public void WindowsPm5BleClient_CSharpConnectHelperUsesBluetoothDeviceServiceBeforeSelectorFallback()
     {
         var source = BuildCSharpConnectHelperSourceForTest();

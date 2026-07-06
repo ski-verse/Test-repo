@@ -688,6 +688,12 @@ internal static class SkiVersePm5BleConnectHelper
         Log(""PM5 single Rowing Stroke Data subscription diagnostic started."");
         var subscription = await SubscribeCharacteristic(service, ""Rowing Stroke Data"", RowingStrokeDataUuid);
         Log(""PM5 single Rowing Stroke Data subscription diagnostic completed. Active="" + (subscription != null));
+        if (subscription == null)
+        {
+            Console.WriteLine(""FAILED|PM5 Rowing Stroke Data subscription failed."");
+            Flush();
+            return;
+        }
 
         while (true)
         {
