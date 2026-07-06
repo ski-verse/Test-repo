@@ -755,7 +755,6 @@ internal static class SkiVersePm5BleConnectHelper
             };
 
             var handlerAttached = false;
-            IAsyncOperation<GattCommunicationStatus> writeOperation = null;
             Exception subscribeException = null;
             try
             {
@@ -763,11 +762,9 @@ internal static class SkiVersePm5BleConnectHelper
                 handlerAttached = true;
                 Log(string.Format(""PM5 notification handler attached before CCCD write. Name={0}, Uuid={1}, CacheMode={2}"", name, uuid, cacheMode));
                 await ReadCccd(characteristic, name, uuid, cacheMode, ""BeforeNotifyWrite"");
-                Log(string.Format(""PM5 notification subscribe started. Name={0}, Uuid={1}, CacheMode={2}, Properties={3}, Descriptor=Notify"", name, uuid, cacheMode, characteristic.CharacteristicProperties));
-                writeOperation = characteristic.WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue.Notify);
-                Log(string.Format(""PM5 notification write operation created. Name={0}, Uuid={1}, CacheMode={2}, Diagnostics={3}"", name, uuid, cacheMode, FormatWinRtOperationDiagnostics(writeOperation)));
-                var status = await TimeoutAfter(writeOperation, 12000, ""PM5 Notify "" + name);
-                Log(string.Format(""PM5 notification subscribe completed. Name={0}, Uuid={1}, CacheMode={2}, Descriptor=Notify, Status={3}"", name, uuid, cacheMode, status));
+                Log(string.Format(""PM5 notification subscribe started. Name={0}, Uuid={1}, CacheMode={2}, Properties={3}, Descriptor=DirectCCCDNotify0100"", name, uuid, cacheMode, characteristic.CharacteristicProperties));
+                var status = await WriteNotifyCccdDirect(characteristic, name, uuid, cacheMode);
+                Log(string.Format(""PM5 notification subscribe completed. Name={0}, Uuid={1}, CacheMode={2}, Descriptor=DirectCCCDNotify0100, Status={3}"", name, uuid, cacheMode, status));
                 await ReadCccd(characteristic, name, uuid, cacheMode, ""AfterNotifyWrite"");
                 if (status == GattCommunicationStatus.Success)
                 {
@@ -797,13 +794,35 @@ internal static class SkiVersePm5BleConnectHelper
                 }
                 catch {}
 
-                Error(string.Format(""PM5 notification subscribe timed out or failed. Name={0}, Uuid={1}, CacheMode={2}, Descriptor=Notify, Error={3}, Diagnostics={4}"", name, uuid, cacheMode, subscribeException.Message, FormatWinRtOperationDiagnostics(writeOperation)));
+                Error(string.Format(""PM5 notification subscribe timed out or failed. Name={0}, Uuid={1}, CacheMode={2}, Descriptor=DirectCCCDNotify0100, Error={3}"", name, uuid, cacheMode, subscribeException.Message));
                 await ReadCccd(characteristic, name, uuid, cacheMode, ""AfterNotifyWriteFailure"");
             }
         }
 
         Log(string.Format(""PM5 characteristic could not be subscribed after uncached/cached attempts. Name={0}, Uuid={1}"", name, uuid));
         return null;
+    }
+
+    private static async Task<GattCommunicationStatus> WriteNotifyCccdDirect(GattCharacteristic characteristic, string name, Guid uuid, BluetoothCacheMode cacheMode)
+    {
+        Log(string.Format(""PM5 direct CCCD notify write lookup started. Name={0}, Uuid={1}, CacheMode={2}, DescriptorUuid={3}, Payload=0100"", name, uuid, cacheMode, ClientCharacteristicConfigurationDescriptorUuid));
+        var descriptorsResult = await TimeoutAfter(characteristic.GetDescriptorsForUuidAsync(ClientCharacteristicConfigurationDescriptorUuid, cacheMode), 8000, ""PM5 direct CCCD descriptor lookup "" + name);
+        var descriptorCount = descriptorsResult.Descriptors == null ? 0 : descriptorsResult.Descriptors.Count;
+        Log(string.Format(""PM5 direct CCCD notify write lookup result. Name={0}, Uuid={1}, CacheMode={2}, Status={3}, Count={4}"", name, uuid, cacheMode, descriptorsResult.Status, descriptorCount));
+        if (descriptorsResult.Status != GattCommunicationStatus.Success || descriptorCount <= 0)
+        {
+            return descriptorsResult.Status;
+        }
+
+        var descriptor = descriptorsResult.Descriptors[0];
+        var writer = new DataWriter();
+        writer.WriteBytes(new byte[] { 0x01, 0x00 });
+        var payload = writer.DetachBuffer();
+        var writeOperation = descriptor.WriteValueAsync(payload);
+        Log(string.Format(""PM5 direct CCCD notify write operation created. Name={0}, Uuid={1}, CacheMode={2}, Payload=0100, Diagnostics={3}"", name, uuid, cacheMode, FormatWinRtOperationDiagnostics(writeOperation)));
+        var status = await TimeoutAfter(writeOperation, 12000, ""PM5 direct CCCD Notify "" + name);
+        Log(string.Format(""PM5 direct CCCD notify write completed. Name={0}, Uuid={1}, CacheMode={2}, Payload=0100, Status={3}"", name, uuid, cacheMode, status));
+        return status;
     }
 
     private static void LogBluetoothDeviceState(BluetoothLEDevice device, string phase)

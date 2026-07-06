@@ -95,12 +95,14 @@ public class Pm5BleRuntimeConnectorTests
     }
 
     [Test]
-    public void WindowsPm5BleClient_CSharpConnectHelperUsesAwaitedCccdNotifyWrite()
+    public void WindowsPm5BleClient_CSharpConnectHelperUsesDirectCccdNotifyWrite()
     {
         var source = BuildCSharpConnectHelperSourceForTest();
 
         StringAssert.Contains("[STAThread]", source);
-        StringAssert.Contains("WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue.Notify)", source);
+        StringAssert.Contains("private static async Task<GattCommunicationStatus> WriteNotifyCccdDirect", source);
+        StringAssert.Contains("writer.WriteBytes(new byte[] { 0x01, 0x00 })", source);
+        StringAssert.Contains("descriptor.WriteValueAsync(payload)", source);
         StringAssert.Contains("await TimeoutAfter", source);
         StringAssert.Contains("METRIC_RAW|{0}|{1}|{2}", source);
     }
@@ -110,9 +112,9 @@ public class Pm5BleRuntimeConnectorTests
     {
         var source = BuildCSharpConnectHelperSourceForTest();
 
-        StringAssert.Contains("PM5 notification write operation created", source);
+        StringAssert.Contains("PM5 direct CCCD notify write operation created", source);
         StringAssert.Contains("FormatWinRtOperationDiagnostics(writeOperation)", source);
-        StringAssert.Contains("Diagnostics={4}", source);
+        StringAssert.Contains("Diagnostics={3}", source);
     }
 
     [Test]
