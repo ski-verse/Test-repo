@@ -122,8 +122,22 @@ public class Pm5BleRuntimeConnectorTests
 
         StringAssert.Contains("PM5 single Rowing Stroke Data subscription diagnostic started.", source);
         StringAssert.Contains("SubscribeCharacteristic(service, \"Rowing Stroke Data\", RowingStrokeDataUuid)", source);
-        StringAssert.DoesNotContain("SubscribeCharacteristic(service, \"Multiplexed Information\", MultiplexedInformationUuid)", source);
         StringAssert.DoesNotContain("PM5 workout data subscription attempt", source);
+    }
+
+    [Test]
+    public void WindowsPm5BleClient_CSharpConnectHelperFallsBackToMultiplexedWhenRowingStrokeNotifyFails()
+    {
+        var source = BuildCSharpConnectHelperSourceForTest();
+        var rowingSubscribeIndex = source.IndexOf("SubscribeCharacteristic(service, \"Rowing Stroke Data\", RowingStrokeDataUuid)", StringComparison.Ordinal);
+        var multiplexedLogIndex = source.IndexOf("PM5 Rowing Stroke Data subscription failed. Trying Multiplexed Information.", StringComparison.Ordinal);
+        var multiplexedSubscribeIndex = source.IndexOf("SubscribeCharacteristic(service, \"Multiplexed Information\", MultiplexedInformationUuid)", StringComparison.Ordinal);
+        var failureIndex = source.IndexOf("FAILED|PM5 Rowing Stroke Data and Multiplexed Information subscriptions failed.", StringComparison.Ordinal);
+
+        Assert.That(rowingSubscribeIndex, Is.GreaterThanOrEqualTo(0));
+        Assert.That(multiplexedLogIndex, Is.GreaterThan(rowingSubscribeIndex));
+        Assert.That(multiplexedSubscribeIndex, Is.GreaterThan(multiplexedLogIndex));
+        Assert.That(failureIndex, Is.GreaterThan(multiplexedSubscribeIndex));
     }
 
     [Test]
@@ -145,7 +159,7 @@ public class Pm5BleRuntimeConnectorTests
     public void WindowsPm5BleClient_CSharpConnectHelperExitsWhenDiagnosticSubscriptionFails()
     {
         var source = BuildCSharpConnectHelperSourceForTest();
-        var failureIndex = source.IndexOf("FAILED|PM5 Rowing Stroke Data subscription failed.", StringComparison.Ordinal);
+        var failureIndex = source.IndexOf("FAILED|PM5 Rowing Stroke Data and Multiplexed Information subscriptions failed.", StringComparison.Ordinal);
         var returnIndex = source.IndexOf("return;", failureIndex, StringComparison.Ordinal);
         var keepAliveIndex = source.IndexOf("while (true)", failureIndex, StringComparison.Ordinal);
 

@@ -690,9 +690,15 @@ internal static class SkiVersePm5BleConnectHelper
         Log(""PM5 single Rowing Stroke Data subscription diagnostic completed. Active="" + (subscription != null));
         if (subscription == null)
         {
-            Console.WriteLine(""FAILED|PM5 Rowing Stroke Data subscription failed."");
-            Flush();
-            return;
+            Log(""PM5 Rowing Stroke Data subscription failed. Trying Multiplexed Information."");
+            subscription = await SubscribeCharacteristic(service, ""Multiplexed Information"", MultiplexedInformationUuid);
+            Log(""PM5 Multiplexed Information subscription diagnostic completed. Active="" + (subscription != null));
+            if (subscription == null)
+            {
+                Console.WriteLine(""FAILED|PM5 Rowing Stroke Data and Multiplexed Information subscriptions failed."");
+                Flush();
+                return;
+            }
         }
 
         while (true)
