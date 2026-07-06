@@ -203,15 +203,17 @@ public class Pm5BleRuntimeConnectorTests
     }
 
     [Test]
-    public void WindowsPm5BleClient_CSharpConnectHelperUsesBluetoothDeviceServiceBeforeSelectorFallback()
+    public void WindowsPm5BleClient_CSharpConnectHelperUsesServiceSelectorBeforeBluetoothDeviceFallback()
     {
         var source = BuildCSharpConnectHelperSourceForTest();
+        var selectorPrimaryCallIndex = source.IndexOf("TryOpenWorkoutServiceFromSelector(address)", StringComparison.Ordinal);
         var bluetoothDeviceResolveIndex = source.IndexOf("BluetoothLEDevice device;", StringComparison.Ordinal);
-        var selectorFallbackCallIndex = source.IndexOf("TryOpenWorkoutServiceFromSelector(address)", StringComparison.Ordinal);
 
+        Assert.GreaterOrEqual(selectorPrimaryCallIndex, 0);
         Assert.GreaterOrEqual(bluetoothDeviceResolveIndex, 0);
-        Assert.GreaterOrEqual(selectorFallbackCallIndex, 0);
-        Assert.Less(bluetoothDeviceResolveIndex, selectorFallbackCallIndex);
+        Assert.Less(selectorPrimaryCallIndex, bluetoothDeviceResolveIndex);
+        StringAssert.Contains("Trying PM5 workout service selector before BluetoothLEDevice resolve.", source);
+        StringAssert.Contains("PM5 workout service selector did not open a direct service. Falling back to BluetoothLEDevice service lookup.", source);
     }
 
     private static string BuildConnectScriptForTest()
