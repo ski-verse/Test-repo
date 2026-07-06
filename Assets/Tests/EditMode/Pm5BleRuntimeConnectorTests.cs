@@ -216,6 +216,23 @@ public class Pm5BleRuntimeConnectorTests
         StringAssert.Contains("PM5 workout service selector did not open a direct service. Falling back to BluetoothLEDevice service lookup.", source);
     }
 
+    [Test]
+    public void WindowsPm5BleClient_CSharpConnectHelperReportsConnectedOnlyAfterNotifySubscription()
+    {
+        var source = BuildCSharpConnectHelperSourceForTest();
+        var oldServiceVerifiedConnectedIndex = source.IndexOf("CONNECTED|GATT Concept2 PM5 workout service verified", StringComparison.Ordinal);
+        var subscriptionFailureIndex = source.IndexOf("FAILED|PM5 Rowing Stroke Data and Multiplexed Information subscriptions failed.", StringComparison.Ordinal);
+        var connectedIndex = source.IndexOf("CONNECTED|PM5 workout notifications subscribed", StringComparison.Ordinal);
+        var keepAliveLoopIndex = source.IndexOf("while (true)", StringComparison.Ordinal);
+
+        Assert.AreEqual(-1, oldServiceVerifiedConnectedIndex);
+        Assert.GreaterOrEqual(subscriptionFailureIndex, 0);
+        Assert.GreaterOrEqual(connectedIndex, 0);
+        Assert.GreaterOrEqual(keepAliveLoopIndex, 0);
+        Assert.Less(subscriptionFailureIndex, connectedIndex);
+        Assert.Less(connectedIndex, keepAliveLoopIndex);
+    }
+
     private static string BuildConnectScriptForTest()
     {
         var method = typeof(WindowsPm5BleClient).GetMethod("BuildConnectScript", BindingFlags.NonPublic | BindingFlags.Static);

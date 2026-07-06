@@ -672,7 +672,7 @@ internal static class SkiVersePm5BleConnectHelper
 
     private static async Task StartWorkoutNotifications(GattDeviceService service, string deviceName)
     {
-        Console.WriteLine(string.Format(""CONNECTED|GATT Concept2 PM5 workout service verified. DeviceName=\""{0}\"""", deviceName));
+        Log(string.Format(""PM5 workout service verified. DeviceName=\""{0}\"". Waiting for notification subscription before reporting Connected."", deviceName));
         Flush();
 
         try
@@ -707,6 +707,9 @@ internal static class SkiVersePm5BleConnectHelper
                 return;
             }
         }
+
+        Console.WriteLine(string.Format(""CONNECTED|PM5 workout notifications subscribed. DeviceName=\""{0}\"", Characteristic=\""{1}\"""", deviceName, subscription.Name));
+        Flush();
 
         while (true)
         {
@@ -1510,7 +1513,7 @@ function Find-Pm5WorkoutServiceDeviceId([Guid]$workoutServiceUuid, [UInt64]$addr
     return $null
 }
 function Start-Pm5WorkoutNotifications($pm5Service, [string]$deviceName) {
-    [Console]::WriteLine(('CONNECTED|GATT Concept2 PM5 workout service verified. DeviceName=""{0}""' -f $deviceName))
+    [Console]::WriteLine(('LOG|PM5 workout service verified. DeviceName=""{0}"". Waiting for notification subscription before reporting Connected.' -f $deviceName))
     [Console]::Out.Flush()
     try {
         $session = $pm5Service.Session
@@ -1525,6 +1528,7 @@ function Start-Pm5WorkoutNotifications($pm5Service, [string]$deviceName) {
     }
 
     $subscriptions = @()
+    $reportedConnected = $false
     $subscriptionAttempt = 0
     while ($true) {
         $activeSubscriptions = @($subscriptions | Where-Object { $null -ne $_ })
@@ -1546,6 +1550,10 @@ function Start-Pm5WorkoutNotifications($pm5Service, [string]$deviceName) {
             if ($null -ne $primarySubscription) {
                 $subscriptions += $primarySubscription
                 [Console]::WriteLine(('LOG|PM5 primary workout data subscription active. Name={0}' -f $primaryName))
+                if (-not $reportedConnected) {
+                    [Console]::WriteLine(('CONNECTED|PM5 workout notifications subscribed. DeviceName=""{0}"", Characteristic=""{1}""' -f $deviceName, $primaryName))
+                    $reportedConnected = $true
+                }
                 [Console]::Out.Flush()
 
                 if ($primaryName -eq 'Rowing Stroke Data') {
