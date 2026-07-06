@@ -109,11 +109,35 @@ public class Pm5BleRuntimeConnectorTests
         var source = BuildCSharpConnectHelperSourceForTest();
 
         StringAssert.Contains("[STAThread]", source);
+        StringAssert.Contains("private static async Task<GattCommunicationStatus> WriteNotifyCccdStandard", source);
         StringAssert.Contains("private static async Task<GattCommunicationStatus> WriteNotifyCccdDirect", source);
+        StringAssert.Contains("WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue.Notify)", source);
         StringAssert.Contains("writer.WriteBytes(new byte[] { 0x01, 0x00 })", source);
         StringAssert.Contains("descriptor.WriteValueAsync(payload)", source);
         StringAssert.Contains("await TimeoutAfter", source);
         StringAssert.Contains("METRIC_RAW|{0}|{1}|{2}", source);
+    }
+
+    [Test]
+    public void WindowsPm5BleClient_CSharpConnectHelperTriesStandardNotifyBeforeDirectCccdFallback()
+    {
+        var source = BuildCSharpConnectHelperSourceForTest();
+        var standardIndex = source.IndexOf("var status = await WriteNotifyCccdStandard(characteristic, name, uuid, cacheMode);", StringComparison.Ordinal);
+        var fallbackIndex = source.IndexOf("PM5 standard notify write failed. Trying direct CCCD payload.", StringComparison.Ordinal);
+        var directIndex = source.IndexOf("status = await WriteNotifyCccdDirect(characteristic, name, uuid, cacheMode);", StringComparison.Ordinal);
+
+        Assert.That(standardIndex, Is.GreaterThanOrEqualTo(0));
+        Assert.That(fallbackIndex, Is.GreaterThan(standardIndex));
+        Assert.That(directIndex, Is.GreaterThan(fallbackIndex));
+    }
+
+    [Test]
+    public void WindowsPm5BleClient_CSharpConnectHelperCancelsTimedOutWinRtOperations()
+    {
+        var source = BuildCSharpConnectHelperSourceForTest();
+
+        StringAssert.Contains("operation.Cancel();", source);
+        StringAssert.Contains("WinRT operation cancel requested after timeout", source);
     }
 
     [Test]

@@ -811,9 +811,34 @@ internal static class SkiVersePm5BleConnectHelper
                 handlerAttached = true;
                 Log(string.Format(""PM5 notification handler attached before CCCD write. Name={0}, Uuid={1}, CacheMode={2}"", name, uuid, cacheMode));
                 await ReadCccd(characteristic, name, uuid, cacheMode, ""BeforeNotifyWrite"");
-                Log(string.Format(""PM5 notification subscribe started. Name={0}, Uuid={1}, CacheMode={2}, Properties={3}, Descriptor=DirectCCCDNotify0100"", name, uuid, cacheMode, characteristic.CharacteristicProperties));
-                var status = await WriteNotifyCccdDirect(characteristic, name, uuid, cacheMode);
-                Log(string.Format(""PM5 notification subscribe completed. Name={0}, Uuid={1}, CacheMode={2}, Descriptor=DirectCCCDNotify0100, Status={3}"", name, uuid, cacheMode, status));
+                Log(string.Format(""PM5 notification subscribe started. Name={0}, Uuid={1}, CacheMode={2}, Properties={3}, Descriptor=StandardNotify"", name, uuid, cacheMode, characteristic.CharacteristicProperties));
+                var status = GattCommunicationStatus.Unreachable;
+                var tryDirectCccdFallback = false;
+                var standardNotifyThrew = false;
+                try
+                {
+                    status = await WriteNotifyCccdStandard(characteristic, name, uuid, cacheMode);
+                    Log(string.Format(""PM5 notification subscribe completed. Name={0}, Uuid={1}, CacheMode={2}, Descriptor=StandardNotify, Status={3}"", name, uuid, cacheMode, status));
+                    tryDirectCccdFallback = status != GattCommunicationStatus.Success;
+                }
+                catch (Exception standardException)
+                {
+                    Error(string.Format(""PM5 standard notify write timed out or failed. Name={0}, Uuid={1}, CacheMode={2}, Error={3}"", name, uuid, cacheMode, standardException.Message));
+                    standardNotifyThrew = true;
+                    tryDirectCccdFallback = true;
+                }
+
+                if (standardNotifyThrew)
+                {
+                    await ReadCccd(characteristic, name, uuid, cacheMode, ""AfterStandardNotifyWriteFailure"");
+                }
+
+                if (tryDirectCccdFallback)
+                {
+                    Log(string.Format(""PM5 standard notify write failed. Trying direct CCCD payload. Name={0}, Uuid={1}, CacheMode={2}, Status={3}"", name, uuid, cacheMode, status));
+                    status = await WriteNotifyCccdDirect(characteristic, name, uuid, cacheMode);
+                    Log(string.Format(""PM5 notification subscribe completed. Name={0}, Uuid={1}, CacheMode={2}, Descriptor=DirectCCCDNotify0100, Status={3}"", name, uuid, cacheMode, status));
+                }
                 await ReadCccd(characteristic, name, uuid, cacheMode, ""AfterNotifyWrite"");
                 if (status == GattCommunicationStatus.Success)
                 {
@@ -850,6 +875,16 @@ internal static class SkiVersePm5BleConnectHelper
 
         Log(string.Format(""PM5 characteristic could not be subscribed after uncached/cached attempts. Name={0}, Uuid={1}"", name, uuid));
         return null;
+    }
+
+    private static async Task<GattCommunicationStatus> WriteNotifyCccdStandard(GattCharacteristic characteristic, string name, Guid uuid, BluetoothCacheMode cacheMode)
+    {
+        Log(string.Format(""PM5 standard notify write operation started. Name={0}, Uuid={1}, CacheMode={2}, Descriptor=Notify"", name, uuid, cacheMode));
+        var writeOperation = characteristic.WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue.Notify);
+        Log(string.Format(""PM5 standard notify write operation created. Name={0}, Uuid={1}, CacheMode={2}, Diagnostics={3}"", name, uuid, cacheMode, FormatWinRtOperationDiagnostics(writeOperation)));
+        var status = await TimeoutAfter(writeOperation, 12000, ""PM5 standard Notify "" + name);
+        Log(string.Format(""PM5 standard notify write completed. Name={0}, Uuid={1}, CacheMode={2}, Status={3}"", name, uuid, cacheMode, status));
+        return status;
     }
 
     private static async Task<GattCommunicationStatus> WriteNotifyCccdDirect(GattCharacteristic characteristic, string name, Guid uuid, BluetoothCacheMode cacheMode)
@@ -992,6 +1027,16 @@ internal static class SkiVersePm5BleConnectHelper
         var completed = await Task.WhenAny(task, Task.Delay(timeoutMs));
         if (completed != task)
         {
+            try
+            {
+                operation.Cancel();
+                Log(""WinRT operation cancel requested after timeout. Label="" + label);
+            }
+            catch (Exception cancelException)
+            {
+                Error(""WinRT operation cancel after timeout failed. Label="" + label + "", Error="" + cancelException.Message);
+            }
+
             throw new TimeoutException(""Timed out waiting for Windows BLE operation. Label="" + label);
         }
 
