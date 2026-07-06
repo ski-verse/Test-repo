@@ -129,6 +129,21 @@ public class Pm5BleRuntimeConnectorTests
     }
 
     [Test]
+    public void WindowsPm5BleClient_CSharpConnectHelperWaitsForActiveGattSessionBeforeNotify()
+    {
+        var source = BuildCSharpConnectHelperSourceForTest();
+        var waitMethodIndex = source.IndexOf("private static async Task WaitForActiveGattSession", StringComparison.Ordinal);
+        var waitCallIndex = source.IndexOf("await WaitForActiveGattSession(session)", StringComparison.Ordinal);
+        var subscribeIndex = source.IndexOf("SubscribeCharacteristic(service, \"Rowing Stroke Data\", RowingStrokeDataUuid)", StringComparison.Ordinal);
+
+        Assert.That(waitMethodIndex, Is.GreaterThanOrEqualTo(0));
+        Assert.That(waitCallIndex, Is.GreaterThan(waitMethodIndex));
+        Assert.That(waitCallIndex, Is.LessThan(subscribeIndex));
+        StringAssert.Contains("PM5 GATT session wait completed", source);
+        StringAssert.Contains("PM5 GATT session wait timed out", source);
+    }
+
+    [Test]
     public void WindowsPm5BleClient_CSharpConnectHelperUsesSingleRowingStrokeDiagnosticSubscription()
     {
         var source = BuildCSharpConnectHelperSourceForTest();

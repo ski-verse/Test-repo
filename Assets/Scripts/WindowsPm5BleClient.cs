@@ -682,6 +682,7 @@ internal static class SkiVersePm5BleConnectHelper
                 session.MaintainConnection = true;
                 LogGattSessionState(session, ""AfterMaintainConnection"");
                 Log(""PM5 GATT session maintain connection enabled. MaxPduSize="" + session.MaxPduSize);
+                await WaitForActiveGattSession(session);
             }
         }
         catch (Exception exception)
@@ -826,6 +827,31 @@ internal static class SkiVersePm5BleConnectHelper
         catch (Exception exception)
         {
             Error(string.Format(""PM5 GATT session state log failed. Phase={0}, Error={1}"", phase, exception.Message));
+        }
+    }
+
+    private static async Task WaitForActiveGattSession(GattSession session)
+    {
+        try
+        {
+            var deadline = DateTime.UtcNow.AddSeconds(8);
+            while (DateTime.UtcNow < deadline)
+            {
+                LogGattSessionState(session, ""WaitForActiveSession"");
+                if (session.SessionStatus == GattSessionStatus.Active)
+                {
+                    Log(""PM5 GATT session wait completed. SessionStatus="" + session.SessionStatus);
+                    return;
+                }
+
+                await Task.Delay(250);
+            }
+
+            Log(""PM5 GATT session wait timed out. SessionStatus="" + session.SessionStatus);
+        }
+        catch (Exception exception)
+        {
+            Error(""PM5 GATT session wait failed: "" + exception.Message);
         }
     }
 
