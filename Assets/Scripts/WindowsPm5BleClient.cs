@@ -1463,6 +1463,24 @@ trap {
 [Windows.Devices.Enumeration.DeviceAccessInformation,Windows.Devices.Enumeration,ContentType=WindowsRuntime] | Out-Null
 [Windows.Foundation.TypedEventHandler`2,Windows.Foundation,ContentType=WindowsRuntime] | Out-Null
 [Console]::WriteLine('LOG|Windows BLE scan helper started.')
+[Console]::Out.Flush()
+try {
+    $bluetoothService = Get-Service -Name bthserv -ErrorAction Stop
+    [Console]::WriteLine(('LOG|Bluetooth support service status. Name={0}, Status={1}, StartType={2}' -f $bluetoothService.Name, $bluetoothService.Status, $bluetoothService.StartType))
+    [Console]::Out.Flush()
+} catch {
+    [Console]::WriteLine(('ERROR|Bluetooth support service status unavailable: {0}' -f $_.Exception.Message))
+    [Console]::Out.Flush()
+}
+try {
+    foreach ($bluetoothDevice in Get-PnpDevice -Class Bluetooth -ErrorAction Stop) {
+        [Console]::WriteLine(('LOG|Bluetooth PnP adapter. Name=""{0}"", Status={1}, InstanceId=""{2}""' -f $bluetoothDevice.FriendlyName, $bluetoothDevice.Status, $bluetoothDevice.InstanceId))
+        [Console]::Out.Flush()
+    }
+} catch {
+    [Console]::WriteLine(('ERROR|Bluetooth PnP adapter diagnostics failed: {0}' -f $_.Exception.Message))
+    [Console]::Out.Flush()
+}
 [Console]::WriteLine('LOG|Production BLE advertisement scan started. PM5 should be detected by name or Concept2 service UUID without Windows Bluetooth pairing.')
 $services = @([Guid]'ce060000-43e5-11e4-916c-0800200c9a66', [Guid]'ce060030-43e5-11e4-916c-0800200c9a66', [Guid]'ce060020-43e5-11e4-916c-0800200c9a66', [Guid]'ce060010-43e5-11e4-916c-0800200c9a66')
 $seen = [hashtable]::Synchronized(@{})
@@ -1493,6 +1511,8 @@ function Report-Pm5($source, $deviceId, $address, $name) {
 }
 $advertisementWatcher = [Windows.Devices.Bluetooth.Advertisement.BluetoothLEAdvertisementWatcher]::new()
 $advertisementWatcher.ScanningMode = [Windows.Devices.Bluetooth.Advertisement.BluetoothLEScanningMode]::Active
+[Console]::WriteLine(('LOG|Advertisement watcher initial status. Status={0}, ScanningMode={1}' -f $advertisementWatcher.Status, $advertisementWatcher.ScanningMode))
+[Console]::Out.Flush()
 $advertisementHandler = [Windows.Foundation.TypedEventHandler[Windows.Devices.Bluetooth.Advertisement.BluetoothLEAdvertisementWatcher,Windows.Devices.Bluetooth.Advertisement.BluetoothLEAdvertisementReceivedEventArgs]] {
     param($sender, $args)
     $script:advertisementCount++
@@ -1511,8 +1531,17 @@ $advertisementHandler = [Windows.Foundation.TypedEventHandler[Windows.Devices.Bl
 }
 $advertisementToken = $advertisementWatcher.add_Received($advertisementHandler)
 $advertisementWatcher.Start()
+[Console]::WriteLine(('LOG|Advertisement watcher start requested. Status={0}' -f $advertisementWatcher.Status))
+[Console]::Out.Flush()
+Start-Sleep -Milliseconds 500
+[Console]::WriteLine(('LOG|Advertisement watcher status after start. Status={0}' -f $advertisementWatcher.Status))
+[Console]::Out.Flush()
 Start-Sleep -Seconds 20
+[Console]::WriteLine(('LOG|Advertisement watcher status before stop. Status={0}' -f $advertisementWatcher.Status))
+[Console]::Out.Flush()
 $advertisementWatcher.Stop()
+[Console]::WriteLine(('LOG|Advertisement watcher status after stop. Status={0}' -f $advertisementWatcher.Status))
+[Console]::Out.Flush()
 $advertisementWatcher.remove_Received($advertisementToken)
 [Console]::WriteLine(('LOG|Production BLE advertisement scan summary. Advertisements={0}, Pm5Matches={1}' -f $advertisementCount, $pm5AdvertisementMatchCount))
 [Console]::WriteLine('LOG|Production BLE advertisement scan finished.')

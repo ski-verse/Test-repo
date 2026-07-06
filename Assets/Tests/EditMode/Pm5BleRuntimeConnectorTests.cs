@@ -42,7 +42,8 @@ public class Pm5BleRuntimeConnectorTests
 
         StringAssert.Contains("Production BLE advertisement scan started", script);
         StringAssert.Contains("Development Windows known-device fallback disabled", script);
-        StringAssert.DoesNotContain("Get-PnpDevice", script);
+        StringAssert.DoesNotContain("Development fallback checking Windows PnP", script);
+        StringAssert.DoesNotContain("Report-Pm5 'DevelopmentWindowsPnP'", script);
         StringAssert.DoesNotContain("CreateWatcher($selector)", script);
     }
 
@@ -71,6 +72,20 @@ public class Pm5BleRuntimeConnectorTests
         StringAssert.Contains("$developmentDeviceWatcherCount = 0", script);
         StringAssert.Contains("$developmentPnpCount = 0", script);
         StringAssert.Contains("Development fallback scan summary", script);
+    }
+
+    [Test]
+    public void WindowsPm5BleClient_ScanScriptLogsBluetoothAdapterAndWatcherStatus()
+    {
+        var script = BuildScanScriptForTest(Pm5BleDiscoveryMode.DevelopmentWindowsKnownDevicesFallback);
+
+        StringAssert.Contains("Bluetooth support service status", script);
+        StringAssert.Contains("Bluetooth PnP adapter", script);
+        StringAssert.Contains("Advertisement watcher initial status", script);
+        StringAssert.Contains("Advertisement watcher start requested", script);
+        StringAssert.Contains("Advertisement watcher status after start", script);
+        StringAssert.Contains("Advertisement watcher status before stop", script);
+        StringAssert.Contains("Advertisement watcher status after stop", script);
     }
 
     [Test]
