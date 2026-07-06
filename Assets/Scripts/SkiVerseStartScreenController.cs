@@ -314,9 +314,9 @@ public class SkiVerseStartScreenController : MonoBehaviour
         var label = CreatePanelText(section.transform, "PM5 Section Title", new Vector2(0f, 88f), new Vector2(600f, 34f), 26f, FontStyles.Bold);
         label.text = "Concept2 PM5";
 
-        pm5StatusText = CreatePanelText(section.transform, "PM5 Status Text", new Vector2(0f, 50f), new Vector2(600f, 32f), 24f, FontStyles.Normal);
+        pm5StatusText = CreatePanelText(section.transform, "PM5 Status Text", new Vector2(0f, 42f), new Vector2(600f, 56f), 20f, FontStyles.Normal);
 
-        pm5DeviceListText = CreatePanelText(section.transform, "PM5 Device List Text", new Vector2(0f, 16f), new Vector2(600f, 28f), 20f, FontStyles.Normal);
+        pm5DeviceListText = CreatePanelText(section.transform, "PM5 Device List Text", new Vector2(0f, -2f), new Vector2(600f, 28f), 20f, FontStyles.Normal);
         pm5DeviceListText.text = "No PM5 devices found";
 
         var deviceListObject = new GameObject("PM5 Device Button Container");
@@ -325,7 +325,7 @@ public class SkiVerseStartScreenController : MonoBehaviour
         pm5DeviceButtonContainer.anchorMin = new Vector2(0.5f, 0.5f);
         pm5DeviceButtonContainer.anchorMax = new Vector2(0.5f, 0.5f);
         pm5DeviceButtonContainer.pivot = new Vector2(0.5f, 0.5f);
-        pm5DeviceButtonContainer.anchoredPosition = new Vector2(0f, -26f);
+        pm5DeviceButtonContainer.anchoredPosition = new Vector2(0f, -42f);
         pm5DeviceButtonContainer.sizeDelta = new Vector2(600f, 58f);
 
         connectPm5Button = CreateButton(section.transform, "Connect PM5 Button", "Connect PM5", new Vector2(0f, -88f), new Vector2(340f, 54f), 26f);
@@ -402,7 +402,7 @@ public class SkiVerseStartScreenController : MonoBehaviour
 
         if (pm5StatusText != null)
         {
-            pm5StatusText.text = pm5Connector.GetStatusText();
+            pm5StatusText.text = $"{pm5Connector.GetStatusText()}\n{pm5Connector.GetDataStatusText()}";
         }
 
         RebuildPm5DeviceListIfNeeded(force);

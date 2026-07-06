@@ -8,12 +8,21 @@ public class Pm5BleRuntimeConnectorTests
     public void StatusToText_ReturnsRequiredPm5UiStates()
     {
         Assert.AreEqual("PM5: Not connected", Pm5BleRuntimeConnector.StatusToText(Pm5BleConnectionStatus.NotConnected));
-        Assert.AreEqual("Searching...", Pm5BleRuntimeConnector.StatusToText(Pm5BleConnectionStatus.Searching));
-        Assert.AreEqual("PM5 Found - select device", Pm5BleRuntimeConnector.StatusToText(Pm5BleConnectionStatus.Pm5Found));
-        Assert.AreEqual("Connecting...", Pm5BleRuntimeConnector.StatusToText(Pm5BleConnectionStatus.Connecting));
-        Assert.AreEqual("Connected", Pm5BleRuntimeConnector.StatusToText(Pm5BleConnectionStatus.Connected));
+        Assert.AreEqual("PM5: Searching", Pm5BleRuntimeConnector.StatusToText(Pm5BleConnectionStatus.Searching));
+        Assert.AreEqual("PM5: Found", Pm5BleRuntimeConnector.StatusToText(Pm5BleConnectionStatus.Pm5Found));
+        Assert.AreEqual("PM5: Connecting", Pm5BleRuntimeConnector.StatusToText(Pm5BleConnectionStatus.Connecting));
+        Assert.AreEqual("PM5: Connected", Pm5BleRuntimeConnector.StatusToText(Pm5BleConnectionStatus.Connected));
         Assert.AreEqual("PM5 Found - connection not implemented", Pm5BleRuntimeConnector.StatusToText(Pm5BleConnectionStatus.Pm5FoundConnectionNotImplemented));
         Assert.AreEqual("Connection Failed", Pm5BleRuntimeConnector.StatusToText(Pm5BleConnectionStatus.ConnectionFailed));
+    }
+
+    [Test]
+    public void DataStatusToText_ReturnsRequiredPm5WorkoutDataUiStates()
+    {
+        Assert.AreEqual("Data: Waiting for workout data", Pm5BleRuntimeConnector.DataStatusToText(Pm5WorkoutDataStatus.WaitingForWorkoutData));
+        Assert.AreEqual("Data: Subscribing to workout notifications", Pm5BleRuntimeConnector.DataStatusToText(Pm5WorkoutDataStatus.SubscribingToWorkoutNotifications));
+        Assert.AreEqual("Data: Receiving live data", Pm5BleRuntimeConnector.DataStatusToText(Pm5WorkoutDataStatus.ReceivingLiveData));
+        Assert.AreEqual("Data: Notification subscription failed", Pm5BleRuntimeConnector.DataStatusToText(Pm5WorkoutDataStatus.NotificationSubscriptionFailed));
     }
 
     [Test]
@@ -166,12 +175,12 @@ public class Pm5BleRuntimeConnectorTests
         var rowingSubscribeIndex = source.IndexOf("SubscribeCharacteristic(service, \"Rowing Stroke Data\", RowingStrokeDataUuid)", StringComparison.Ordinal);
         var multiplexedLogIndex = source.IndexOf("PM5 Rowing Stroke Data subscription failed. Trying Multiplexed Information.", StringComparison.Ordinal);
         var multiplexedSubscribeIndex = source.IndexOf("SubscribeCharacteristic(service, \"Multiplexed Information\", MultiplexedInformationUuid)", StringComparison.Ordinal);
-        var failureIndex = source.IndexOf("FAILED|PM5 Rowing Stroke Data and Multiplexed Information subscriptions failed.", StringComparison.Ordinal);
+        var dataFailureIndex = source.IndexOf("DATA|NotificationSubscriptionFailed|PM5 Rowing Stroke Data and Multiplexed Information subscriptions failed.", StringComparison.Ordinal);
 
         Assert.That(rowingSubscribeIndex, Is.GreaterThanOrEqualTo(0));
         Assert.That(multiplexedLogIndex, Is.GreaterThan(rowingSubscribeIndex));
         Assert.That(multiplexedSubscribeIndex, Is.GreaterThan(multiplexedLogIndex));
-        Assert.That(failureIndex, Is.GreaterThan(multiplexedSubscribeIndex));
+        Assert.That(dataFailureIndex, Is.GreaterThan(multiplexedSubscribeIndex));
     }
 
     [Test]
@@ -190,16 +199,16 @@ public class Pm5BleRuntimeConnectorTests
     }
 
     [Test]
-    public void WindowsPm5BleClient_CSharpConnectHelperExitsWhenDiagnosticSubscriptionFails()
+    public void WindowsPm5BleClient_CSharpConnectHelperKeepsConnectionAliveWhenDiagnosticSubscriptionFails()
     {
         var source = BuildCSharpConnectHelperSourceForTest();
         var failureIndex = source.IndexOf("FAILED|PM5 Rowing Stroke Data and Multiplexed Information subscriptions failed.", StringComparison.Ordinal);
-        var returnIndex = source.IndexOf("return;", failureIndex, StringComparison.Ordinal);
-        var keepAliveIndex = source.IndexOf("while (true)", failureIndex, StringComparison.Ordinal);
+        var dataFailureIndex = source.IndexOf("DATA|NotificationSubscriptionFailed", StringComparison.Ordinal);
+        var keepAliveIndex = source.IndexOf("while (true)", dataFailureIndex, StringComparison.Ordinal);
 
-        Assert.That(failureIndex, Is.GreaterThanOrEqualTo(0));
-        Assert.That(returnIndex, Is.GreaterThan(failureIndex));
-        Assert.That(returnIndex, Is.LessThan(keepAliveIndex));
+        Assert.AreEqual(-1, failureIndex);
+        Assert.That(dataFailureIndex, Is.GreaterThanOrEqualTo(0));
+        Assert.That(keepAliveIndex, Is.GreaterThan(dataFailureIndex));
     }
 
     [Test]
@@ -217,20 +226,25 @@ public class Pm5BleRuntimeConnectorTests
     }
 
     [Test]
-    public void WindowsPm5BleClient_CSharpConnectHelperReportsConnectedOnlyAfterNotifySubscription()
+    public void WindowsPm5BleClient_CSharpConnectHelperSeparatesConnectionStatusFromDataStatus()
     {
         var source = BuildCSharpConnectHelperSourceForTest();
         var oldServiceVerifiedConnectedIndex = source.IndexOf("CONNECTED|GATT Concept2 PM5 workout service verified", StringComparison.Ordinal);
+        var connectedIndex = source.IndexOf("CONNECTED|PM5 GATT connected", StringComparison.Ordinal);
+        var subscribingIndex = source.IndexOf("DATA|SubscribingToWorkoutNotifications", StringComparison.Ordinal);
         var subscriptionFailureIndex = source.IndexOf("FAILED|PM5 Rowing Stroke Data and Multiplexed Information subscriptions failed.", StringComparison.Ordinal);
-        var connectedIndex = source.IndexOf("CONNECTED|PM5 workout notifications subscribed", StringComparison.Ordinal);
-        var keepAliveLoopIndex = source.IndexOf("while (true)", StringComparison.Ordinal);
+        var receivingIndex = source.IndexOf("DATA|ReceivingLiveData", StringComparison.Ordinal);
+        var dataFailureIndex = source.IndexOf("DATA|NotificationSubscriptionFailed", StringComparison.Ordinal);
 
         Assert.AreEqual(-1, oldServiceVerifiedConnectedIndex);
-        Assert.GreaterOrEqual(subscriptionFailureIndex, 0);
+        Assert.AreEqual(-1, subscriptionFailureIndex);
         Assert.GreaterOrEqual(connectedIndex, 0);
-        Assert.GreaterOrEqual(keepAliveLoopIndex, 0);
-        Assert.Less(subscriptionFailureIndex, connectedIndex);
-        Assert.Less(connectedIndex, keepAliveLoopIndex);
+        Assert.GreaterOrEqual(subscribingIndex, 0);
+        Assert.GreaterOrEqual(receivingIndex, 0);
+        Assert.GreaterOrEqual(dataFailureIndex, 0);
+        Assert.Less(connectedIndex, subscribingIndex);
+        Assert.Less(subscribingIndex, dataFailureIndex);
+        Assert.Less(subscribingIndex, receivingIndex);
     }
 
     private static string BuildConnectScriptForTest()
@@ -252,6 +266,8 @@ public class Pm5BleRuntimeConnectorTests
         public event Action StateChanged;
 
         public Pm5BleConnectionStatus Status => Pm5BleConnectionStatus.NotConnected;
+
+        public Pm5WorkoutDataStatus DataStatus => Pm5WorkoutDataStatus.WaitingForWorkoutData;
 
         public System.Collections.Generic.IReadOnlyList<Pm5BleDeviceInfo> DiscoveredDevices => Array.Empty<Pm5BleDeviceInfo>();
 

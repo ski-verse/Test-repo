@@ -47,6 +47,8 @@ public class Pm5WorkoutDataSourceTests
 
         public Pm5BleConnectionStatus Status => Pm5BleConnectionStatus.Connected;
 
+        public Pm5WorkoutDataStatus DataStatus => Pm5WorkoutDataStatus.WaitingForWorkoutData;
+
         public System.Collections.Generic.IReadOnlyList<Pm5BleDeviceInfo> DiscoveredDevices => Array.Empty<Pm5BleDeviceInfo>();
 
         public bool HasWorkoutData => metrics.HasAnyMetrics;

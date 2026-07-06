@@ -7,6 +7,8 @@ public interface IPm5BleClient
 
     Pm5BleConnectionStatus Status { get; }
 
+    Pm5WorkoutDataStatus DataStatus { get; }
+
     IReadOnlyList<Pm5BleDeviceInfo> DiscoveredDevices { get; }
 
     void StartScan();

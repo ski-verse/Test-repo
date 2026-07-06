@@ -19,6 +19,7 @@ public sealed class WindowsPm5BleClient : IPm5BleClient, IPm5WorkoutDataClient
     private readonly object gate = new object();
     private readonly List<Pm5BleDeviceInfo> discoveredDevices = new List<Pm5BleDeviceInfo>();
     private Pm5BleConnectionStatus status = Pm5BleConnectionStatus.NotConnected;
+    private Pm5WorkoutDataStatus dataStatus = Pm5WorkoutDataStatus.WaitingForWorkoutData;
     private Pm5WorkoutMetrics latestWorkoutMetrics;
 
 #if ENABLE_WINMD_SUPPORT
@@ -62,6 +63,17 @@ public sealed class WindowsPm5BleClient : IPm5BleClient, IPm5WorkoutDataClient
         }
     }
 
+    public Pm5WorkoutDataStatus DataStatus
+    {
+        get
+        {
+            lock (gate)
+            {
+                return dataStatus;
+            }
+        }
+    }
+
     public bool HasWorkoutData
     {
         get
@@ -92,6 +104,8 @@ public sealed class WindowsPm5BleClient : IPm5BleClient, IPm5WorkoutDataClient
         {
             discoveredDevices.Clear();
         }
+
+        SetDataStatus(Pm5WorkoutDataStatus.WaitingForWorkoutData);
 
 #if ENABLE_WINMD_SUPPORT
         StopScan();
@@ -176,6 +190,7 @@ public sealed class WindowsPm5BleClient : IPm5BleClient, IPm5WorkoutDataClient
 #elif UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
         StopScan();
         SetStatus(Pm5BleConnectionStatus.Connecting);
+        SetDataStatus(Pm5WorkoutDataStatus.SubscribingToWorkoutNotifications);
         StartCSharpConnectHelper(device, HandlePowerShellLine);
 #else
         SetStatus(Pm5BleConnectionStatus.ConnectionFailed);
@@ -672,7 +687,9 @@ internal static class SkiVersePm5BleConnectHelper
 
     private static async Task StartWorkoutNotifications(GattDeviceService service, string deviceName)
     {
-        Log(string.Format(""PM5 workout service verified. DeviceName=\""{0}\"". Waiting for notification subscription before reporting Connected."", deviceName));
+        Log(string.Format(""PM5 workout service verified. DeviceName=\""{0}\"". Reporting PM5 connected before workout data notification subscription."", deviceName));
+        Console.WriteLine(string.Format(""CONNECTED|PM5 GATT connected. DeviceName=\""{0}\"""", deviceName));
+        Console.WriteLine(""DATA|SubscribingToWorkoutNotifications"");
         Flush();
 
         try
@@ -702,13 +719,16 @@ internal static class SkiVersePm5BleConnectHelper
             Log(""PM5 Multiplexed Information subscription diagnostic completed. Active="" + (subscription != null));
             if (subscription == null)
             {
-                Console.WriteLine(""FAILED|PM5 Rowing Stroke Data and Multiplexed Information subscriptions failed."");
+                Console.WriteLine(""DATA|NotificationSubscriptionFailed|PM5 Rowing Stroke Data and Multiplexed Information subscriptions failed."");
                 Flush();
-                return;
+                while (true)
+                {
+                    await Task.Delay(1000);
+                }
             }
         }
 
-        Console.WriteLine(string.Format(""CONNECTED|PM5 workout notifications subscribed. DeviceName=\""{0}\"", Characteristic=\""{1}\"""", deviceName, subscription.Name));
+        Console.WriteLine(string.Format(""DATA|ReceivingLiveData|Characteristic=\""{0}\"""", subscription.Name));
         Flush();
 
         while (true)
@@ -1154,6 +1174,12 @@ internal static class SkiVersePm5BleConnectHelper
             return;
         }
 
+        if (line.StartsWith("DATA|", StringComparison.OrdinalIgnoreCase))
+        {
+            HandlePowerShellDataStatus(line);
+            return;
+        }
+
         if (line.StartsWith("CONNECTED|", StringComparison.OrdinalIgnoreCase) || line.Equals("CONNECTED", StringComparison.OrdinalIgnoreCase))
         {
             Log("Connection success reported by Windows BLE helper: " + line);
@@ -1163,6 +1189,14 @@ internal static class SkiVersePm5BleConnectHelper
 
         if (line.StartsWith("FAILED|", StringComparison.OrdinalIgnoreCase) || line.Equals("FAILED", StringComparison.OrdinalIgnoreCase))
         {
+            if (line.StartsWith("FAILED|PM5 Rowing Stroke Data and Multiplexed Information subscriptions failed.", StringComparison.OrdinalIgnoreCase))
+            {
+                LogWarning("Workout data notification subscription failed after PM5 connection: " + line);
+                SetStatus(Pm5BleConnectionStatus.Connected);
+                SetDataStatus(Pm5WorkoutDataStatus.NotificationSubscriptionFailed);
+                return;
+            }
+
             LogWarning("Connection failed reported by Windows BLE helper: " + line);
             SetStatus(Pm5BleConnectionStatus.ConnectionFailed);
             return;
@@ -1194,6 +1228,7 @@ internal static class SkiVersePm5BleConnectHelper
         }
 
         Log($"Workout data received. Characteristic='{characteristicName}', Uuid='{characteristicUuid}', Bytes={payload.Length}, RawHex='{parts[3]}'.");
+        SetDataStatus(Pm5WorkoutDataStatus.ReceivingLiveData);
 
         Pm5WorkoutMetrics updatedMetrics;
         var changed = false;
@@ -1214,6 +1249,38 @@ internal static class SkiVersePm5BleConnectHelper
 
         Log($"Parsed workout metrics. Watts={(updatedMetrics.HasWatts ? updatedMetrics.Watts.ToString("0") : "-")}, HeartRate={(updatedMetrics.HasHeartRateBpm ? updatedMetrics.HeartRateBpm.ToString("0") : "-")}, StrokeRate={(updatedMetrics.HasStrokeRateSpm ? updatedMetrics.StrokeRateSpm.ToString("0") : "-")}, TotalStrokes={(updatedMetrics.HasTotalStrokes ? updatedMetrics.TotalStrokes.ToString() : "-")}.");
         WorkoutDataChanged?.Invoke();
+    }
+
+    private void HandlePowerShellDataStatus(string line)
+    {
+        var parts = line.Split('|');
+        if (parts.Length < 2)
+        {
+            LogWarning("Could not parse PM5 workout data status line: " + line);
+            return;
+        }
+
+        var dataStatusName = parts[1];
+        if (dataStatusName.Equals("WaitingForWorkoutData", StringComparison.OrdinalIgnoreCase))
+        {
+            SetDataStatus(Pm5WorkoutDataStatus.WaitingForWorkoutData);
+        }
+        else if (dataStatusName.Equals("SubscribingToWorkoutNotifications", StringComparison.OrdinalIgnoreCase))
+        {
+            SetDataStatus(Pm5WorkoutDataStatus.SubscribingToWorkoutNotifications);
+        }
+        else if (dataStatusName.Equals("ReceivingLiveData", StringComparison.OrdinalIgnoreCase))
+        {
+            SetDataStatus(Pm5WorkoutDataStatus.ReceivingLiveData);
+        }
+        else if (dataStatusName.Equals("NotificationSubscriptionFailed", StringComparison.OrdinalIgnoreCase))
+        {
+            SetDataStatus(Pm5WorkoutDataStatus.NotificationSubscriptionFailed);
+        }
+        else
+        {
+            LogWarning("Unknown PM5 workout data status line: " + line);
+        }
     }
 
     private void HandlePowerShellDeviceFound(string line)
@@ -1513,7 +1580,9 @@ function Find-Pm5WorkoutServiceDeviceId([Guid]$workoutServiceUuid, [UInt64]$addr
     return $null
 }
 function Start-Pm5WorkoutNotifications($pm5Service, [string]$deviceName) {
-    [Console]::WriteLine(('LOG|PM5 workout service verified. DeviceName=""{0}"". Waiting for notification subscription before reporting Connected.' -f $deviceName))
+    [Console]::WriteLine(('LOG|PM5 workout service verified. DeviceName=""{0}"". Reporting PM5 connected before workout data notification subscription.' -f $deviceName))
+    [Console]::WriteLine(('CONNECTED|PM5 GATT connected. DeviceName=""{0}""' -f $deviceName))
+    [Console]::WriteLine('DATA|SubscribingToWorkoutNotifications')
     [Console]::Out.Flush()
     try {
         $session = $pm5Service.Session
@@ -1528,7 +1597,6 @@ function Start-Pm5WorkoutNotifications($pm5Service, [string]$deviceName) {
     }
 
     $subscriptions = @()
-    $reportedConnected = $false
     $subscriptionAttempt = 0
     while ($true) {
         $activeSubscriptions = @($subscriptions | Where-Object { $null -ne $_ })
@@ -1550,10 +1618,7 @@ function Start-Pm5WorkoutNotifications($pm5Service, [string]$deviceName) {
             if ($null -ne $primarySubscription) {
                 $subscriptions += $primarySubscription
                 [Console]::WriteLine(('LOG|PM5 primary workout data subscription active. Name={0}' -f $primaryName))
-                if (-not $reportedConnected) {
-                    [Console]::WriteLine(('CONNECTED|PM5 workout notifications subscribed. DeviceName=""{0}"", Characteristic=""{1}""' -f $deviceName, $primaryName))
-                    $reportedConnected = $true
-                }
+                [Console]::WriteLine(('DATA|ReceivingLiveData|Characteristic=""{0}""' -f $primaryName))
                 [Console]::Out.Flush()
 
                 if ($primaryName -eq 'Rowing Stroke Data') {
@@ -1583,6 +1648,7 @@ function Start-Pm5WorkoutNotifications($pm5Service, [string]$deviceName) {
             [Console]::WriteLine(('LOG|PM5 workout data subscriptions active. Count={0}' -f $activeSubscriptions.Count))
             if ($activeSubscriptions.Count -eq 0) {
                 [Console]::WriteLine('LOG|PM5 workout data subscriptions unavailable. Retrying while PM5 connection stays alive.')
+                [Console]::WriteLine('DATA|NotificationSubscriptionFailed|PM5 workout data subscriptions unavailable.')
             }
             [Console]::Out.Flush()
         }
@@ -1777,6 +1843,17 @@ exit 1
         }
 
         Log("Status changed: " + newStatus);
+        StateChanged?.Invoke();
+    }
+
+    private void SetDataStatus(Pm5WorkoutDataStatus newStatus)
+    {
+        lock (gate)
+        {
+            dataStatus = newStatus;
+        }
+
+        Log("Data status changed: " + newStatus);
         StateChanged?.Invoke();
     }
 

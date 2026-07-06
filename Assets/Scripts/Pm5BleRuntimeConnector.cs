@@ -6,12 +6,16 @@ using UnityEngine;
 public class Pm5BleRuntimeConnector : MonoBehaviour
 {
     public const string NotConnectedStatusText = "PM5: Not connected";
-    public const string SearchingStatusText = "Searching...";
-    public const string Pm5FoundStatusText = "PM5 Found - select device";
-    public const string ConnectingStatusText = "Connecting...";
-    public const string ConnectedStatusText = "Connected";
+    public const string SearchingStatusText = "PM5: Searching";
+    public const string Pm5FoundStatusText = "PM5: Found";
+    public const string ConnectingStatusText = "PM5: Connecting";
+    public const string ConnectedStatusText = "PM5: Connected";
     public const string Pm5FoundConnectionNotImplementedStatusText = "PM5 Found - connection not implemented";
     public const string ConnectionFailedStatusText = "Connection Failed";
+    public const string WaitingForWorkoutDataText = "Data: Waiting for workout data";
+    public const string SubscribingToWorkoutNotificationsText = "Data: Subscribing to workout notifications";
+    public const string ReceivingLiveDataText = "Data: Receiving live data";
+    public const string NotificationSubscriptionFailedText = "Data: Notification subscription failed";
 
     private IPm5BleClient client;
     private int selectedDeviceIndex = -1;
@@ -45,6 +49,8 @@ public class Pm5BleRuntimeConnector : MonoBehaviour
     }
 
     public Pm5BleConnectionStatus Status => Client.Status;
+
+    public Pm5WorkoutDataStatus DataStatus => Client.DataStatus;
 
     public IReadOnlyList<Pm5BleDeviceInfo> DiscoveredDevices => Client.DiscoveredDevices;
 
@@ -126,6 +132,11 @@ public class Pm5BleRuntimeConnector : MonoBehaviour
         return StatusToText(Status);
     }
 
+    public string GetDataStatusText()
+    {
+        return DataStatusToText(DataStatus);
+    }
+
     public static string StatusToText(Pm5BleConnectionStatus status)
     {
         switch (status)
@@ -144,6 +155,21 @@ public class Pm5BleRuntimeConnector : MonoBehaviour
                 return ConnectionFailedStatusText;
             default:
                 return NotConnectedStatusText;
+        }
+    }
+
+    public static string DataStatusToText(Pm5WorkoutDataStatus status)
+    {
+        switch (status)
+        {
+            case Pm5WorkoutDataStatus.SubscribingToWorkoutNotifications:
+                return SubscribingToWorkoutNotificationsText;
+            case Pm5WorkoutDataStatus.ReceivingLiveData:
+                return ReceivingLiveDataText;
+            case Pm5WorkoutDataStatus.NotificationSubscriptionFailed:
+                return NotificationSubscriptionFailedText;
+            default:
+                return WaitingForWorkoutDataText;
         }
     }
 

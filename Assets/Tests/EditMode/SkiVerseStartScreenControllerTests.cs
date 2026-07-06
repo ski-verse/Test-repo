@@ -33,10 +33,10 @@ public class SkiVerseStartScreenControllerTests
         Assert.AreEqual("3 km Circuit", SkiVerseStartScreenController.ThreeKmCourseLabel);
         Assert.AreEqual("40 km Long Course", SkiVerseStartScreenController.FortyKmCourseLabel);
         Assert.AreEqual("PM5: Not connected", SkiVerseStartScreenController.Pm5NotConnectedText);
-        Assert.AreEqual("Searching...", SkiVerseStartScreenController.Pm5SearchingText);
-        Assert.AreEqual("PM5 Found - select device", SkiVerseStartScreenController.Pm5FoundText);
-        Assert.AreEqual("Connecting...", SkiVerseStartScreenController.Pm5ConnectingText);
-        Assert.AreEqual("Connected", SkiVerseStartScreenController.Pm5ConnectedText);
+        Assert.AreEqual("PM5: Searching", SkiVerseStartScreenController.Pm5SearchingText);
+        Assert.AreEqual("PM5: Found", SkiVerseStartScreenController.Pm5FoundText);
+        Assert.AreEqual("PM5: Connecting", SkiVerseStartScreenController.Pm5ConnectingText);
+        Assert.AreEqual("PM5: Connected", SkiVerseStartScreenController.Pm5ConnectedText);
         Assert.AreEqual("PM5 Found - connection not implemented", SkiVerseStartScreenController.Pm5FoundConnectionNotImplementedText);
         Assert.AreEqual("Connection Failed", SkiVerseStartScreenController.Pm5ConnectionFailedText);
         Assert.AreEqual("Jämtland Ski Tour", SkiVerseStartScreenController.JamtlandTourLabel);
@@ -62,7 +62,7 @@ public class SkiVerseStartScreenControllerTests
         Assert.IsNotNull(controller.pm5Connector);
         Assert.IsTrue(controller.threeKmToggle.isOn);
         Assert.AreEqual(SkiVerseStartScreenController.CourseSelection.ThreeKmCircuit, controller.SelectedCourse);
-        Assert.AreEqual(SkiVerseStartScreenController.Pm5NotConnectedText, controller.pm5StatusText.text);
+        Assert.AreEqual("PM5: Not connected\nData: Waiting for workout data", controller.pm5StatusText.text);
 
         var title = GameObject.Find("Ski-Verse Title").GetComponent<TextMeshProUGUI>();
         Assert.AreEqual("Ski-Verse", title.text);
@@ -85,7 +85,7 @@ public class SkiVerseStartScreenControllerTests
 
         Assert.IsTrue(fakeClient.StartScanCalled);
         Assert.IsFalse(controller.IsPm5Connected);
-        Assert.AreEqual(SkiVerseStartScreenController.Pm5SearchingText, controller.pm5StatusText.text);
+        Assert.AreEqual("PM5: Searching\nData: Waiting for workout data", controller.pm5StatusText.text);
     }
 
     [Test]
@@ -103,7 +103,7 @@ public class SkiVerseStartScreenControllerTests
         Assert.IsTrue(fakeClient.ConnectCalled);
         Assert.AreEqual("pm5-1", fakeClient.ConnectedDevice.DeviceId);
         Assert.IsTrue(controller.IsPm5Connected);
-        Assert.AreEqual(SkiVerseStartScreenController.Pm5ConnectedText, controller.pm5StatusText.text);
+        Assert.AreEqual("PM5: Connected\nData: Waiting for workout data", controller.pm5StatusText.text);
     }
 
     [Test]
@@ -122,7 +122,7 @@ public class SkiVerseStartScreenControllerTests
 
         Assert.IsFalse(fakeClient.ConnectCalled);
         Assert.IsFalse(controller.IsPm5Connected);
-        Assert.AreEqual(SkiVerseStartScreenController.Pm5FoundText, controller.pm5StatusText.text);
+        Assert.AreEqual("PM5: Found\nData: Waiting for workout data", controller.pm5StatusText.text);
         Assert.AreEqual("Select PM5 device to connect", controller.pm5DeviceListText.text);
 
         var buttonText = controller.pm5DeviceButtonContainer.GetChild(0).GetComponentInChildren<TextMeshProUGUI>();
@@ -171,6 +171,8 @@ public class SkiVerseStartScreenControllerTests
         public Pm5BleConnectionStatus ConnectResultStatus { get; set; } = Pm5BleConnectionStatus.Connected;
 
         public Pm5BleConnectionStatus Status { get; private set; } = Pm5BleConnectionStatus.NotConnected;
+
+        public Pm5WorkoutDataStatus DataStatus { get; set; } = Pm5WorkoutDataStatus.WaitingForWorkoutData;
 
         public System.Collections.Generic.IReadOnlyList<Pm5BleDeviceInfo> DiscoveredDevices => devices;
 
