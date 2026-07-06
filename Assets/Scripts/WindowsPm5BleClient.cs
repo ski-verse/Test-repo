@@ -587,6 +587,7 @@ internal static class SkiVersePm5BleConnectHelper
         }
 
         LogBluetoothDeviceState(device, ""AfterResolve"");
+        await LogDeviceAccessAndPairingState(device.DeviceId, ""AfterResolve"");
         Log(string.Format(""BluetoothLEDevice resolved. Name=\""{0}\"", DeviceId=\""{1}\"". Verifying Concept2 PM5 workout GATT service {2}."", device.Name, device.DeviceId, WorkoutServiceUuid));
 
         var lastServiceStatus = ""NotAttempted"";
@@ -834,6 +835,30 @@ internal static class SkiVersePm5BleConnectHelper
         catch (Exception exception)
         {
             Error(string.Format(""PM5 Bluetooth device state log failed. Phase={0}, Error={1}"", phase, exception.Message));
+        }
+    }
+
+    private static async Task LogDeviceAccessAndPairingState(string deviceId, string phase)
+    {
+        try
+        {
+            var accessStatus = GetDeviceAccessStatus(deviceId);
+            var deviceInformation = await TimeoutAfter(DeviceInformation.CreateFromIdAsync(deviceId), 8000, ""PM5 DeviceInformation.CreateFromIdAsync "" + phase);
+            if (deviceInformation == null)
+            {
+                Log(string.Format(""PM5 device access and pairing state. Phase={0}, DeviceId=\""{1}\"", DeviceAccess={2}, DeviceInformation=null"", phase, deviceId, accessStatus));
+                return;
+            }
+
+            var pairing = deviceInformation.Pairing;
+            var isPaired = pairing == null ? ""Unknown"" : pairing.IsPaired.ToString();
+            var canPair = pairing == null ? ""Unknown"" : pairing.CanPair.ToString();
+            var protectionLevel = pairing == null ? ""Unknown"" : pairing.ProtectionLevel.ToString();
+            Log(string.Format(""PM5 device access and pairing state. Phase={0}, Name=\""{1}\"", DeviceId=\""{2}\"", IsEnabled={3}, DeviceAccess={4}, IsPaired={5}, CanPair={6}, ProtectionLevel={7}"", phase, deviceInformation.Name, deviceInformation.Id, deviceInformation.IsEnabled, accessStatus, isPaired, canPair, protectionLevel));
+        }
+        catch (Exception exception)
+        {
+            Error(string.Format(""PM5 device access and pairing state log failed. Phase={0}, DeviceId=\""{1}\"", Error={2}"", phase, deviceId, exception.Message));
         }
     }
 

@@ -123,6 +123,10 @@ public class Pm5BleRuntimeConnectorTests
         var source = BuildCSharpConnectHelperSourceForTest();
 
         StringAssert.Contains("PM5 Bluetooth device state. Phase=AfterResolve", source);
+        StringAssert.Contains("PM5 device access and pairing state. Phase=AfterResolve", source);
+        StringAssert.Contains("IsPaired", source);
+        StringAssert.Contains("CanPair", source);
+        StringAssert.Contains("DeviceAccess", source);
         StringAssert.Contains("PM5 GATT session state. Phase=BeforeMaintainConnection", source);
         StringAssert.Contains("CanMaintainConnection", source);
         StringAssert.Contains("SessionStatus", source);
