@@ -226,6 +226,21 @@ public class Pm5BleRuntimeConnectorTests
     }
 
     [Test]
+    public void WindowsPm5BleClient_CSharpConnectHelperFallsBackToBluetoothDeviceLookupWhenDirectServiceNotifyFails()
+    {
+        var source = BuildCSharpConnectHelperSourceForTest();
+        var directServiceIndex = source.IndexOf("var directService = await TryOpenWorkoutServiceFromSelector(address);", StringComparison.Ordinal);
+        var directNotifyResultIndex = source.IndexOf("var directNotificationsStarted = await StartWorkoutNotifications(directService, \"Concept2 PM5\", false);", StringComparison.Ordinal);
+        var fallbackLogIndex = source.IndexOf("Direct PM5 service opened but notification subscription failed. Retrying through BluetoothLEDevice service lookup.", StringComparison.Ordinal);
+        var bluetoothDeviceResolveIndex = source.IndexOf("BluetoothLEDevice device;", StringComparison.Ordinal);
+
+        Assert.That(directServiceIndex, Is.GreaterThanOrEqualTo(0));
+        Assert.That(directNotifyResultIndex, Is.GreaterThan(directServiceIndex));
+        Assert.That(fallbackLogIndex, Is.GreaterThan(directNotifyResultIndex));
+        Assert.That(bluetoothDeviceResolveIndex, Is.GreaterThan(fallbackLogIndex));
+    }
+
+    [Test]
     public void WindowsPm5BleClient_CSharpConnectHelperSeparatesConnectionStatusFromDataStatus()
     {
         var source = BuildCSharpConnectHelperSourceForTest();

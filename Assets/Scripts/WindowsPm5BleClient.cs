@@ -586,11 +586,27 @@ internal static class SkiVersePm5BleConnectHelper
         var directService = await TryOpenWorkoutServiceFromSelector(address);
         if (directService != null)
         {
-            await StartWorkoutNotifications(directService, ""Concept2 PM5"");
-            return 0;
+            var directNotificationsStarted = await StartWorkoutNotifications(directService, ""Concept2 PM5"", false);
+            if (directNotificationsStarted)
+            {
+                return 0;
+            }
+
+            try
+            {
+                directService.Dispose();
+            }
+            catch
+            {
+            }
+
+            Log(""Direct PM5 service opened but notification subscription failed. Retrying through BluetoothLEDevice service lookup."");
+        }
+        else
+        {
+            Log(""PM5 workout service selector did not open a direct service. Falling back to BluetoothLEDevice service lookup."");
         }
 
-        Log(""PM5 workout service selector did not open a direct service. Falling back to BluetoothLEDevice service lookup."");
         BluetoothLEDevice device;
         if (!string.IsNullOrWhiteSpace(deviceId) && address == 0)
         {
@@ -628,8 +644,11 @@ internal static class SkiVersePm5BleConnectHelper
                 Log(string.Format(""PM5 workout service lookup result. CacheMode={0}, GattStatus={1}, ServiceCount={2}"", cacheMode, servicesResult.Status, serviceCount));
                 if (servicesResult.Status == GattCommunicationStatus.Success && serviceCount > 0)
                 {
-                    await StartWorkoutNotifications(servicesResult.Services[0], device.Name);
-                    return 0;
+                    var notificationsStarted = await StartWorkoutNotifications(servicesResult.Services[0], device.Name, true);
+                    if (notificationsStarted)
+                    {
+                        return 0;
+                    }
                 }
             }
             catch (Exception exception)
@@ -685,7 +704,7 @@ internal static class SkiVersePm5BleConnectHelper
         return null;
     }
 
-    private static async Task StartWorkoutNotifications(GattDeviceService service, string deviceName)
+    private static async Task<bool> StartWorkoutNotifications(GattDeviceService service, string deviceName, bool keepAliveOnFailure)
     {
         Log(string.Format(""PM5 workout service verified. DeviceName=\""{0}\"". Reporting PM5 connected before workout data notification subscription."", deviceName));
         Console.WriteLine(string.Format(""CONNECTED|PM5 GATT connected. DeviceName=\""{0}\"""", deviceName));
@@ -719,12 +738,17 @@ internal static class SkiVersePm5BleConnectHelper
             Log(""PM5 Multiplexed Information subscription diagnostic completed. Active="" + (subscription != null));
             if (subscription == null)
             {
-                Console.WriteLine(""DATA|NotificationSubscriptionFailed|PM5 Rowing Stroke Data and Multiplexed Information subscriptions failed."");
-                Flush();
-                while (true)
+                if (keepAliveOnFailure)
                 {
-                    await Task.Delay(1000);
+                    Console.WriteLine(""DATA|NotificationSubscriptionFailed|PM5 Rowing Stroke Data and Multiplexed Information subscriptions failed."");
+                    Flush();
+                    while (true)
+                    {
+                        await Task.Delay(1000);
+                    }
                 }
+
+                return false;
             }
         }
 
