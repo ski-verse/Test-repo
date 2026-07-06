@@ -17,6 +17,9 @@ public class Pm5BleRuntimeConnector : MonoBehaviour
     public const string ReceivingLiveDataText = "Data: Receiving live data";
     public const string NotificationSubscriptionFailedText = "Data: Notification subscription failed";
 
+    [Tooltip("Production mode uses BLE advertisements only. Development fallback can use Windows known/paired/PnP BLE devices to continue debugging on Windows.")]
+    public Pm5BleDiscoveryMode discoveryMode = Pm5BleDiscoveryMode.DevelopmentWindowsKnownDevicesFallback;
+
     private IPm5BleClient client;
     private int selectedDeviceIndex = -1;
 
@@ -180,7 +183,7 @@ public class Pm5BleRuntimeConnector : MonoBehaviour
             return;
         }
 
-        Client = new WindowsPm5BleClient();
+        Client = new WindowsPm5BleClient(discoveryMode);
     }
 
     private void NotifyStateChanged()

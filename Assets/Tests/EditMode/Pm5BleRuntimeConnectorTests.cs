@@ -36,6 +36,31 @@ public class Pm5BleRuntimeConnectorTests
     }
 
     [Test]
+    public void WindowsPm5BleClient_ProductionScanScriptDoesNotUseWindowsKnownDeviceFallback()
+    {
+        var script = BuildScanScriptForTest(Pm5BleDiscoveryMode.ProductionBleAdvertisementsOnly);
+
+        StringAssert.Contains("Production BLE advertisement scan started", script);
+        StringAssert.Contains("Development Windows known-device fallback disabled", script);
+        StringAssert.DoesNotContain("Get-PnpDevice", script);
+        StringAssert.DoesNotContain("CreateWatcher($selector)", script);
+    }
+
+    [Test]
+    public void WindowsPm5BleClient_DevelopmentScanScriptSeparatesAdvertisementScanFromWindowsFallback()
+    {
+        var script = BuildScanScriptForTest(Pm5BleDiscoveryMode.DevelopmentWindowsKnownDevicesFallback);
+        var advertisementIndex = script.IndexOf("Production BLE advertisement scan started", StringComparison.Ordinal);
+        var fallbackIndex = script.IndexOf("Development Windows known-device fallback enabled", StringComparison.Ordinal);
+
+        Assert.That(advertisementIndex, Is.GreaterThanOrEqualTo(0));
+        Assert.That(fallbackIndex, Is.GreaterThan(advertisementIndex));
+        StringAssert.Contains("Report-Pm5 'Advertisement'", script);
+        StringAssert.Contains("Report-Pm5 'DevelopmentDeviceWatcher'", script);
+        StringAssert.Contains("Report-Pm5 'DevelopmentWindowsPnP'", script);
+    }
+
+    [Test]
     public void RuntimeConnector_StopsPm5ClientWhenDisabled()
     {
         var gameObject = new UnityEngine.GameObject("PM5 Runtime Connector");
@@ -291,6 +316,13 @@ public class Pm5BleRuntimeConnectorTests
         var method = typeof(WindowsPm5BleClient).GetMethod("BuildConnectScript", BindingFlags.NonPublic | BindingFlags.Static);
         Assert.IsNotNull(method);
         return (string)method.Invoke(null, new object[] { new Pm5BleDeviceInfo("pm5-1", "PM5 12345", 12345) });
+    }
+
+    private static string BuildScanScriptForTest(Pm5BleDiscoveryMode mode)
+    {
+        var method = typeof(WindowsPm5BleClient).GetMethod("BuildScanScript", BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.IsNotNull(method);
+        return (string)method.Invoke(null, new object[] { mode });
     }
 
     private static string BuildCSharpConnectHelperSourceForTest()

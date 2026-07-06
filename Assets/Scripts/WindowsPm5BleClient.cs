@@ -18,6 +18,7 @@ public sealed class WindowsPm5BleClient : IPm5BleClient, IPm5WorkoutDataClient
 
     private readonly object gate = new object();
     private readonly List<Pm5BleDeviceInfo> discoveredDevices = new List<Pm5BleDeviceInfo>();
+    private readonly Pm5BleDiscoveryMode discoveryMode;
     private Pm5BleConnectionStatus status = Pm5BleConnectionStatus.NotConnected;
     private Pm5WorkoutDataStatus dataStatus = Pm5WorkoutDataStatus.WaitingForWorkoutData;
     private Pm5WorkoutMetrics latestWorkoutMetrics;
@@ -35,7 +36,13 @@ public sealed class WindowsPm5BleClient : IPm5BleClient, IPm5WorkoutDataClient
     public event Action WorkoutDataChanged;
 
     public WindowsPm5BleClient()
+        : this(Pm5BleDiscoveryMode.DevelopmentWindowsKnownDevicesFallback)
     {
+    }
+
+    public WindowsPm5BleClient(Pm5BleDiscoveryMode discoveryMode)
+    {
+        this.discoveryMode = discoveryMode;
 #if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
         KillStaleHelperProcesses("client startup");
 #endif
@@ -98,7 +105,7 @@ public sealed class WindowsPm5BleClient : IPm5BleClient, IPm5WorkoutDataClient
 
     public void StartScan()
     {
-        Log("Start scan requested. This is real Windows BLE scanning, not placeholder UI.");
+        Log("Start scan requested. DiscoveryMode=" + discoveryMode + ". This is real Windows BLE scanning, not placeholder UI.");
 
         lock (gate)
         {
@@ -121,8 +128,8 @@ public sealed class WindowsPm5BleClient : IPm5BleClient, IPm5WorkoutDataClient
 #elif UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
         StopScan();
         SetStatus(Pm5BleConnectionStatus.Searching);
-        Log("Using Windows PowerShell WinRT BLE helper with AdvertisementWatcher + DeviceWatcher.");
-        StartPowerShellHelper(BuildScanScript(), HandlePowerShellLine);
+        Log("Using Windows PowerShell WinRT BLE helper with production AdvertisementWatcher and optional development fallback.");
+        StartPowerShellHelper(BuildScanScript(discoveryMode), HandlePowerShellLine);
 #else
         SetStatus(Pm5BleConnectionStatus.ConnectionFailed);
         LogWarning("BLE scanning requires Windows WinRT/WinMD support in this Unity build.");
@@ -1386,8 +1393,52 @@ internal static class SkiVersePm5BleConnectHelper
         }
     }
 
-    private static string BuildScanScript()
+    private static string BuildScanScript(Pm5BleDiscoveryMode discoveryMode)
     {
+        var developmentFallbackScript = discoveryMode == Pm5BleDiscoveryMode.DevelopmentWindowsKnownDevicesFallback
+            ? @"
+[Console]::WriteLine('LOG|Development Windows known-device fallback enabled. This may find PM5 devices already known to Windows and is only for debugging GATT/Notify.')
+$selector = [Windows.Devices.Bluetooth.BluetoothLEDevice]::GetDeviceSelector()
+$deviceWatcher = [Windows.Devices.Enumeration.DeviceInformation]::CreateWatcher($selector)
+$deviceHandler = [Windows.Foundation.TypedEventHandler[Windows.Devices.Enumeration.DeviceWatcher,Windows.Devices.Enumeration.DeviceInformation]] {
+    param($sender, $deviceInfo)
+    $matches = Test-Pm5Name $deviceInfo.Name
+    [Console]::WriteLine(('LOG|Development fallback BLE DeviceWatcher discovered. Name=""{0}"", Id=""{1}"", MatchesPM5={2}' -f $deviceInfo.Name, $deviceInfo.Id, $matches))
+    [Console]::Out.Flush()
+    if ($matches) {
+        Report-Pm5 'DevelopmentDeviceWatcher' $deviceInfo.Id '0' $deviceInfo.Name
+    }
+}
+$deviceToken = $deviceWatcher.add_Added($deviceHandler)
+$deviceWatcher.Start()
+Start-Sleep -Seconds 5
+$deviceWatcher.Stop()
+$deviceWatcher.remove_Added($deviceToken)
+try {
+    [Console]::WriteLine('LOG|Development fallback checking Windows PnP BTHLE devices for already-known PM5 devices.')
+    foreach ($pnpDevice in Get-PnpDevice -ErrorAction Stop) {
+        $name = [string]$pnpDevice.FriendlyName
+        $id = [string]$pnpDevice.InstanceId
+        $isBle = $id -like 'BTHLE*'
+        $matches = $isBle -and ((Test-Pm5Name $name) -or (Test-Pm5Name $id))
+        if ($isBle) {
+            [Console]::WriteLine(('LOG|Development fallback PnP BTHLE device. Name=""{0}"", Id=""{1}"", MatchesPM5={2}' -f $name, $id, $matches))
+            [Console]::Out.Flush()
+        }
+        if ($matches) {
+            $address = Get-BluetoothAddressFromPnpId $id
+            Report-Pm5 'DevelopmentWindowsPnP' $id $address $name
+        }
+    }
+} catch {
+    [Console]::WriteLine(('ERROR|Development fallback Windows PnP PM5 lookup failed: {0}' -f $_.Exception.Message))
+    [Console]::Out.Flush()
+}
+"
+            : @"
+[Console]::WriteLine('LOG|Development Windows known-device fallback disabled. Windows paired/known/PnP devices will not be used for production discovery.')
+";
+
         return @"
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
@@ -1399,10 +1450,10 @@ trap {
 [Windows.Devices.Bluetooth.Advertisement.BluetoothLEAdvertisementWatcher,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
 [Windows.Devices.Bluetooth.BluetoothLEDevice,Windows.Devices.Bluetooth,ContentType=WindowsRuntime] | Out-Null
 [Windows.Devices.Enumeration.DeviceInformation,Windows.Devices.Enumeration,ContentType=WindowsRuntime] | Out-Null
-[Windows.Devices.Enumeration.DeviceInformationCollection,Windows.Devices.Enumeration,ContentType=WindowsRuntime] | Out-Null
 [Windows.Devices.Enumeration.DeviceAccessInformation,Windows.Devices.Enumeration,ContentType=WindowsRuntime] | Out-Null
 [Windows.Foundation.TypedEventHandler`2,Windows.Foundation,ContentType=WindowsRuntime] | Out-Null
-[Console]::WriteLine('LOG|Windows BLE scan helper started. Scanning advertisements and BLE device list for 20 seconds.')
+[Console]::WriteLine('LOG|Windows BLE scan helper started.')
+[Console]::WriteLine('LOG|Production BLE advertisement scan started. PM5 should be detected by name or Concept2 service UUID without Windows Bluetooth pairing.')
 $services = @([Guid]'ce060000-43e5-11e4-916c-0800200c9a66', [Guid]'ce060030-43e5-11e4-916c-0800200c9a66', [Guid]'ce060020-43e5-11e4-916c-0800200c9a66', [Guid]'ce060010-43e5-11e4-916c-0800200c9a66')
 $seen = [hashtable]::Synchronized(@{})
 function Test-Pm5Name($name) {
@@ -1421,7 +1472,7 @@ function Get-BluetoothAddressFromPnpId($instanceId) {
 }
 function Report-Pm5($source, $deviceId, $address, $name) {
     if ([string]::IsNullOrWhiteSpace($name)) { $name = 'Concept2 PM5' }
-    $key = ('{0}|{1}' -f $source, $deviceId)
+    $key = ('{0}|{1}' -f $address, $deviceId)
     if (-not $seen.ContainsKey($key)) {
         $seen[$key] = $true
         [Console]::WriteLine(('FOUND|{0}|{1}|{2}|{3}' -f $source, $deviceId, $address, $name))
@@ -1444,46 +1495,13 @@ $advertisementHandler = [Windows.Foundation.TypedEventHandler[Windows.Devices.Bl
         Report-Pm5 'Advertisement' ([string]$args.BluetoothAddress) ([string]$args.BluetoothAddress) $name
     }
 }
-$selector = [Windows.Devices.Bluetooth.BluetoothLEDevice]::GetDeviceSelector()
-$deviceWatcher = [Windows.Devices.Enumeration.DeviceInformation]::CreateWatcher($selector)
-$deviceHandler = [Windows.Foundation.TypedEventHandler[Windows.Devices.Enumeration.DeviceWatcher,Windows.Devices.Enumeration.DeviceInformation]] {
-    param($sender, $deviceInfo)
-    $matches = Test-Pm5Name $deviceInfo.Name
-    [Console]::WriteLine(('LOG|BLE DeviceWatcher discovered. Name=""{0}"", Id=""{1}"", MatchesPM5={2}' -f $deviceInfo.Name, $deviceInfo.Id, $matches))
-    [Console]::Out.Flush()
-    if ($matches) {
-        Report-Pm5 'DeviceWatcher' $deviceInfo.Id '0' $deviceInfo.Name
-    }
-}
-try {
-    [Console]::WriteLine('LOG|Checking Windows PnP BTHLE devices for already-known PM5 devices.')
-    foreach ($pnpDevice in Get-PnpDevice -ErrorAction Stop) {
-        $name = [string]$pnpDevice.FriendlyName
-        $id = [string]$pnpDevice.InstanceId
-        $isBle = $id -like 'BTHLE*'
-        $matches = $isBle -and ((Test-Pm5Name $name) -or (Test-Pm5Name $id))
-        if ($isBle) {
-            [Console]::WriteLine(('LOG|PnP BTHLE device. Name=""{0}"", Id=""{1}"", MatchesPM5={2}' -f $name, $id, $matches))
-            [Console]::Out.Flush()
-        }
-        if ($matches) {
-            $address = Get-BluetoothAddressFromPnpId $id
-            Report-Pm5 'WindowsPnP' $id $address $name
-        }
-    }
-} catch {
-    [Console]::WriteLine(('ERROR|Windows PnP PM5 lookup failed: {0}' -f $_.Exception.Message))
-    [Console]::Out.Flush()
-}
 $advertisementToken = $advertisementWatcher.add_Received($advertisementHandler)
-$deviceToken = $deviceWatcher.add_Added($deviceHandler)
 $advertisementWatcher.Start()
-$deviceWatcher.Start()
 Start-Sleep -Seconds 20
 $advertisementWatcher.Stop()
-$deviceWatcher.Stop()
 $advertisementWatcher.remove_Received($advertisementToken)
-$deviceWatcher.remove_Added($deviceToken)
+[Console]::WriteLine('LOG|Production BLE advertisement scan finished.')
+" + developmentFallbackScript + @"
 [Console]::WriteLine('LOG|Windows BLE scan helper finished.')
 ";
     }
