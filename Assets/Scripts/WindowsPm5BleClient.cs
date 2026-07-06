@@ -697,7 +697,7 @@ internal static class SkiVersePm5BleConnectHelper
 
     private static async Task<Subscription> SubscribeCharacteristic(GattDeviceService service, string name, Guid uuid)
     {
-        foreach (var cacheMode in new[] { BluetoothCacheMode.Uncached, BluetoothCacheMode.Cached })
+        foreach (var cacheMode in new[] { BluetoothCacheMode.Cached })
         {
             GattCharacteristic characteristic = null;
             try

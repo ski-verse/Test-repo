@@ -127,6 +127,21 @@ public class Pm5BleRuntimeConnectorTests
     }
 
     [Test]
+    public void WindowsPm5BleClient_CSharpConnectHelperUsesCachedCharacteristicLookupOnlyForSubscription()
+    {
+        var source = BuildCSharpConnectHelperSourceForTest();
+        var subscribeStart = source.IndexOf("private static async Task<Subscription> SubscribeCharacteristic", StringComparison.Ordinal);
+        var subscribeEnd = source.IndexOf("private static async Task ReadCccd", StringComparison.Ordinal);
+
+        Assert.GreaterOrEqual(subscribeStart, 0);
+        Assert.Greater(subscribeEnd, subscribeStart);
+
+        var subscribeMethod = source.Substring(subscribeStart, subscribeEnd - subscribeStart);
+        StringAssert.Contains("new[] { BluetoothCacheMode.Cached }", subscribeMethod);
+        StringAssert.DoesNotContain("BluetoothCacheMode.Uncached", subscribeMethod);
+    }
+
+    [Test]
     public void WindowsPm5BleClient_CSharpConnectHelperUsesBluetoothDeviceServiceBeforeSelectorFallback()
     {
         var source = BuildCSharpConnectHelperSourceForTest();
