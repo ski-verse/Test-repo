@@ -61,6 +61,12 @@ internal sealed class Pm5PacketParser
             case 0x32:
                 ParseAdditionalStatus1(payload);
                 break;
+            case 0x33:
+                ParseAdditionalStatus2(payload);
+                break;
+            case 0x35:
+                ParseStrokeData(payload);
+                break;
             case 0x36:
                 ParseAdditionalStrokeData(payload);
                 break;
@@ -93,7 +99,7 @@ internal sealed class Pm5PacketParser
 
     private void ParseAdditionalStatus1(byte[] raw)
     {
-        if (raw.Length < 19)
+        if (raw.Length < 11)
         {
             state.ParseWarning = $"additional status 1 packet too short: {raw.Length}";
             return;
@@ -105,27 +111,152 @@ internal sealed class Pm5PacketParser
         state.HeartRateBpm = raw[6] == 255 ? null : raw[6];
         state.CurrentPaceSecondsPer500m = ReadUInt16(raw, 7) / 100.0;
         state.AveragePaceSecondsPer500m = ReadUInt16(raw, 9) / 100.0;
-        state.RestDistanceMeters = ReadUInt16(raw, 11);
-        state.RestTimeSeconds = ReadUInt24(raw, 13) / 100.0;
-        state.AveragePowerWatts = ReadUInt16(raw, 16);
-        state.ErgMachineType = raw[18];
+        if (raw.Length >= 13)
+        {
+            state.RestDistanceMeters = ReadUInt16(raw, 11);
+        }
+
+        if (raw.Length >= 16)
+        {
+            state.RestTimeSeconds = ReadUInt24(raw, 13) / 100.0;
+        }
+
+        if (raw.Length >= 18)
+        {
+            state.AveragePowerWatts = ReadUInt16(raw, 16);
+        }
+
+        if (raw.Length >= 19)
+        {
+            state.ErgMachineType = raw[18];
+        }
+    }
+
+    private void ParseAdditionalStatus2(byte[] raw)
+    {
+        if (raw.Length < 10)
+        {
+            state.ParseWarning = $"additional status 2 packet too short: {raw.Length}";
+            return;
+        }
+
+        state.ElapsedTimeSeconds = ReadUInt24(raw, 0) / 100.0;
+        state.IntervalCount = raw[3];
+        if (raw.Length >= 6)
+        {
+            state.TotalCalories = ReadUInt16(raw, 4);
+        }
+
+        if (raw.Length >= 8)
+        {
+            state.SplitAveragePaceSecondsPer500m = ReadUInt16(raw, 6) / 100.0;
+        }
+
+        state.SplitAveragePowerWatts = ReadUInt16(raw, 8);
+        if (raw.Length >= 12)
+        {
+            state.SplitAverageCaloriesPerHour = ReadUInt16(raw, 10);
+        }
+
+        if (raw.Length >= 15)
+        {
+            state.LastSplitTimeSeconds = ReadUInt24(raw, 12) / 10.0;
+        }
+
+        if (raw.Length >= 18)
+        {
+            state.LastSplitDistanceMeters = ReadUInt24(raw, 15);
+        }
+    }
+
+    private void ParseStrokeData(byte[] raw)
+    {
+        if (raw.Length < 3)
+        {
+            state.ParseWarning = $"stroke data packet too short: {raw.Length}";
+            return;
+        }
+
+        state.ElapsedTimeSeconds = ReadUInt24(raw, 0) / 100.0;
+        if (raw.Length >= 6)
+        {
+            state.DistanceMeters = ReadUInt24(raw, 3) / 10.0;
+        }
+
+        if (raw.Length >= 7)
+        {
+            state.DriveLengthMeters = raw[6] / 100.0;
+        }
+
+        if (raw.Length >= 8)
+        {
+            state.DriveTimeSeconds = raw[7] / 100.0;
+        }
+
+        if (raw.Length >= 10)
+        {
+            state.StrokeRecoveryTimeSeconds = ReadUInt16(raw, 8) / 100.0;
+        }
+
+        if (raw.Length >= 12)
+        {
+            state.StrokeDistanceMeters = ReadUInt16(raw, 10) / 100.0;
+        }
+
+        if (raw.Length >= 14)
+        {
+            state.PeakDriveForcePounds = ReadUInt16(raw, 12) / 10.0;
+        }
+
+        if (raw.Length >= 16)
+        {
+            state.AverageDriveForcePounds = ReadUInt16(raw, 14) / 10.0;
+        }
+
+        if (raw.Length >= 18)
+        {
+            state.StrokeCount = ReadUInt16(raw, 16);
+        }
     }
 
     private void ParseAdditionalStrokeData(byte[] raw)
     {
-        if (raw.Length < 17)
+        if (raw.Length < 5)
         {
             state.ParseWarning = $"additional stroke data packet too short: {raw.Length}";
             return;
         }
 
-        state.ElapsedTimeSeconds = ReadUInt24(raw, 0) / 100.0;
+        if (raw.Length >= 3)
+        {
+            state.ElapsedTimeSeconds = ReadUInt24(raw, 0) / 100.0;
+        }
+
         state.StrokePowerWatts = ReadUInt16(raw, 3);
-        state.StrokeCaloriesPerHour = ReadUInt16(raw, 5);
-        state.StrokeCount = ReadUInt16(raw, 7);
-        state.ProjectedWorkTimeSeconds = ReadUInt24(raw, 9);
-        state.ProjectedWorkDistanceMeters = ReadUInt24(raw, 12);
-        state.WorkPerStrokeJoules = ReadUInt16(raw, 15) / 10.0;
+        if (raw.Length >= 7)
+        {
+            state.StrokeCaloriesPerHour = ReadUInt16(raw, 5);
+        }
+
+        if (raw.Length >= 9)
+        {
+            state.StrokeCount = ReadUInt16(raw, 7);
+        }
+
+        if (raw.Length >= 12)
+        {
+            state.ProjectedWorkTimeSeconds = ReadUInt24(raw, 9);
+        }
+
+        if (raw.Length >= 15)
+        {
+            state.ProjectedWorkDistanceMeters = ReadUInt24(raw, 12);
+        }
+
+        if (raw.Length >= 17)
+        {
+            state.WorkPerStrokeJoules = ReadUInt16(raw, 15) / 10.0;
+        }
     }
 
     private static int ReadUInt16(byte[] raw, int offset)
@@ -170,8 +301,21 @@ internal sealed class Pm5ParsedMetrics
     public double? ProjectedWorkTimeSeconds { get; set; }
     public double? ProjectedWorkDistanceMeters { get; set; }
     public double? WorkPerStrokeJoules { get; set; }
+    public int? IntervalCount { get; set; }
+    public int? TotalCalories { get; set; }
+    public double? SplitAveragePaceSecondsPer500m { get; set; }
+    public int? SplitAveragePowerWatts { get; set; }
+    public int? SplitAverageCaloriesPerHour { get; set; }
+    public double? LastSplitTimeSeconds { get; set; }
+    public double? LastSplitDistanceMeters { get; set; }
+    public double? DriveLengthMeters { get; set; }
+    public double? DriveTimeSeconds { get; set; }
+    public double? StrokeRecoveryTimeSeconds { get; set; }
+    public double? StrokeDistanceMeters { get; set; }
+    public double? PeakDriveForcePounds { get; set; }
+    public double? AverageDriveForcePounds { get; set; }
 
-    public int? DisplayWatts => StrokePowerWatts ?? AveragePowerWatts;
+    public int? DisplayWatts => StrokePowerWatts ?? AveragePowerWatts ?? SplitAveragePowerWatts;
 
     public Pm5ParsedMetrics Copy()
     {
@@ -196,6 +340,7 @@ internal sealed class Pm5ParsedMetrics
         Append(builder, "HeartRate", HeartRateBpm);
         Append(builder, "Pace", FormatTime(CurrentPaceSecondsPer500m));
         Append(builder, "AvgPace", FormatTime(AveragePaceSecondsPer500m));
+        Append(builder, "SplitAvgWatts", SplitAveragePowerWatts);
         Append(builder, "WorkoutState", WorkoutState);
         Append(builder, "RowingState", RowingState);
         Append(builder, "StrokeState", StrokeState);
