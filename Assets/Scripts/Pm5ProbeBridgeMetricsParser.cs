@@ -14,87 +14,93 @@ public static class Pm5ProbeBridgeMetricsParser
         }
 
         var fields = ParseFields(line);
+        var updatedMetrics = metrics;
         var changed = false;
 
         changed |= TryApplyFloat(fields, "Watts", value =>
         {
-            metrics.HasWatts = true;
-            metrics.Watts = value;
+            updatedMetrics.HasWatts = true;
+            updatedMetrics.Watts = value;
         });
         changed |= TryApplyFloat(fields, "SPM", value =>
         {
-            metrics.HasStrokeRateSpm = true;
-            metrics.StrokeRateSpm = value;
+            updatedMetrics.HasStrokeRateSpm = true;
+            updatedMetrics.StrokeRateSpm = value;
         });
         changed |= TryApplyInt(fields, "StrokeCount", value =>
         {
-            metrics.HasTotalStrokes = true;
-            metrics.TotalStrokes = value;
+            updatedMetrics.HasTotalStrokes = true;
+            updatedMetrics.TotalStrokes = value;
         });
         changed |= TryApplyTime(fields, "Time", value =>
         {
-            metrics.HasElapsedTimeSeconds = true;
-            metrics.ElapsedTimeSeconds = value;
+            updatedMetrics.HasElapsedTimeSeconds = true;
+            updatedMetrics.ElapsedTimeSeconds = value;
         });
         changed |= TryApplyFloat(fields, "Distance", value =>
         {
-            metrics.HasDistanceMeters = true;
-            metrics.DistanceMeters = value;
+            updatedMetrics.HasDistanceMeters = true;
+            updatedMetrics.DistanceMeters = value;
         });
         changed |= TryApplyFloat(fields, "SpeedKmh", value =>
         {
-            metrics.HasSpeedKmh = true;
-            metrics.SpeedKmh = value;
+            updatedMetrics.HasSpeedKmh = true;
+            updatedMetrics.SpeedKmh = value;
         });
         changed |= TryApplyTime(fields, "Pace", value =>
         {
-            metrics.HasPaceSecondsPer500m = true;
-            metrics.PaceSecondsPer500m = value;
+            updatedMetrics.HasPaceSecondsPer500m = true;
+            updatedMetrics.PaceSecondsPer500m = value;
         });
         changed |= TryApplyTime(fields, "AvgPace", value =>
         {
-            metrics.HasAveragePaceSecondsPer500m = true;
-            metrics.AveragePaceSecondsPer500m = value;
+            updatedMetrics.HasAveragePaceSecondsPer500m = true;
+            updatedMetrics.AveragePaceSecondsPer500m = value;
         });
         changed |= TryApplyFloat(fields, "SplitAvgWatts", value =>
         {
-            metrics.HasSplitAverageWatts = true;
-            metrics.SplitAverageWatts = value;
+            updatedMetrics.HasSplitAverageWatts = true;
+            updatedMetrics.SplitAverageWatts = value;
         });
         changed |= TryApplyInt(fields, "DragFactor", value =>
         {
-            metrics.HasDragFactor = true;
-            metrics.DragFactor = value;
+            updatedMetrics.HasDragFactor = true;
+            updatedMetrics.DragFactor = value;
         });
         if (fields.TryGetValue("HeartRate", out var rawHeartRate) && (string.IsNullOrWhiteSpace(rawHeartRate) || rawHeartRate == "null"))
         {
-            metrics.HasHeartRateBpm = false;
-            metrics.HeartRateBpm = 0f;
+            updatedMetrics.HasHeartRateBpm = false;
+            updatedMetrics.HeartRateBpm = 0f;
             changed = true;
         }
         else
         {
             changed |= TryApplyFloat(fields, "HeartRate", value =>
             {
-                metrics.HasHeartRateBpm = true;
-                metrics.HeartRateBpm = value;
+                updatedMetrics.HasHeartRateBpm = true;
+                updatedMetrics.HeartRateBpm = value;
             });
         }
         changed |= TryApplyInt(fields, "WorkoutState", value =>
         {
-            metrics.HasWorkoutState = true;
-            metrics.WorkoutState = value;
+            updatedMetrics.HasWorkoutState = true;
+            updatedMetrics.WorkoutState = value;
         });
         changed |= TryApplyInt(fields, "RowingState", value =>
         {
-            metrics.HasRowingState = true;
-            metrics.RowingState = value;
+            updatedMetrics.HasRowingState = true;
+            updatedMetrics.RowingState = value;
         });
         changed |= TryApplyInt(fields, "StrokeState", value =>
         {
-            metrics.HasStrokeState = true;
-            metrics.StrokeState = value;
+            updatedMetrics.HasStrokeState = true;
+            updatedMetrics.StrokeState = value;
         });
+
+        if (changed)
+        {
+            metrics = updatedMetrics;
+        }
 
         return changed;
     }
