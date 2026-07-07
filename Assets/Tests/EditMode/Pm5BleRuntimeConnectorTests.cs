@@ -132,6 +132,30 @@ public class Pm5BleRuntimeConnectorTests
     }
 
     [Test]
+    public void Pm5ProbeBridgeClient_UsesConfiguredDotnetExecutableWhenProvided()
+    {
+        const string configuredDotnet = "C:\\Tools\\dotnet\\dotnet.exe";
+
+        Assert.AreEqual(configuredDotnet, Pm5ProbeBridgeClient.ResolveDotnetExecutable(configuredDotnet));
+    }
+
+    [Test]
+    public void Pm5ProbeBridgeClient_ResolvesProgramFilesDotnetBeforePathFallback()
+    {
+        var programFilesDotnet = System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+            "dotnet",
+            "dotnet.exe");
+
+        var expected = System.IO.File.Exists(programFilesDotnet)
+            ? programFilesDotnet
+            : "dotnet";
+
+        Assert.AreEqual(expected, Pm5ProbeBridgeClient.ResolveDotnetExecutable(null));
+        Assert.AreEqual(expected, Pm5ProbeBridgeClient.ResolveDotnetExecutable("dotnet"));
+    }
+
+    [Test]
     public void WindowsPm5BleClient_ConnectScriptSubscribesMultiplexedDataBeforeDirectStrokeFallback()
     {
         var script = BuildConnectScriptForTest();

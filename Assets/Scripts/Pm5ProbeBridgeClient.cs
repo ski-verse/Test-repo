@@ -9,6 +9,8 @@ using UnityEngine;
 public sealed class Pm5ProbeBridgeClient : IPm5BleClient, IPm5WorkoutDataClient, IPm5BleClientPump
 {
     private const string LogPrefix = "[Ski-Verse PM5 Bridge] ";
+    private const string DotnetExecutableName = "dotnet";
+    private const string DotnetExecutableFileName = "dotnet.exe";
     private readonly object gate = new object();
     private readonly Queue<string> pendingLines = new Queue<string>();
     private readonly List<Pm5BleDeviceInfo> discoveredDevices = new List<Pm5BleDeviceInfo>();
@@ -24,14 +26,14 @@ public sealed class Pm5ProbeBridgeClient : IPm5BleClient, IPm5WorkoutDataClient,
     private Pm5WorkoutMetrics latestWorkoutMetrics;
 
     public Pm5ProbeBridgeClient()
-        : this(GetDefaultProbeProjectPath(), "dotnet", 30)
+        : this(GetDefaultProbeProjectPath(), null, 30)
     {
     }
 
     public Pm5ProbeBridgeClient(string probeProjectPath, string dotnetExecutable = "dotnet", int scanSeconds = 30)
     {
         this.probeProjectPath = probeProjectPath;
-        this.dotnetExecutable = string.IsNullOrWhiteSpace(dotnetExecutable) ? "dotnet" : dotnetExecutable;
+        this.dotnetExecutable = ResolveDotnetExecutable(dotnetExecutable);
         this.scanSeconds = Mathf.Clamp(scanSeconds, 5, 300);
     }
 
@@ -151,6 +153,23 @@ public sealed class Pm5ProbeBridgeClient : IPm5BleClient, IPm5WorkoutDataClient,
         return $"run --project {Quote(projectPath)} -- --bridge --scan-seconds {Mathf.Clamp(scanSeconds, 5, 300).ToString(CultureInfo.InvariantCulture)}";
     }
 
+    public static string ResolveDotnetExecutable(string configuredDotnetExecutable)
+    {
+        if (!string.IsNullOrWhiteSpace(configuredDotnetExecutable) &&
+            !string.Equals(configuredDotnetExecutable, DotnetExecutableName, StringComparison.OrdinalIgnoreCase))
+        {
+            return configuredDotnetExecutable;
+        }
+
+        var programFilesDotnet = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "dotnet", DotnetExecutableFileName);
+        if (File.Exists(programFilesDotnet))
+        {
+            return programFilesDotnet;
+        }
+
+        return DotnetExecutableName;
+    }
+
     public static string GetDefaultProbeProjectPath()
     {
         var projectRoot = Directory.GetParent(Application.dataPath)?.FullName;
@@ -161,9 +180,42 @@ public sealed class Pm5ProbeBridgeClient : IPm5BleClient, IPm5WorkoutDataClient,
 
     private void StartBridgeProcess()
     {
+        var workingDirectory = Directory.GetParent(probeProjectPath)?.FullName ?? Application.dataPath;
+        var arguments = BuildProbeArguments(probeProjectPath, scanSeconds);
+        var dotnetPathIsRooted = Path.IsPathRooted(dotnetExecutable);
+        var dotnetFileExists = dotnetPathIsRooted && File.Exists(dotnetExecutable);
+        var probeProjectExists = File.Exists(probeProjectPath);
+        var workingDirectoryExists = Directory.Exists(workingDirectory);
+
+        UnityEngine.Debug.Log(
+            LogPrefix +
+            "Bridge startup config. " +
+            "DotnetExecutable='" + dotnetExecutable + "', " +
+            "DotnetIsAbsolute=" + dotnetPathIsRooted.ToString() + ", " +
+            "DotnetFileExists=" + dotnetFileExists.ToString() + ", " +
+            "ProbeProjectPath='" + probeProjectPath + "', " +
+            "ProbeProjectExists=" + probeProjectExists.ToString() + ", " +
+            "WorkingDirectory='" + workingDirectory + "', " +
+            "WorkingDirectoryExists=" + workingDirectoryExists.ToString() + ", " +
+            "Arguments='" + arguments + "'.");
+
+        if (dotnetPathIsRooted && !dotnetFileExists)
+        {
+            UnityEngine.Debug.LogError(LogPrefix + "Cannot start PM5 bridge because dotnet.exe was not found at: " + dotnetExecutable);
+            SetStatus(Pm5BleConnectionStatus.ConnectionFailed);
+            return;
+        }
+
         if (!File.Exists(probeProjectPath))
         {
-            UnityEngine.Debug.LogWarning(LogPrefix + "Pm5BleProbe project not found: " + probeProjectPath);
+            UnityEngine.Debug.LogError(LogPrefix + "Cannot start PM5 bridge because Pm5BleProbe.csproj was not found at: " + probeProjectPath);
+            SetStatus(Pm5BleConnectionStatus.ConnectionFailed);
+            return;
+        }
+
+        if (!workingDirectoryExists)
+        {
+            UnityEngine.Debug.LogError(LogPrefix + "Cannot start PM5 bridge because the working directory was not found: " + workingDirectory);
             SetStatus(Pm5BleConnectionStatus.ConnectionFailed);
             return;
         }
@@ -171,38 +223,53 @@ public sealed class Pm5ProbeBridgeClient : IPm5BleClient, IPm5WorkoutDataClient,
         var startInfo = new ProcessStartInfo
         {
             FileName = dotnetExecutable,
-            Arguments = BuildProbeArguments(probeProjectPath, scanSeconds),
+            Arguments = arguments,
             CreateNoWindow = true,
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
-            WorkingDirectory = Directory.GetParent(probeProjectPath)?.FullName ?? Application.dataPath,
+            WorkingDirectory = workingDirectory,
         };
 
         var processGeneration = ++bridgeGeneration;
         activeBridgeGeneration = processGeneration;
 
-        bridgeProcess = new Process
+        var process = new Process
         {
             StartInfo = startInfo,
             EnableRaisingEvents = true,
         };
 
-        bridgeProcess.OutputDataReceived += (_, args) => EnqueueLine(args.Data);
-        bridgeProcess.ErrorDataReceived += (_, args) => EnqueueLine(args.Data);
-        bridgeProcess.Exited += (_, _) => EnqueueLine("PM5_BRIDGE_EXITED|Generation=" + processGeneration.ToString(CultureInfo.InvariantCulture));
+        process.OutputDataReceived += (_, args) => EnqueueLine(args.Data);
+        process.ErrorDataReceived += (_, args) => EnqueueLine(args.Data);
+        process.Exited += (_, _) => EnqueueLine("PM5_BRIDGE_EXITED|Generation=" + processGeneration.ToString(CultureInfo.InvariantCulture));
 
         try
         {
-            bridgeProcess.Start();
-            bridgeProcess.BeginOutputReadLine();
-            bridgeProcess.BeginErrorReadLine();
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+            bridgeProcess = process;
             UnityEngine.Debug.Log(LogPrefix + "Bridge process started: " + dotnetExecutable + " " + startInfo.Arguments);
         }
         catch (Exception exception)
         {
-            UnityEngine.Debug.LogWarning(LogPrefix + "Bridge process failed to start: " + exception.Message);
-            StopBridgeProcess();
+            UnityEngine.Debug.LogError(
+                LogPrefix +
+                "Bridge process failed to start. " +
+                "DotnetExecutable='" + dotnetExecutable + "', " +
+                "ProbeProjectPath='" + probeProjectPath + "', " +
+                "WorkingDirectory='" + workingDirectory + "', " +
+                "Arguments='" + arguments + "'. " +
+                "Exception=" + exception.Message + "\n" +
+                exception);
+            if (SafeIsRunning(process))
+            {
+                process.Kill();
+            }
+
+            process.Dispose();
+            activeBridgeGeneration = 0;
             SetStatus(Pm5BleConnectionStatus.ConnectionFailed);
         }
     }
@@ -216,10 +283,11 @@ public sealed class Pm5ProbeBridgeClient : IPm5BleClient, IPm5WorkoutDataClient,
 
         try
         {
-            if (!bridgeProcess.HasExited)
+            var process = bridgeProcess;
+            if (process != null && SafeIsRunning(process))
             {
                 UnityEngine.Debug.Log(LogPrefix + "Stopping bridge process.");
-                bridgeProcess.Kill();
+                process.Kill();
             }
         }
         catch (Exception exception)
@@ -231,6 +299,18 @@ public sealed class Pm5ProbeBridgeClient : IPm5BleClient, IPm5WorkoutDataClient,
             activeBridgeGeneration = 0;
             bridgeProcess.Dispose();
             bridgeProcess = null;
+        }
+    }
+
+    private static bool SafeIsRunning(Process process)
+    {
+        try
+        {
+            return process != null && !process.HasExited;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
         }
     }
 
