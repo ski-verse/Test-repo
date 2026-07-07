@@ -179,7 +179,7 @@ internal static class Program
         }
 
         using var service = serviceResult.Services[0];
-        Log($"SERVICE_OPEN|DeviceId=\"{service.DeviceId}\"|Uuid={service.Uuid}");
+        Log($"SERVICE_OPEN|Uuid={service.Uuid}");
 
         var activeSubscriptions = new List<GattCharacteristic>();
         foreach (var target in Characteristics)
