@@ -25,7 +25,13 @@ public class Pm5WorkoutDataSourceTests
             HasStrokeRateSpm = true,
             StrokeRateSpm = 31f,
             HasTotalStrokes = true,
-            TotalStrokes = 52
+            TotalStrokes = 52,
+            HasElapsedTimeSeconds = true,
+            ElapsedTimeSeconds = 26.82f,
+            HasDistanceMeters = true,
+            DistanceMeters = 84.7f,
+            HasSpeedKmh = true,
+            SpeedKmh = 12.8f
         });
 
         Assert.IsTrue(source.HasWorkoutMetrics);
@@ -34,6 +40,12 @@ public class Pm5WorkoutDataSourceTests
         Assert.IsTrue(source.HasStrokeMetrics);
         Assert.AreEqual(31f, source.StrokeRateSpm, 0.001f);
         Assert.AreEqual(52, source.TotalStrokes);
+        Assert.IsTrue(source.HasElapsedTimeSeconds);
+        Assert.AreEqual(26.82f, source.ElapsedTimeSeconds, 0.001f);
+        Assert.IsTrue(source.HasDistanceMeters);
+        Assert.AreEqual(84.7f, source.DistanceMeters, 0.001f);
+        Assert.IsTrue(source.HasSpeedKmh);
+        Assert.AreEqual(12.8f, source.SpeedKmh, 0.001f);
 
         UnityEngine.Object.DestroyImmediate(connectorObject);
     }

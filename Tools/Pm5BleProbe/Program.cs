@@ -36,7 +36,7 @@ internal static class Program
 
         Log("PM5 BLE Probe starting.");
         Log($"TargetFramework: net8.0-windows10.0.19041.0");
-        Log($"ScanSeconds={options.ScanSeconds}, VerboseAdvertisements={options.VerboseAdvertisements}, Address={options.Address?.ToString() ?? "scan"}");
+        Log($"ScanSeconds={options.ScanSeconds}, VerboseAdvertisements={options.VerboseAdvertisements}, Address={options.Address?.ToString() ?? "scan"}, BridgeMode={options.BridgeMode}");
 
         try
         {
@@ -47,7 +47,7 @@ internal static class Program
                 return 2;
             }
 
-            await ConnectAndSubscribe(address.Value);
+            await ConnectAndSubscribe(address.Value, options);
             return 0;
         }
         catch (Exception exception)
@@ -88,12 +88,21 @@ internal static class Program
 
             pm5Matches++;
             found[eventArgs.BluetoothAddress] = new DiscoveredPm5(eventArgs.BluetoothAddress, string.IsNullOrWhiteSpace(name) ? "Concept2 PM5" : name, serviceUuids);
+            if (options.BridgeMode)
+            {
+                scanFinished.Cancel();
+            }
         };
 
         watcher.Stopped += (_, eventArgs) =>
         {
             Log($"SCAN_STOPPED|Status={eventArgs.Error}");
         };
+
+        if (options.BridgeMode)
+        {
+            Bridge("PM5_STATUS|Searching");
+        }
 
         Log($"SCAN_START|InitialStatus={watcher.Status}|Mode={watcher.ScanningMode}");
         watcher.Start();
@@ -121,9 +130,13 @@ internal static class Program
         for (var i = 0; i < devices.Length; i++)
         {
             Log($"PM5[{i + 1}] Name=\"{devices[i].Name}\" Address={devices[i].Address} Services={FormatServices(devices[i].ServiceUuids)}");
+            if (options.BridgeMode)
+            {
+                Bridge($"PM5_DEVICE|Name={EscapeBridgeValue(devices[i].Name)}|Address={devices[i].Address}");
+            }
         }
 
-        if (devices.Length == 1 || !Environment.UserInteractive)
+        if (options.BridgeMode || devices.Length == 1 || !Environment.UserInteractive)
         {
             Log($"SELECT|Using PM5 \"{devices[0].Name}\" Address={devices[0].Address}");
             return devices[0].Address;
@@ -140,9 +153,15 @@ internal static class Program
         return devices[selected - 1].Address;
     }
 
-    private static async Task ConnectAndSubscribe(ulong address)
+    private static async Task ConnectAndSubscribe(ulong address, ProbeOptions options)
     {
         Log($"CONNECT_START|Address={address}");
+        if (options.BridgeMode)
+        {
+            Bridge("PM5_STATUS|Connecting");
+            Bridge("PM5_DATA_STATUS|SubscribingToWorkoutNotifications");
+        }
+
         using var device = await BluetoothLEDevice.FromBluetoothAddressAsync(address);
         if (device == null)
         {
@@ -150,6 +169,11 @@ internal static class Program
         }
 
         Log($"DEVICE|Name=\"{device.Name}\"|DeviceId=\"{device.DeviceId}\"|ConnectionStatus={device.ConnectionStatus}");
+        if (options.BridgeMode)
+        {
+            Bridge($"PM5_DEVICE|Name={EscapeBridgeValue(device.Name)}|Address={address}");
+        }
+
         device.ConnectionStatusChanged += (_, _) =>
         {
             Log($"DEVICE_CONNECTION_STATUS|{device.ConnectionStatus}");
@@ -185,12 +209,16 @@ internal static class Program
 
         using var service = serviceResult.Services[0];
         Log($"SERVICE_OPEN|Uuid={service.Uuid}");
+        if (options.BridgeMode)
+        {
+            Bridge("PM5_STATUS|Connected");
+        }
 
         var parser = new Pm5PacketParser();
         var activeSubscriptions = new List<GattCharacteristic>();
         foreach (var target in Characteristics)
         {
-            var subscribed = await TrySubscribe(service, target, parser);
+            var subscribed = await TrySubscribe(service, target, parser, options);
             if (subscribed != null)
             {
                 activeSubscriptions.Add(subscribed);
@@ -201,13 +229,25 @@ internal static class Program
         if (activeSubscriptions.Count == 0)
         {
             Warn("No notifications subscribed. Probe will stay open briefly for diagnostics, but no RAW packets are expected.");
+            if (options.BridgeMode)
+            {
+                Bridge("PM5_DATA_STATUS|NotificationSubscriptionFailed");
+            }
         }
 
-        Log("LISTENING|Press Enter to stop. Start rowing/skiing now and watch for RAW lines.");
-        Console.ReadLine();
+        if (options.BridgeMode)
+        {
+            Log("LISTENING|Bridge mode active. Stop the parent process to exit.");
+            await Task.Delay(Timeout.InfiniteTimeSpan);
+        }
+        else
+        {
+            Log("LISTENING|Press Enter to stop. Start rowing/skiing now and watch for RAW lines.");
+            Console.ReadLine();
+        }
     }
 
-    private static async Task<GattCharacteristic?> TrySubscribe(GattDeviceService service, ProbeCharacteristic target, Pm5PacketParser parser)
+    private static async Task<GattCharacteristic?> TrySubscribe(GattDeviceService service, ProbeCharacteristic target, Pm5PacketParser parser, ProbeOptions options)
     {
         foreach (var cacheMode in new[] { BluetoothCacheMode.Uncached, BluetoothCacheMode.Cached })
         {
@@ -228,7 +268,13 @@ internal static class Program
                 Log($"RAW|Name=\"{target.Name}\"|Uuid={target.Uuid}|Bytes={raw.Length}|Hex={Convert.ToHexString(raw)}");
                 lock (parser)
                 {
-                    Log(parser.Parse(target.Name, target.Uuid, raw).ToLogLine());
+                    var parsed = parser.Parse(target.Name, target.Uuid, raw);
+                    Log(parsed.ToLogLine());
+                    if (options.BridgeMode)
+                    {
+                        Bridge("PM5_DATA_STATUS|ReceivingLiveData");
+                        Bridge(parsed.ToBridgeMetricsLine());
+                    }
                 }
             };
 
@@ -304,6 +350,11 @@ internal static class Program
         Console.WriteLine($"{DateTimeOffset.Now:HH:mm:ss.fff} {message}");
     }
 
+    private static void Bridge(string message)
+    {
+        Console.WriteLine(message);
+    }
+
     private static void Warn(string message)
     {
         Console.WriteLine($"{DateTimeOffset.Now:HH:mm:ss.fff} WARN|{message}");
@@ -318,17 +369,24 @@ internal static class Program
 
     private readonly record struct DiscoveredPm5(ulong Address, string Name, IReadOnlyCollection<Guid> ServiceUuids);
 
+    private static string EscapeBridgeValue(string value)
+    {
+        return (value ?? string.Empty).Replace("|", " ").Replace("\r", " ").Replace("\n", " ");
+    }
+
     private sealed class ProbeOptions
     {
         public int ScanSeconds { get; private init; } = 30;
         public bool VerboseAdvertisements { get; private init; }
         public ulong? Address { get; private init; }
+        public bool BridgeMode { get; private init; }
 
         public static ProbeOptions Parse(string[] args)
         {
             var scanSeconds = 30;
             var verboseAdvertisements = false;
             ulong? address = null;
+            var bridgeMode = false;
 
             for (var i = 0; i < args.Length; i++)
             {
@@ -341,13 +399,16 @@ internal static class Program
                     case "--verbose-advertisements":
                         verboseAdvertisements = true;
                         break;
+                    case "--bridge":
+                        bridgeMode = true;
+                        break;
                     case "--address" when i + 1 < args.Length && ulong.TryParse(args[i + 1], out var parsedAddress):
                         address = parsedAddress;
                         i++;
                         break;
                     case "--help":
                     case "-h":
-                        Console.WriteLine("Usage: dotnet run -- [--scan-seconds 30] [--verbose-advertisements] [--address 237390097829415] [--self-test]");
+                        Console.WriteLine("Usage: dotnet run -- [--scan-seconds 30] [--verbose-advertisements] [--address 237390097829415] [--bridge] [--self-test]");
                         break;
                 }
             }
@@ -357,6 +418,7 @@ internal static class Program
                 ScanSeconds = scanSeconds,
                 VerboseAdvertisements = verboseAdvertisements,
                 Address = address,
+                BridgeMode = bridgeMode,
             };
         }
     }

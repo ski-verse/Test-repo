@@ -72,8 +72,26 @@ public class WorkoutMetricsHudDisplay : MonoBehaviour
         var lap = session != null ? session.CurrentLapNumber : player != null ? player.CurrentLapNumber : 1;
         var elapsedTime = session != null ? session.ElapsedTimeSeconds : 0f;
         var movementInput = player != null ? player.LastMovementInput : PlayerMovementInput.None;
+        if (TryReadExternalCourseMetrics(out var externalSpeedKmh, out var externalDistanceMeters, out var externalElapsedTimeSeconds))
+        {
+            if (externalSpeedKmh.HasValue)
+            {
+                speedKmh = externalSpeedKmh.Value;
+            }
 
-        if (TryReadExternalWorkoutMetrics(out var watts, out var heartRateBpm))
+            if (externalDistanceMeters.HasValue)
+            {
+                distanceKm = externalDistanceMeters.Value / 1000f;
+            }
+
+            if (externalElapsedTimeSeconds.HasValue)
+            {
+                elapsedTime = externalElapsedTimeSeconds.Value;
+            }
+        }
+
+        var hasExternalWorkoutMetrics = TryReadExternalWorkoutMetrics(out var watts, out var heartRateBpm, out var hasExternalHeartRate);
+        if (hasExternalWorkoutMetrics)
         {
             CurrentWatts = watts;
             CurrentHeartRateBpm = heartRateBpm;
@@ -89,7 +107,7 @@ public class WorkoutMetricsHudDisplay : MonoBehaviour
 
         SetText(speedValueText, $"{speedKmh:0.0}");
         SetText(wattsValueText, $"{CurrentWatts:0}");
-        SetText(heartRateValueText, $"{CurrentHeartRateBpm:0}");
+        SetText(heartRateValueText, hasExternalWorkoutMetrics && !hasExternalHeartRate ? "--" : $"{CurrentHeartRateBpm:0}");
         SetText(strokeRateValueText, $"{strokeRate:0}");
         SetText(timeValueText, WorkoutSessionController.FormatElapsedTime(elapsedTime));
         SetText(distanceValueText, $"{distanceKm:0.00} km");
@@ -274,18 +292,47 @@ public class WorkoutMetricsHudDisplay : MonoBehaviour
         }
     }
 
-    private bool TryReadExternalWorkoutMetrics(out int watts, out int heartRateBpm)
+    private bool TryReadExternalWorkoutMetrics(out int watts, out int heartRateBpm, out bool hasHeartRate)
     {
         if (workoutMetricsSourceBehaviour is IWorkoutMetricsSource source && source.HasWorkoutMetrics)
         {
             watts = Mathf.Max(0, Mathf.RoundToInt(source.Watts));
             heartRateBpm = Mathf.Max(0, Mathf.RoundToInt(source.HeartRateBpm));
+            hasHeartRate = source.HasHeartRateBpm;
             return true;
         }
 
         watts = 0;
         heartRateBpm = 0;
+        hasHeartRate = false;
         return false;
+    }
+
+    private bool TryReadExternalCourseMetrics(out float? speedKmh, out float? distanceMeters, out float? elapsedTimeSeconds)
+    {
+        speedKmh = null;
+        distanceMeters = null;
+        elapsedTimeSeconds = null;
+
+        if (workoutMetricsSourceBehaviour is IPm5CourseMetricsSource source)
+        {
+            if (source.HasSpeedKmh)
+            {
+                speedKmh = Mathf.Max(0f, source.SpeedKmh);
+            }
+
+            if (source.HasDistanceMeters)
+            {
+                distanceMeters = Mathf.Max(0f, source.DistanceMeters);
+            }
+
+            if (source.HasElapsedTimeSeconds)
+            {
+                elapsedTimeSeconds = Mathf.Max(0f, source.ElapsedTimeSeconds);
+            }
+        }
+
+        return speedKmh.HasValue || distanceMeters.HasValue || elapsedTimeSeconds.HasValue;
     }
 
     private static void SetText(TMP_Text text, string value)
@@ -327,6 +374,23 @@ public interface IWorkoutMetricsSource
     float Watts { get; }
 
     float HeartRateBpm { get; }
+
+    bool HasHeartRateBpm { get; }
+}
+
+public interface IPm5CourseMetricsSource
+{
+    bool HasElapsedTimeSeconds { get; }
+
+    float ElapsedTimeSeconds { get; }
+
+    bool HasDistanceMeters { get; }
+
+    float DistanceMeters { get; }
+
+    bool HasSpeedKmh { get; }
+
+    float SpeedKmh { get; }
 }
 
 public class WorkoutMetricsHudRuntimeUpdater : MonoBehaviour

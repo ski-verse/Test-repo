@@ -93,4 +93,40 @@ public class WorkoutMetricsHudDisplayTests
         Assert.AreEqual(0, WorkoutMetricsHudDisplay.CalculateDisplayWatts(coastingInput, 20f));
         Assert.Greater(WorkoutMetricsHudDisplay.CalculateDisplayHeartRateBpm(20f), 100);
     }
+
+    [Test]
+    public void Refresh_ShowsBlankHeartRateWhenPm5HasNoHeartRateBelt()
+    {
+        var canvas = new GameObject("Race HUD").AddComponent<Canvas>();
+        var player = new GameObject("Player").AddComponent<PlayerSpeedController>();
+        var source = new GameObject("PM5 Source").AddComponent<FakeWorkoutMetricsSource>();
+        source.hasWorkoutMetrics = true;
+        source.watts = 126f;
+        source.hasHeartRateBpm = false;
+
+        var display = WorkoutMetricsHudDisplay.CreateRuntimeHud(canvas.transform, player);
+        display.workoutMetricsSourceBehaviour = source;
+        display.Refresh();
+
+        Assert.AreEqual("126", display.wattsValueText.text);
+        Assert.AreEqual("--", display.heartRateValueText.text);
+
+        Object.DestroyImmediate(source.gameObject);
+    }
+
+    private sealed class FakeWorkoutMetricsSource : MonoBehaviour, IWorkoutMetricsSource
+    {
+        public bool hasWorkoutMetrics;
+        public float watts;
+        public bool hasHeartRateBpm;
+        public float heartRateBpm;
+
+        public bool HasWorkoutMetrics => hasWorkoutMetrics;
+
+        public float Watts => watts;
+
+        public float HeartRateBpm => heartRateBpm;
+
+        public bool HasHeartRateBpm => hasHeartRateBpm;
+    }
 }

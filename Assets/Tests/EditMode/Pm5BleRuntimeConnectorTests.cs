@@ -104,6 +104,34 @@ public class Pm5BleRuntimeConnectorTests
     }
 
     [Test]
+    public void RuntimeConnector_UsesProbeBridgeByDefaultAndKeepsLegacyWindowsFallback()
+    {
+        var bridgeObject = new UnityEngine.GameObject("PM5 Bridge Connector");
+        var bridgeConnector = bridgeObject.AddComponent<Pm5BleRuntimeConnector>();
+
+        Assert.AreEqual(Pm5BleClientMode.ProbeBridge, bridgeConnector.clientMode);
+        Assert.IsInstanceOf<Pm5ProbeBridgeClient>(bridgeConnector.Client);
+
+        var legacyObject = new UnityEngine.GameObject("PM5 Legacy Connector");
+        var legacyConnector = legacyObject.AddComponent<Pm5BleRuntimeConnector>();
+        legacyConnector.clientMode = Pm5BleClientMode.LegacyWindowsBle;
+
+        Assert.IsInstanceOf<WindowsPm5BleClient>(legacyConnector.Client);
+
+        UnityEngine.Object.DestroyImmediate(bridgeObject);
+        UnityEngine.Object.DestroyImmediate(legacyObject);
+    }
+
+    [Test]
+    public void Pm5ProbeBridgeClient_BuildsMachineReadableBridgeArguments()
+    {
+        var arguments = Pm5ProbeBridgeClient.BuildProbeArguments("C:\\Probe\\Pm5BleProbe.csproj", 30);
+
+        StringAssert.Contains("run --project \"C:\\Probe\\Pm5BleProbe.csproj\"", arguments);
+        StringAssert.Contains("-- --bridge --scan-seconds 30", arguments);
+    }
+
+    [Test]
     public void WindowsPm5BleClient_ConnectScriptSubscribesMultiplexedDataBeforeDirectStrokeFallback()
     {
         var script = BuildConnectScriptForTest();

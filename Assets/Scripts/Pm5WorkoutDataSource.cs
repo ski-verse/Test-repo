@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public class Pm5WorkoutDataSource : MonoBehaviour, IWorkoutMetricsSource, IStrokeMetricsSource
+public class Pm5WorkoutDataSource : MonoBehaviour, IWorkoutMetricsSource, IStrokeMetricsSource, IPm5CourseMetricsSource
 {
     public Pm5BleRuntimeConnector pm5Connector;
 
@@ -14,11 +14,25 @@ public class Pm5WorkoutDataSource : MonoBehaviour, IWorkoutMetricsSource, IStrok
 
     public float HeartRateBpm => latestMetrics.HasHeartRateBpm ? latestMetrics.HeartRateBpm : 0f;
 
+    public bool HasHeartRateBpm => latestMetrics.HasHeartRateBpm;
+
     public bool HasStrokeMetrics => latestMetrics.HasStrokeRateSpm && latestMetrics.HasTotalStrokes;
 
     public float StrokeRateSpm => latestMetrics.HasStrokeRateSpm ? latestMetrics.StrokeRateSpm : 0f;
 
     public int TotalStrokes => latestMetrics.HasTotalStrokes ? latestMetrics.TotalStrokes : 0;
+
+    public bool HasElapsedTimeSeconds => latestMetrics.HasElapsedTimeSeconds;
+
+    public float ElapsedTimeSeconds => latestMetrics.ElapsedTimeSeconds;
+
+    public bool HasDistanceMeters => latestMetrics.HasDistanceMeters;
+
+    public float DistanceMeters => latestMetrics.DistanceMeters;
+
+    public bool HasSpeedKmh => latestMetrics.HasSpeedKmh;
+
+    public float SpeedKmh => latestMetrics.SpeedKmh;
 
     private void Awake()
     {

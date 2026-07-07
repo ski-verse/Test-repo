@@ -19,6 +19,8 @@ public class Pm5BleRuntimeConnector : MonoBehaviour
 
     [Tooltip("Production mode uses BLE advertisements only. Development fallback can use Windows known/paired/PnP BLE devices to continue debugging on Windows.")]
     public Pm5BleDiscoveryMode discoveryMode = Pm5BleDiscoveryMode.DevelopmentWindowsKnownDevicesFallback;
+    [Tooltip("Probe Bridge starts the standalone .NET Pm5BleProbe process and reads parsed PM5 metrics from stdout. Legacy Windows BLE keeps the previous Unity helper path as fallback.")]
+    public Pm5BleClientMode clientMode = Pm5BleClientMode.ProbeBridge;
 
     private IPm5BleClient client;
     private int selectedDeviceIndex = -1;
@@ -91,6 +93,7 @@ public class Pm5BleRuntimeConnector : MonoBehaviour
 
     public void StartScan()
     {
+        PumpClientIfNeeded();
         Debug.Log("[Ski-Verse PM5 BLE] Runtime connector starts scan.");
         selectedDeviceIndex = -1;
         Client.StartScan();
@@ -99,6 +102,7 @@ public class Pm5BleRuntimeConnector : MonoBehaviour
 
     public void SelectDevice(int deviceIndex)
     {
+        PumpClientIfNeeded();
         var devices = DiscoveredDevices;
         selectedDeviceIndex = deviceIndex >= 0 && deviceIndex < devices.Count ? deviceIndex : -1;
 
@@ -117,6 +121,7 @@ public class Pm5BleRuntimeConnector : MonoBehaviour
 
     public void ConnectSelectedDevice()
     {
+        PumpClientIfNeeded();
         var selected = SelectedDevice;
         if (!selected.HasValue)
         {
@@ -132,12 +137,19 @@ public class Pm5BleRuntimeConnector : MonoBehaviour
 
     public string GetStatusText()
     {
+        PumpClientIfNeeded();
         return StatusToText(Status);
     }
 
     public string GetDataStatusText()
     {
+        PumpClientIfNeeded();
         return DataStatusToText(DataStatus);
+    }
+
+    private void Update()
+    {
+        PumpClientIfNeeded();
     }
 
     public static string StatusToText(Pm5BleConnectionStatus status)
@@ -183,7 +195,17 @@ public class Pm5BleRuntimeConnector : MonoBehaviour
             return;
         }
 
-        Client = new WindowsPm5BleClient(discoveryMode);
+        Client = clientMode == Pm5BleClientMode.ProbeBridge
+            ? new Pm5ProbeBridgeClient()
+            : new WindowsPm5BleClient(discoveryMode);
+    }
+
+    private void PumpClientIfNeeded()
+    {
+        if (client is IPm5BleClientPump pump)
+        {
+            pump.Pump();
+        }
     }
 
     private void NotifyStateChanged()

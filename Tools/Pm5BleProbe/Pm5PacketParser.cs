@@ -354,6 +354,26 @@ internal sealed class Pm5ParsedMetrics
         return builder.ToString();
     }
 
+    public string ToBridgeMetricsLine()
+    {
+        var builder = new StringBuilder("PM5_METRICS");
+        Append(builder, "Watts", DisplayWatts);
+        Append(builder, "SPM", StrokeRateSpm);
+        Append(builder, "StrokeCount", StrokeCount);
+        Append(builder, "Time", FormatTime(ElapsedTimeSeconds));
+        Append(builder, "Distance", DistanceMeters.HasValue ? FormatNumber(DistanceMeters.Value, "0.0") : null);
+        Append(builder, "SpeedKmh", SpeedMetersPerSecond.HasValue ? FormatNumber(SpeedMetersPerSecond.Value * 3.6, "0.0") : null);
+        Append(builder, "Pace", FormatTime(CurrentPaceSecondsPer500m));
+        Append(builder, "AvgPace", FormatTime(AveragePaceSecondsPer500m));
+        Append(builder, "SplitAvgWatts", SplitAveragePowerWatts);
+        Append(builder, "DragFactor", DragFactor);
+        Append(builder, "HeartRate", HeartRateBpm);
+        Append(builder, "WorkoutState", WorkoutState);
+        Append(builder, "RowingState", RowingState);
+        Append(builder, "StrokeState", StrokeState);
+        return builder.ToString();
+    }
+
     private static void Append(StringBuilder builder, string name, object? value)
     {
         builder.Append('|');
