@@ -27,6 +27,11 @@ internal static class Program
     [STAThread]
     private static async Task<int> Main(string[] args)
     {
+        if (args.Contains("--self-test", StringComparer.OrdinalIgnoreCase))
+        {
+            return Pm5ParserSelfTests.Run();
+        }
+
         var options = ProbeOptions.Parse(args);
 
         Log("PM5 BLE Probe starting.");
@@ -181,10 +186,11 @@ internal static class Program
         using var service = serviceResult.Services[0];
         Log($"SERVICE_OPEN|Uuid={service.Uuid}");
 
+        var parser = new Pm5PacketParser();
         var activeSubscriptions = new List<GattCharacteristic>();
         foreach (var target in Characteristics)
         {
-            var subscribed = await TrySubscribe(service, target);
+            var subscribed = await TrySubscribe(service, target, parser);
             if (subscribed != null)
             {
                 activeSubscriptions.Add(subscribed);
@@ -201,7 +207,7 @@ internal static class Program
         Console.ReadLine();
     }
 
-    private static async Task<GattCharacteristic?> TrySubscribe(GattDeviceService service, ProbeCharacteristic target)
+    private static async Task<GattCharacteristic?> TrySubscribe(GattDeviceService service, ProbeCharacteristic target, Pm5PacketParser parser)
     {
         foreach (var cacheMode in new[] { BluetoothCacheMode.Uncached, BluetoothCacheMode.Cached })
         {
@@ -220,6 +226,10 @@ internal static class Program
             {
                 var raw = ReadBuffer(eventArgs.CharacteristicValue);
                 Log($"RAW|Name=\"{target.Name}\"|Uuid={target.Uuid}|Bytes={raw.Length}|Hex={Convert.ToHexString(raw)}");
+                lock (parser)
+                {
+                    Log(parser.Parse(target.Name, target.Uuid, raw).ToLogLine());
+                }
             };
 
             var descriptorValue = SelectDescriptorValue(characteristic);
@@ -337,7 +347,7 @@ internal static class Program
                         break;
                     case "--help":
                     case "-h":
-                        Console.WriteLine("Usage: dotnet run -- [--scan-seconds 30] [--verbose-advertisements] [--address 237390097829415]");
+                        Console.WriteLine("Usage: dotnet run -- [--scan-seconds 30] [--verbose-advertisements] [--address 237390097829415] [--self-test]");
                         break;
                 }
             }
