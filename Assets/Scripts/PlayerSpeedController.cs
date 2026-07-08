@@ -12,6 +12,8 @@ public class PlayerSpeedController : MonoBehaviour
     public const float RollingResistanceDeceleration = 0.18f;
     public const float AirResistanceDecelerationPerSpeedSquared = 0.012f;
     public const float MinimumPropulsionWatts = 1f;
+    public const float WattsForFullPropulsion = 240f;
+    public const float WattsEffortSmoothingRate = 5f;
 
     [Header("Speed")]
     public float acceleration = 3f;
@@ -30,6 +32,7 @@ public class PlayerSpeedController : MonoBehaviour
     private float totalDistanceMeters;
     [SerializeField]
     private float startDistanceMeters;
+    private float smoothedPropulsionEffort;
 
     private IPlayerInputSource inputSource;
 
@@ -129,6 +132,17 @@ public class PlayerSpeedController : MonoBehaviour
         return RollingResistanceDeceleration + speed * speed * AirResistanceDecelerationPerSpeedSquared;
     }
 
+    public static float CalculatePropulsionEffortFromWatts(float propulsionWatts)
+    {
+        if (propulsionWatts < MinimumPropulsionWatts)
+        {
+            return 0f;
+        }
+
+        var normalizedWatts = Mathf.InverseLerp(MinimumPropulsionWatts, WattsForFullPropulsion, propulsionWatts);
+        return Mathf.Clamp01(Mathf.Sqrt(normalizedWatts));
+    }
+
     public void EnsureInputSource()
     {
         if (inputSource != null)
@@ -170,10 +184,14 @@ public class PlayerSpeedController : MonoBehaviour
         var gradientPercent = CurrentGradientPercent;
 
         var hasPropulsionInput = HasPropulsionInput(movementInput);
+        var propulsionEffort = CalculateSmoothedPropulsionEffort(movementInput.PropulsionWatts, safeDeltaTime);
+        var effectivePropulsionAxis = movementInput.SpeedAxis > 0f
+            ? movementInput.SpeedAxis
+            : propulsionEffort;
 
-        if (movementInput.SpeedAxis > 0f)
+        if (movementInput.SpeedAxis > 0f || (movementInput.SpeedAxis >= 0f && effectivePropulsionAxis > 0f))
         {
-            IncreaseSpeed(safeDeltaTime * movementInput.SpeedAxis * CalculateUphillAccelerationMultiplier(gradientPercent));
+            IncreaseSpeed(safeDeltaTime * effectivePropulsionAxis * CalculateUphillAccelerationMultiplier(gradientPercent));
         }
         else if (movementInput.SpeedAxis < 0f)
         {
@@ -188,7 +206,7 @@ public class PlayerSpeedController : MonoBehaviour
 
         ApplyUphillMaxSpeedLimit(gradientPercent);
 
-        if (movementInput.SpeedAxis > 0f)
+        if (effectivePropulsionAxis > 0f && movementInput.SpeedAxis >= 0f)
         {
             ApplyMinimumUphillMovementSpeed(gradientPercent);
         }
@@ -263,6 +281,22 @@ public class PlayerSpeedController : MonoBehaviour
     private void ApplyCoastDecay(float deltaTime)
     {
         CurrentSpeed -= CalculateCoastDeceleration(CurrentSpeed) * deltaTime;
+    }
+
+    private float CalculateSmoothedPropulsionEffort(float propulsionWatts, float deltaTime)
+    {
+        var targetEffort = CalculatePropulsionEffortFromWatts(propulsionWatts);
+        if (targetEffort <= 0f)
+        {
+            smoothedPropulsionEffort = 0f;
+            return 0f;
+        }
+
+        smoothedPropulsionEffort = Mathf.MoveTowards(
+            smoothedPropulsionEffort,
+            targetEffort,
+            Mathf.Max(0f, deltaTime) * WattsEffortSmoothingRate);
+        return smoothedPropulsionEffort;
     }
 
     private static bool HasPropulsionInput(PlayerMovementInput movementInput)

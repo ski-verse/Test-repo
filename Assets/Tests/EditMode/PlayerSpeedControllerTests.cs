@@ -107,6 +107,63 @@ public class PlayerSpeedControllerTests
     }
 
     [Test]
+    public void ApplyMovementInputAndGradientResistance_HigherWattsAccelerateMoreThanLowWatts()
+    {
+        var lowPower = new GameObject("Low Power Player").AddComponent<PlayerSpeedController>();
+        var highPower = new GameObject("High Power Player").AddComponent<PlayerSpeedController>();
+        lowPower.AlignToCourse(900f);
+        highPower.AlignToCourse(900f);
+        lowPower.CurrentSpeed = 4f;
+        highPower.CurrentSpeed = 4f;
+
+        lowPower.ApplyMovementInputAndGradientResistance(new PlayerMovementInput(0f, 80f), 1f);
+        highPower.ApplyMovementInputAndGradientResistance(new PlayerMovementInput(0f, 240f), 1f);
+
+        Assert.Greater(lowPower.CurrentSpeed, 4f);
+        Assert.Greater(highPower.CurrentSpeed, lowPower.CurrentSpeed);
+
+        Object.DestroyImmediate(lowPower.gameObject);
+        Object.DestroyImmediate(highPower.gameObject);
+    }
+
+    [Test]
+    public void ApplyMovementInputAndGradientResistance_ZeroWattsStillCoastsAndDecays()
+    {
+        var controller = new GameObject("Player").AddComponent<PlayerSpeedController>();
+        controller.AlignToCourse(900f);
+        controller.CurrentSpeed = 8f;
+
+        controller.ApplyMovementInputAndGradientResistance(new PlayerMovementInput(0f, 0f), 1f);
+
+        Assert.Less(controller.CurrentSpeed, 8f);
+        Assert.Greater(controller.CurrentSpeed, 0f);
+
+        Object.DestroyImmediate(controller.gameObject);
+    }
+
+    [Test]
+    public void ApplyMovementInputAndGradientResistance_WattsStillRespectClimbResistance()
+    {
+        var flat = new GameObject("Flat Player").AddComponent<PlayerSpeedController>();
+        var climb = new GameObject("Climb Player").AddComponent<PlayerSpeedController>();
+        var climbDistance = CoursePath.MajorClimbStartMeters + CoursePath.MajorClimbLengthMeters * 0.5f;
+        flat.AlignToCourse(900f);
+        climb.AlignToCourse(climbDistance);
+        flat.CurrentSpeed = 4f;
+        climb.CurrentSpeed = 4f;
+
+        flat.ApplyMovementInputAndGradientResistance(new PlayerMovementInput(0f, 180f), 1f);
+        climb.ApplyMovementInputAndGradientResistance(new PlayerMovementInput(0f, 180f), 1f);
+
+        Assert.LessOrEqual(flat.CurrentGradientPercent, 0f);
+        Assert.Greater(climb.CurrentGradientPercent, 0f);
+        Assert.Less(climb.CurrentSpeed, flat.CurrentSpeed);
+
+        Object.DestroyImmediate(flat.gameObject);
+        Object.DestroyImmediate(climb.gameObject);
+    }
+
+    [Test]
     public void CalculateNextPosition_MovesForwardBySpeedAndDeltaTime()
     {
         var controller = new GameObject("Player").AddComponent<PlayerSpeedController>();

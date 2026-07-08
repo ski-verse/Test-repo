@@ -69,6 +69,41 @@ public class PlayerInputAbstractionTests
         Object.DestroyImmediate(keyboard.gameObject);
     }
 
+    [Test]
+    public void Pm5PlayerInputSource_ReadsWattsFromWorkoutMetricsSource()
+    {
+        var inputObject = new GameObject("PM5 Input");
+        var input = inputObject.AddComponent<Pm5PlayerInputSource>();
+        var metrics = inputObject.AddComponent<FakeWorkoutMetricsSource>();
+        metrics.HasWorkoutMetricsValue = true;
+        metrics.WattsValue = 143f;
+        input.workoutMetricsSourceBehaviour = metrics;
+
+        var movementInput = input.ReadMovementInput();
+
+        Assert.AreEqual(0f, movementInput.SpeedAxis, 0.001f);
+        Assert.AreEqual(143f, movementInput.PropulsionWatts, 0.001f);
+
+        Object.DestroyImmediate(inputObject);
+    }
+
+    [Test]
+    public void Pm5PlayerInputSource_ReturnsZeroWattsWhenWorkoutMetricsAreMissing()
+    {
+        var inputObject = new GameObject("PM5 Input");
+        var input = inputObject.AddComponent<Pm5PlayerInputSource>();
+        var metrics = inputObject.AddComponent<FakeWorkoutMetricsSource>();
+        metrics.HasWorkoutMetricsValue = false;
+        metrics.WattsValue = 143f;
+        input.workoutMetricsSourceBehaviour = metrics;
+
+        var movementInput = input.ReadMovementInput();
+
+        Assert.AreEqual(0f, movementInput.PropulsionWatts, 0.001f);
+
+        Object.DestroyImmediate(inputObject);
+    }
+
     private sealed class TestInputSource : IPlayerInputSource
     {
         public PlayerMovementInput MovementInput;
@@ -77,5 +112,19 @@ public class PlayerInputAbstractionTests
         {
             return MovementInput;
         }
+    }
+
+    private sealed class FakeWorkoutMetricsSource : MonoBehaviour, IWorkoutMetricsSource
+    {
+        public bool HasWorkoutMetricsValue;
+        public float WattsValue;
+
+        public bool HasWorkoutMetrics => HasWorkoutMetricsValue;
+
+        public float Watts => WattsValue;
+
+        public float HeartRateBpm => 0f;
+
+        public bool HasHeartRateBpm => false;
     }
 }

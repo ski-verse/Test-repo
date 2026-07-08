@@ -490,6 +490,8 @@ public class SkiErgGameBootstrap : MonoBehaviour
         var controller = skier.AddComponent<PlayerSpeedController>();
         controller.CurrentSpeed = 4f;
         controller.SetStartDistanceZ(0f);
+        var pm5Input = skier.AddComponent<Pm5PlayerInputSource>();
+        controller.InputSource = pm5Input;
 
         var animator = skier.AddComponent<RollerSkierAnimator>();
         animator.player = controller;
