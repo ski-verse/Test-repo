@@ -281,13 +281,17 @@ public sealed class Pm5ProbeBridgeClient : IPm5BleClient, IPm5WorkoutDataClient,
             return;
         }
 
+        var process = bridgeProcess;
+        bridgeProcess = null;
+        activeBridgeGeneration = 0;
+
         try
         {
-            var process = bridgeProcess;
             if (process != null && SafeIsRunning(process))
             {
                 UnityEngine.Debug.Log(LogPrefix + "Stopping bridge process.");
                 process.Kill();
+                process.WaitForExit(2000);
             }
         }
         catch (Exception exception)
@@ -296,9 +300,8 @@ public sealed class Pm5ProbeBridgeClient : IPm5BleClient, IPm5WorkoutDataClient,
         }
         finally
         {
-            activeBridgeGeneration = 0;
-            bridgeProcess.Dispose();
-            bridgeProcess = null;
+            SafeCancelOutputRead(process);
+            process?.Dispose();
         }
     }
 
@@ -311,6 +314,30 @@ public sealed class Pm5ProbeBridgeClient : IPm5BleClient, IPm5WorkoutDataClient,
         catch (InvalidOperationException)
         {
             return false;
+        }
+    }
+
+    private static void SafeCancelOutputRead(Process process)
+    {
+        if (process == null)
+        {
+            return;
+        }
+
+        try
+        {
+            process.CancelOutputRead();
+        }
+        catch (InvalidOperationException)
+        {
+        }
+
+        try
+        {
+            process.CancelErrorRead();
+        }
+        catch (InvalidOperationException)
+        {
         }
     }
 

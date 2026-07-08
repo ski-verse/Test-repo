@@ -104,6 +104,21 @@ public class Pm5BleRuntimeConnectorTests
     }
 
     [Test]
+    public void RuntimeConnector_StopsPm5ClientWhenApplicationQuits()
+    {
+        var gameObject = new UnityEngine.GameObject("PM5 Runtime Connector");
+        var connector = gameObject.AddComponent<Pm5BleRuntimeConnector>();
+        var client = new FakePm5BleClient();
+
+        connector.Client = client;
+        gameObject.SendMessage("OnApplicationQuit");
+
+        Assert.AreEqual(1, client.StopScanCount);
+
+        UnityEngine.Object.DestroyImmediate(gameObject);
+    }
+
+    [Test]
     public void RuntimeConnector_UsesProbeBridgeByDefaultAndKeepsLegacyWindowsFallback()
     {
         var bridgeObject = new UnityEngine.GameObject("PM5 Bridge Connector");

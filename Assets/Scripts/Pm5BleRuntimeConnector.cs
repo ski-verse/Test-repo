@@ -82,6 +82,11 @@ public class Pm5BleRuntimeConnector : MonoBehaviour
         StopClient();
     }
 
+    private void OnApplicationQuit()
+    {
+        StopClient();
+    }
+
     private void OnDestroy()
     {
         if (client != null)
