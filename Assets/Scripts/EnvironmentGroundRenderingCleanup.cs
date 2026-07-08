@@ -231,9 +231,9 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
         }
 
         coverage.name = "Full Course Green Ground Coverage";
-        var meshFilter = coverage.GetComponent<MeshFilter>() ?? coverage.gameObject.AddComponent<MeshFilter>();
+        var meshFilter = EnsureComponent<MeshFilter>(coverage.gameObject);
         meshFilter.mesh = CourseGroundCoverageMeshBuilder.CreateCoverageMesh();
-        var renderer = coverage.GetComponent<MeshRenderer>() ?? coverage.gameObject.AddComponent<MeshRenderer>();
+        var renderer = EnsureComponent<MeshRenderer>(coverage.gameObject);
         ApplyOpaqueGrassMaterial(renderer, OpenTerrainGrassColor);
     }
 
@@ -248,10 +248,22 @@ public class EnvironmentGroundRenderingCleanup : MonoBehaviour
         }
 
         ground.name = name;
-        var meshFilter = ground.GetComponent<MeshFilter>() ?? ground.gameObject.AddComponent<MeshFilter>();
+        var meshFilter = EnsureComponent<MeshFilter>(ground.gameObject);
         meshFilter.mesh = RoadsideGroundMeshBuilder.CreateGroundMesh(side);
-        var renderer = ground.GetComponent<MeshRenderer>() ?? ground.gameObject.AddComponent<MeshRenderer>();
+        var renderer = EnsureComponent<MeshRenderer>(ground.gameObject);
         ApplyOpaqueGrassMaterial(renderer, OpenTerrainGrassColor);
+    }
+
+    private static T EnsureComponent<T>(GameObject gameObject)
+        where T : Component
+    {
+        var component = gameObject.GetComponent<T>();
+        if (component == null)
+        {
+            component = gameObject.AddComponent<T>();
+        }
+
+        return component;
     }
 
     private static Transform FindChildContaining(Transform parent, string namePart)

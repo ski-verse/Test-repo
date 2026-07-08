@@ -204,6 +204,29 @@ public class EnvironmentGroundRenderingCleanupTests
     }
 
     [Test]
+    public void EnsureContinuousGreenRoadsideGroundExists_ReaddsMissingCoverageMeshComponents()
+    {
+        var root = new GameObject("Continuous Green Roadside Ground");
+        var coverage = new GameObject("Full Course Green Ground Coverage");
+        coverage.transform.SetParent(root.transform, false);
+
+        try
+        {
+            var refreshed = EnvironmentGroundRenderingCleanup.EnsureContinuousGreenRoadsideGroundExists();
+            var refreshedCoverage = refreshed.transform.Find("Full Course Green Ground Coverage");
+
+            Assert.IsNotNull(refreshedCoverage);
+            Assert.IsNotNull(refreshedCoverage.GetComponent<MeshFilter>());
+            Assert.IsNotNull(refreshedCoverage.GetComponent<MeshRenderer>());
+            Assert.IsNotNull(refreshedCoverage.GetComponent<MeshFilter>().sharedMesh);
+        }
+        finally
+        {
+            Object.DestroyImmediate(root);
+        }
+    }
+
+    [Test]
     public void IsFlatRoadsideGroundCandidate_DetectsLargeBrownOrGreyStripsButKeepsRoad()
     {
         var strip = GameObject.CreatePrimitive(PrimitiveType.Cube);
