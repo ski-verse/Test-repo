@@ -6,8 +6,13 @@ public class Pm5PlayerInputSource : MonoBehaviour, IPlayerInputSource
     public KeyCode accelerateKey = KeyCode.W;
     public KeyCode decelerateKey = KeyCode.S;
     public MonoBehaviour workoutMetricsSourceBehaviour;
+    public float strokePolingTimeoutSeconds = 1.75f;
 
     private IWorkoutMetricsSource workoutMetricsSource;
+    private IStrokeMetricsSource strokeMetricsSource;
+    private bool hasLastStrokeCount;
+    private int lastStrokeCount;
+    private float lastStrokeReceivedTime = float.NegativeInfinity;
 
     private void Awake()
     {
@@ -15,6 +20,11 @@ public class Pm5PlayerInputSource : MonoBehaviour, IPlayerInputSource
     }
 
     public PlayerMovementInput ReadMovementInput()
+    {
+        return ReadMovementInput(Time.time);
+    }
+
+    public PlayerMovementInput ReadMovementInput(float currentTimeSeconds)
     {
         CacheWorkoutMetricsSourceIfNeeded();
         var speedAxis = 0f;
@@ -29,7 +39,8 @@ public class Pm5PlayerInputSource : MonoBehaviour, IPlayerInputSource
             speedAxis -= 1f;
         }
 
-        return new PlayerMovementInput(speedAxis, ReadWatts());
+        var isActivelyPoling = speedAxis > 0f || ReadStrokePolingState(currentTimeSeconds);
+        return new PlayerMovementInput(speedAxis, ReadWatts(), isActivelyPoling);
     }
 
     private float ReadWatts()
@@ -52,6 +63,7 @@ public class Pm5PlayerInputSource : MonoBehaviour, IPlayerInputSource
         if (workoutMetricsSourceBehaviour is IWorkoutMetricsSource configuredSource)
         {
             workoutMetricsSource = configuredSource;
+            strokeMetricsSource = workoutMetricsSourceBehaviour as IStrokeMetricsSource;
             return;
         }
 
@@ -60,6 +72,25 @@ public class Pm5PlayerInputSource : MonoBehaviour, IPlayerInputSource
         {
             workoutMetricsSourceBehaviour = discoveredSource;
             workoutMetricsSource = discoveredSource;
+            strokeMetricsSource = discoveredSource;
         }
+    }
+
+    private bool ReadStrokePolingState(float currentTimeSeconds)
+    {
+        if (strokeMetricsSource == null || !strokeMetricsSource.HasStrokeMetrics)
+        {
+            return false;
+        }
+
+        var currentStrokeCount = Mathf.Max(0, strokeMetricsSource.TotalStrokes);
+        if (hasLastStrokeCount && currentStrokeCount > lastStrokeCount)
+        {
+            lastStrokeReceivedTime = currentTimeSeconds;
+        }
+
+        hasLastStrokeCount = true;
+        lastStrokeCount = currentStrokeCount;
+        return currentTimeSeconds - lastStrokeReceivedTime <= Mathf.Max(0f, strokePolingTimeoutSeconds);
     }
 }

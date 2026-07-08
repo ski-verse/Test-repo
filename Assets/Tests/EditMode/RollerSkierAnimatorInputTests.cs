@@ -17,20 +17,34 @@ public class RollerSkierAnimatorInputTests
     }
 
     [Test]
-    public void ShouldDoublePole_UsesAccelerationInputOrWattsThreshold()
+    public void PlayerMovementInput_SeparatesPropulsionWattsFromActivePoling()
+    {
+        var wattsWithoutStroke = new PlayerMovementInput(0f, 140f, false);
+        var strokePulse = new PlayerMovementInput(0f, 140f, true);
+
+        Assert.AreEqual(140f, wattsWithoutStroke.PropulsionWatts, 0.001f);
+        Assert.IsFalse(wattsWithoutStroke.IsActivelyPoling);
+        Assert.IsTrue(strokePulse.IsActivelyPoling);
+        Assert.IsTrue(PlayerMovementInput.Accelerate.IsActivelyPoling);
+    }
+
+    [Test]
+    public void ShouldDoublePole_UsesActivePolingSignalInsteadOfWattsAlone()
     {
         Assert.IsTrue(RollerSkierAnimator.ShouldDoublePole(PlayerMovementInput.Accelerate, 25f));
-        Assert.IsTrue(RollerSkierAnimator.ShouldDoublePole(new PlayerMovementInput(0f, 140f), 25f));
+        Assert.IsTrue(RollerSkierAnimator.ShouldDoublePole(new PlayerMovementInput(0f, 140f, true), 25f));
+        Assert.IsFalse(RollerSkierAnimator.ShouldDoublePole(new PlayerMovementInput(0f, 140f, false), 25f));
         Assert.IsFalse(RollerSkierAnimator.ShouldDoublePole(PlayerMovementInput.None, 25f));
         Assert.IsFalse(RollerSkierAnimator.ShouldDoublePole(new PlayerMovementInput(0f, 20f), 25f));
         Assert.IsFalse(RollerSkierAnimator.ShouldDoublePole(PlayerMovementInput.Decelerate, 25f));
     }
 
     [Test]
-    public void ImportedDoublePolingAnimationInputDriver_UsesPropulsionInputNotSpeed()
+    public void ImportedDoublePolingAnimationInputDriver_UsesActivePolingSignalNotWattsAlone()
     {
         Assert.IsTrue(ImportedDoublePolingAnimationInputDriver.HasActivePropulsionInput(PlayerMovementInput.Accelerate, 0f));
-        Assert.IsTrue(ImportedDoublePolingAnimationInputDriver.HasActivePropulsionInput(new PlayerMovementInput(0f, 0.5f), 0f));
+        Assert.IsTrue(ImportedDoublePolingAnimationInputDriver.HasActivePropulsionInput(new PlayerMovementInput(0f, 0.5f, true), 0f));
+        Assert.IsFalse(ImportedDoublePolingAnimationInputDriver.HasActivePropulsionInput(new PlayerMovementInput(0f, 140f, false), 0f));
         Assert.IsFalse(ImportedDoublePolingAnimationInputDriver.HasActivePropulsionInput(PlayerMovementInput.None, 0f));
         Assert.IsFalse(ImportedDoublePolingAnimationInputDriver.HasActivePropulsionInput(PlayerMovementInput.Decelerate, 0f));
     }
@@ -88,6 +102,20 @@ public class RollerSkierAnimatorInputTests
 
         Assert.Less(nextPhase, currentPhase);
         Assert.GreaterOrEqual(nextPhase, 0f);
+    }
+
+    [Test]
+    public void PlayerSpeedController_CanCoastWhileAnimationReturnsToIdle()
+    {
+        var player = new GameObject("Player").AddComponent<PlayerSpeedController>();
+        player.CurrentSpeed = 6f;
+
+        var glideInput = new PlayerMovementInput(0f, 0f, false);
+        player.ApplyMovementInputAndGradientResistance(glideInput, 0.5f);
+
+        Assert.Less(player.CurrentSpeed, 6f);
+        Assert.IsFalse(RollerSkierAnimator.ShouldDoublePole(player.LastMovementInput, 25f));
+        Object.DestroyImmediate(player.gameObject);
     }
 
     [Test]

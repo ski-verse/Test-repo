@@ -64,7 +64,7 @@ public class RollerSkierAnimator : MonoBehaviour
 
     public static bool ShouldDoublePole(PlayerMovementInput movementInput, float wattsThreshold)
     {
-        return movementInput.SpeedAxis > 0f || movementInput.PropulsionWatts > Mathf.Max(0f, wattsThreshold);
+        return movementInput.IsActivelyPoling;
     }
 
     public static float CalculateNextPhase(float currentPhase, float speedKmh, float deltaTime, float baseRate, float speedRate)

@@ -131,6 +131,37 @@ public class PlayerInputAbstractionTests
     }
 
     [Test]
+    public void Pm5PlayerInputSource_UsesStrokeCountDeltaForActivePolingAndTimesOut()
+    {
+        var inputObject = new GameObject("PM5 Input");
+        var input = inputObject.AddComponent<Pm5PlayerInputSource>();
+        input.strokePolingTimeoutSeconds = 1.75f;
+        var metrics = inputObject.AddComponent<FakeWorkoutMetricsSource>();
+        metrics.HasWorkoutMetricsValue = true;
+        metrics.WattsValue = 180f;
+        metrics.HasStrokeMetricsValue = true;
+        metrics.TotalStrokesValue = 10;
+        input.workoutMetricsSourceBehaviour = metrics;
+
+        var baseline = input.ReadMovementInput(0f);
+        Assert.AreEqual(180f, baseline.PropulsionWatts, 0.001f);
+        Assert.IsFalse(baseline.IsActivelyPoling);
+
+        metrics.TotalStrokesValue = 11;
+        var strokePulse = input.ReadMovementInput(0.1f);
+        Assert.IsTrue(strokePulse.IsActivelyPoling);
+
+        var withinTimeout = input.ReadMovementInput(1.5f);
+        Assert.IsTrue(withinTimeout.IsActivelyPoling);
+
+        var afterTimeout = input.ReadMovementInput(2.0f);
+        Assert.AreEqual(180f, afterTimeout.PropulsionWatts, 0.001f);
+        Assert.IsFalse(afterTimeout.IsActivelyPoling);
+
+        Object.DestroyImmediate(inputObject);
+    }
+
+    [Test]
     public void Bootstrap_EnsuresExistingPlayerUsesPm5InputWithKeyboardFallback()
     {
         var player = new GameObject("Existing Player");
@@ -158,10 +189,12 @@ public class PlayerInputAbstractionTests
         }
     }
 
-    private sealed class FakeWorkoutMetricsSource : MonoBehaviour, IWorkoutMetricsSource
+    private sealed class FakeWorkoutMetricsSource : MonoBehaviour, IWorkoutMetricsSource, IStrokeMetricsSource
     {
         public bool HasWorkoutMetricsValue;
         public float WattsValue;
+        public bool HasStrokeMetricsValue;
+        public int TotalStrokesValue;
 
         public bool HasWorkoutMetrics => HasWorkoutMetricsValue;
 
@@ -170,6 +203,12 @@ public class PlayerInputAbstractionTests
         public float HeartRateBpm => 0f;
 
         public bool HasHeartRateBpm => false;
+
+        public bool HasStrokeMetrics => HasStrokeMetricsValue;
+
+        public float StrokeRateSpm => 0f;
+
+        public int TotalStrokes => TotalStrokesValue;
     }
 
 }

@@ -31,7 +31,7 @@ public class ImportedDoublePolingAnimationInputDriver : MonoBehaviour
 
     public static bool HasActivePropulsionInput(PlayerMovementInput movementInput, float wattsThreshold)
     {
-        return movementInput.SpeedAxis > 0f || movementInput.PropulsionWatts > Mathf.Max(0f, wattsThreshold);
+        return movementInput.IsActivelyPoling;
     }
 
     public void EnsureReferences()
