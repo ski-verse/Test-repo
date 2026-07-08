@@ -77,7 +77,7 @@ public class PlayerSpeedControllerTests
     public void ApplyMovementInputAndGradientResistance_EventuallyStopsWithoutNewPropulsion()
     {
         var controller = new GameObject("Player").AddComponent<PlayerSpeedController>();
-        controller.AlignToCourse(900f);
+        controller.AlignToCourse(CoursePath.MajorClimbStartMeters);
         controller.CurrentSpeed = 4f;
 
         for (var i = 0; i < 80; i++)
@@ -116,14 +116,30 @@ public class PlayerSpeedControllerTests
         lowPower.CurrentSpeed = 4f;
         highPower.CurrentSpeed = 4f;
 
-        lowPower.ApplyMovementInputAndGradientResistance(new PlayerMovementInput(0f, 80f), 1f);
-        highPower.ApplyMovementInputAndGradientResistance(new PlayerMovementInput(0f, 240f), 1f);
+        lowPower.ApplyMovementInputAndGradientResistance(new PlayerMovementInput(0f, 80f, true), 1f);
+        highPower.ApplyMovementInputAndGradientResistance(new PlayerMovementInput(0f, 240f, true), 1f);
 
         Assert.Greater(lowPower.CurrentSpeed, 4f);
         Assert.Greater(highPower.CurrentSpeed, lowPower.CurrentSpeed);
 
         Object.DestroyImmediate(lowPower.gameObject);
         Object.DestroyImmediate(highPower.gameObject);
+    }
+
+    [Test]
+    public void ApplyMovementInputAndGradientResistance_StaleWattsWithoutActivePolingCoastsAndDecays()
+    {
+        var controller = new GameObject("Player").AddComponent<PlayerSpeedController>();
+        controller.AlignToCourse(900f);
+        controller.CurrentSpeed = 8f;
+
+        controller.ApplyMovementInputAndGradientResistance(new PlayerMovementInput(0f, 220f, false), 1f);
+
+        Assert.Less(controller.CurrentSpeed, 8f);
+        Assert.AreEqual(220f, controller.LastMovementInput.PropulsionWatts, 0.001f);
+        Assert.IsFalse(controller.LastMovementInput.IsActivelyPoling);
+
+        Object.DestroyImmediate(controller.gameObject);
     }
 
     [Test]
@@ -152,8 +168,8 @@ public class PlayerSpeedControllerTests
         flat.CurrentSpeed = 4f;
         climb.CurrentSpeed = 4f;
 
-        flat.ApplyMovementInputAndGradientResistance(new PlayerMovementInput(0f, 180f), 1f);
-        climb.ApplyMovementInputAndGradientResistance(new PlayerMovementInput(0f, 180f), 1f);
+        flat.ApplyMovementInputAndGradientResistance(new PlayerMovementInput(0f, 180f, true), 1f);
+        climb.ApplyMovementInputAndGradientResistance(new PlayerMovementInput(0f, 180f, true), 1f);
 
         Assert.LessOrEqual(flat.CurrentGradientPercent, 0f);
         Assert.Greater(climb.CurrentGradientPercent, 0f);
@@ -161,6 +177,50 @@ public class PlayerSpeedControllerTests
 
         Object.DestroyImmediate(flat.gameObject);
         Object.DestroyImmediate(climb.gameObject);
+    }
+
+    [Test]
+    public void ApplyMovementInputAndGradientResistance_ClimbDecaysMoreThanFlatWhenCoasting()
+    {
+        var flat = new GameObject("Flat Player").AddComponent<PlayerSpeedController>();
+        var climb = new GameObject("Climb Player").AddComponent<PlayerSpeedController>();
+        var climbDistance = CoursePath.MajorClimbStartMeters + CoursePath.MajorClimbLengthMeters * 0.5f;
+        flat.AlignToCourse(900f);
+        climb.AlignToCourse(climbDistance);
+        flat.CurrentSpeed = 8f;
+        climb.CurrentSpeed = 8f;
+
+        flat.ApplyMovementInputAndGradientResistance(PlayerMovementInput.None, 1f);
+        climb.ApplyMovementInputAndGradientResistance(PlayerMovementInput.None, 1f);
+
+        Assert.LessOrEqual(flat.CurrentGradientPercent, 0f);
+        Assert.Greater(climb.CurrentGradientPercent, 0f);
+        Assert.Less(climb.CurrentSpeed, flat.CurrentSpeed);
+
+        Object.DestroyImmediate(flat.gameObject);
+        Object.DestroyImmediate(climb.gameObject);
+    }
+
+    [Test]
+    public void ApplyMovementInputAndGradientResistance_DownhillHelpsComparedWithFlatCoasting()
+    {
+        var flat = new GameObject("Flat Player").AddComponent<PlayerSpeedController>();
+        var downhill = new GameObject("Downhill Player").AddComponent<PlayerSpeedController>();
+        var downhillDistance = 2450f;
+        flat.AlignToCourse(CoursePath.MajorClimbStartMeters);
+        downhill.AlignToCourse(downhillDistance);
+        flat.CurrentSpeed = 8f;
+        downhill.CurrentSpeed = 8f;
+
+        flat.ApplyMovementInputAndGradientResistance(PlayerMovementInput.None, 1f);
+        downhill.ApplyMovementInputAndGradientResistance(PlayerMovementInput.None, 1f);
+
+        Assert.Less(Mathf.Abs(flat.CurrentGradientPercent), 0.5f);
+        Assert.Less(downhill.CurrentGradientPercent, 0f);
+        Assert.Greater(downhill.CurrentSpeed, flat.CurrentSpeed);
+
+        Object.DestroyImmediate(flat.gameObject);
+        Object.DestroyImmediate(downhill.gameObject);
     }
 
     [Test]
