@@ -26,8 +26,10 @@ public class SkiErgGameBootstrap : MonoBehaviour
             NordicEnvironmentSettings.GetOrCreateRuntimeSettings();
             SkierVisualSettings.GetOrCreateRuntimeSettings();
 
-            if (Object.FindObjectOfType<PlayerSpeedController>() != null)
+            var existingPlayer = Object.FindObjectOfType<PlayerSpeedController>();
+            if (existingPlayer != null)
             {
+                EnsurePm5PlayerInput(existingPlayer);
                 StartupPerformanceProfiler.Log("SkiErgGameBootstrap skipped because player already exists");
                 return;
             }
@@ -490,8 +492,7 @@ public class SkiErgGameBootstrap : MonoBehaviour
         var controller = skier.AddComponent<PlayerSpeedController>();
         controller.CurrentSpeed = 4f;
         controller.SetStartDistanceZ(0f);
-        var pm5Input = skier.AddComponent<Pm5PlayerInputSource>();
-        controller.InputSource = pm5Input;
+        EnsurePm5PlayerInput(controller);
 
         var animator = skier.AddComponent<RollerSkierAnimator>();
         animator.player = controller;
@@ -501,6 +502,23 @@ public class SkiErgGameBootstrap : MonoBehaviour
         animator.ApplyPose(0.15f);
 
         return skier;
+    }
+
+    public static Pm5PlayerInputSource EnsurePm5PlayerInput(PlayerSpeedController controller)
+    {
+        if (controller == null)
+        {
+            return null;
+        }
+
+        var pm5Input = controller.GetComponent<Pm5PlayerInputSource>();
+        if (pm5Input == null)
+        {
+            pm5Input = controller.gameObject.AddComponent<Pm5PlayerInputSource>();
+        }
+
+        controller.InputSource = pm5Input;
+        return pm5Input;
     }
 
     private static void CreateRollerSkierVisual(Transform parent, RollerSkierAnimator animator)

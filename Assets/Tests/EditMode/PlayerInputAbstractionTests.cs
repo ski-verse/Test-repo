@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using System.Reflection;
 using UnityEngine;
 
 public class PlayerInputAbstractionTests
@@ -104,6 +105,49 @@ public class PlayerInputAbstractionTests
         Object.DestroyImmediate(inputObject);
     }
 
+    [Test]
+    public void Pm5PlayerInputSource_RetriesDiscoveryWhenWorkoutMetricsSourceAppearsLater()
+    {
+        var inputObject = new GameObject("PM5 Input");
+        var input = inputObject.AddComponent<Pm5PlayerInputSource>();
+
+        Assert.AreEqual(0f, input.ReadMovementInput().PropulsionWatts, 0.001f);
+
+        var metricsObject = new GameObject("PM5 Metrics Source");
+        var metrics = metricsObject.AddComponent<Pm5WorkoutDataSource>();
+        var latestMetricsField = typeof(Pm5WorkoutDataSource).GetField("latestMetrics", BindingFlags.NonPublic | BindingFlags.Instance);
+        latestMetricsField.SetValue(metrics, new Pm5WorkoutMetrics
+        {
+            HasWatts = true,
+            Watts = 165f
+        });
+
+        var movementInput = input.ReadMovementInput();
+
+        Assert.AreEqual(165f, movementInput.PropulsionWatts, 0.001f);
+
+        Object.DestroyImmediate(inputObject);
+        Object.DestroyImmediate(metricsObject);
+    }
+
+    [Test]
+    public void Bootstrap_EnsuresExistingPlayerUsesPm5InputWithKeyboardFallback()
+    {
+        var player = new GameObject("Existing Player");
+        var controller = player.AddComponent<PlayerSpeedController>();
+        var keyboard = player.AddComponent<KeyboardPlayerInputSource>();
+        controller.InputSource = keyboard;
+
+        var pm5Input = SkiErgGameBootstrap.EnsurePm5PlayerInput(controller);
+
+        Assert.IsNotNull(pm5Input);
+        Assert.AreSame(pm5Input, controller.InputSource);
+        Assert.AreEqual(KeyCode.W, pm5Input.accelerateKey);
+        Assert.AreEqual(KeyCode.S, pm5Input.decelerateKey);
+
+        Object.DestroyImmediate(player);
+    }
+
     private sealed class TestInputSource : IPlayerInputSource
     {
         public PlayerMovementInput MovementInput;
@@ -127,4 +171,5 @@ public class PlayerInputAbstractionTests
 
         public bool HasHeartRateBpm => false;
     }
+
 }

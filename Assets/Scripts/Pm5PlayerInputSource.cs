@@ -8,7 +8,6 @@ public class Pm5PlayerInputSource : MonoBehaviour, IPlayerInputSource
     public MonoBehaviour workoutMetricsSourceBehaviour;
 
     private IWorkoutMetricsSource workoutMetricsSource;
-    private bool searchedForWorkoutMetricsSource;
 
     private void Awake()
     {
@@ -56,12 +55,6 @@ public class Pm5PlayerInputSource : MonoBehaviour, IPlayerInputSource
             return;
         }
 
-        if (searchedForWorkoutMetricsSource)
-        {
-            return;
-        }
-
-        searchedForWorkoutMetricsSource = true;
         var discoveredSource = Object.FindFirstObjectByType<Pm5WorkoutDataSource>();
         if (discoveredSource != null)
         {
