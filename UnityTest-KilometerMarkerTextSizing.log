@@ -1,0 +1,46 @@
+[Licensing::Module] Trying to connect to existing licensing client channel...
+Built from '6000.4/staging' branch; Version is '6000.4.10f1 (feeafc12a938) revision 16706300'; Using compiler version '194234433'; Build Type 'Release'
+OS: 'Windows 11  (10.0.26200) Core' Language: 'sv' Physical Memory: 32426 MB
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-perss" at "2026-06-09T18:35:59.7745915Z"
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+System  architecture: x64
+Process architecture: x64
+Date: 2026-06-09T18:35:59Z
+[Licensing::Client] Code 10 while verifying Licensing Client signature (process Id: 14620, path: "C:/Program Files/Unity/Hub/Editor/6000.4.10f1/Editor/Data/Resources/Licensing/Client/Unity.Licensing.Client.exe")
+[Licensing::Module] LicensingClient has failed validation; ignoring
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.18.1+9fbee8e
+  Session Id:              5aa057d28b584818b3eaccd9438cf881
+  Correlation Id:          a17e1d5da9b3cf0d16bffe32349569b5
+  External correlation Id: 4276037890643261515
+  Machine Id:              hasg4gkwWdY6D5IubKLKMDkApEE=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-perss" (connect: 0.00s, validation: 0.00s, handshake: 0.03s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-perss-notifications" at "2026-06-09T18:35:59.8041463Z"
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: 5774062103628-UnityPersXXXX
+  Product: Unity Personal
+  Type: Assigned
+  Expiration: Unlimited
+[Licensing::Client] Successfully updated license, isAsync: True, time: 0.00
+[Licensing::Module] Licensing Background thread has ended after 0.03s
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.4.10f1\Editor\Unity.exe
+-batchmode
+-quit
+-projectPath
+C:\Users\perss\Documents\GitHub\Test-repo
+-runTests
+-testPlatform
+EditMode
+-testFilter
+KilometerMarkerSignRuntimeUpdaterTests
+-testResults
+C:\Users\perss\Documents\GitHub\Test-repo\TestResults-KilometerMarkerTextSizing.xml
+-logFile
+C:\Users\perss\Documents\GitHub\Test-repo\UnityTest-KilometerMarkerTextSizing.log
+Successfully changed project path to: C:\Users\perss\Documents\GitHub\Test-repo
+C:/Users/perss/Documents/GitHub/Test-repo
+Exiting without the bug reporter. Application will terminate with return code 1

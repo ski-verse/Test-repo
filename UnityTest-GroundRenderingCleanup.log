@@ -1,0 +1,46 @@
+[Licensing::Module] Trying to connect to existing licensing client channel...
+Built from '6000.4/staging' branch; Version is '6000.4.10f1 (feeafc12a938) revision 16706300'; Using compiler version '194234433'; Build Type 'Release'
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-perss" at "2026-06-08T17:03:25.0207206Z"
+OS: 'Windows 11  (10.0.26200) Core' Language: 'sv' Physical Memory: 32426 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+System  architecture: x64
+Process architecture: x64
+Date: 2026-06-08T17:03:25Z
+[Licensing::Client] Code 10 while verifying Licensing Client signature (process Id: 6880, path: "C:/Program Files/Unity/Hub/Editor/6000.4.10f1/Editor/Data/Resources/Licensing/Client/Unity.Licensing.Client.exe")
+[Licensing::Module] LicensingClient has failed validation; ignoring
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.18.1+9fbee8e
+  Session Id:              e6d0c9a52e2f4792afc40a23ea1e7e8c
+  Correlation Id:          7f03a0012844c9ae7c4360568e3f08d6
+  External correlation Id: 8219484017201701503
+  Machine Id:              hasg4gkwWdY6D5IubKLKMDkApEE=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-perss" (connect: 0.00s, validation: 0.00s, handshake: 0.03s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-perss-notifications" at "2026-06-08T17:03:25.0510095Z"
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: 5774062103628-UnityPersXXXX
+  Product: Unity Personal
+  Type: Assigned
+  Expiration: Unlimited
+[Licensing::Client] Successfully updated license, isAsync: True, time: 0.00
+[Licensing::Module] Licensing Background thread has ended after 0.03s
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.4.10f1\Editor\Unity.exe
+-batchmode
+-quit
+-projectPath
+C:\Users\perss\Documents\GitHub\Test-repo
+-runTests
+-testPlatform
+EditMode
+-testFilter
+EnvironmentGroundRenderingCleanupTests,SpeedFeelingRuntimeUpdaterTests,RoadShoulderMeshBuilderTests
+-testResults
+C:\Users\perss\Documents\GitHub\Test-repo\TestResults-GroundRenderingCleanup.xml
+-logFile
+C:\Users\perss\Documents\GitHub\Test-repo\UnityTest-GroundRenderingCleanup.log
+Successfully changed project path to: C:\Users\perss\Documents\GitHub\Test-repo
+C:/Users/perss/Documents/GitHub/Test-repo
+Exiting without the bug reporter. Application will terminate with return code 1

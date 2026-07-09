@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.unity.formats.fbx": "5.1.6",
     "com.unity.multiplayer.center": "1.0.1",
     "com.unity.test-framework": "1.6.0",
     "com.unity.timeline": "1.8.12",

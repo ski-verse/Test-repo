@@ -1,0 +1,25 @@
+[Licensing::Module] Trying to connect to existing licensing client channel...
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-perss" at "2026-06-27T20:50:18.9433046Z"
+Built from '6000.4/staging' branch; Version is '6000.4.10f1 (feeafc12a938) revision 16706300'; Using compiler version '194234433'; Build Type 'Release'
+OS: 'Windows 11  (10.0.26200) Core' Language: 'sv' Physical Memory: 32426 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+System  architecture: x64
+Process architecture: x64
+Date: 2026-06-27T20:50:18Z
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.4.10f1\Editor\Unity.exe
+-batchmode
+-projectPath
+C:\Users\perss\Documents\GitHub\Test-repo
+-runTests
+-testPlatform
+EditMode
+-testFilter
+Pm5WorkoutDataParserTests;Pm5BleRuntimeConnectorTests
+-logFile
+C:\Users\perss\Documents\GitHub\Test-repo\UnityTest-Pm5Multiplexed.log
+-quit
+Successfully changed project path to: C:\Users\perss\Documents\GitHub\Test-repo
+C:/Users/perss/Documents/GitHub/Test-repo
+Exiting without the bug reporter. Application will terminate with return code 1

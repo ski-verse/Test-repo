@@ -1,0 +1,44 @@
+[Licensing::Module] Trying to connect to existing licensing client channel...
+Built from '6000.4/staging' branch; Version is '6000.4.10f1 (feeafc12a938) revision 16706300'; Using compiler version '194234433'; Build Type 'Release'
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-perss" at "2026-07-06T19:53:49.6776775Z"
+OS: 'Windows 11  (10.0.26200) Core' Language: 'sv' Physical Memory: 32426 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+System  architecture: x64
+Process architecture: x64
+Date: 2026-07-06T19:53:49Z
+[Licensing::Client] Code 10 while verifying Licensing Client signature (process Id: 27604, path: "C:/Program Files/Unity/Hub/Editor/6000.4.10f1/Editor/Data/Resources/Licensing/Client/Unity.Licensing.Client.exe")
+[Licensing::Module] LicensingClient has failed validation; ignoring
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.18.1+9fbee8e
+  Session Id:              b8510c8001d64129a51e70f80b353223
+  Correlation Id:          8a314b6674aa6b5b427285fb5bfed87a
+  External correlation Id: 3692623385191487260
+  Machine Id:              hasg4gkwWdY6D5IubKLKMDkApEE=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-perss" (connect: 0.00s, validation: 0.00s, handshake: 0.03s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-perss-notifications" at "2026-07-06T19:53:49.7083306Z"
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: 5774062103628-UnityPersXXXX
+  Product: Unity Personal
+  Type: Assigned
+  Expiration: Unlimited
+[Licensing::Client] Successfully updated license, isAsync: True, time: 0.00
+[Licensing::Module] Licensing Background thread has ended after 0.03s
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.4.10f1\Editor\Unity.exe
+-batchmode
+-projectPath
+C:\Users\perss\Documents\GitHub\Test-repo
+-runTests
+-testPlatform
+EditMode
+-testResults
+C:\Users\perss\Documents\GitHub\Test-repo\UnityTest-Pm5DirectServiceFallback.xml
+-logFile
+C:\Users\perss\Documents\GitHub\Test-repo\UnityTest-Pm5DirectServiceFallback.log
+-quit
+Successfully changed project path to: C:\Users\perss\Documents\GitHub\Test-repo
+C:/Users/perss/Documents/GitHub/Test-repo
+Exiting without the bug reporter. Application will terminate with return code 1
